@@ -69,25 +69,37 @@ function Test-AuditPermissions {
         $azCmd  = $using:azCmdLocal
         $uid    = $using:userId
 
-        $output   = & $azCmd "role" "assignment" "list" `
-            "--assignee" $uid `
-            "--subscription" $subId `
-            "--include-groups" "--include-inherited" `
-            "--query" "[].roleDefinitionName" `
-            "--output" "json" 2>&1
-        $exitCode = $LASTEXITCODE
+        # Helper: run az and return (exitCode, stdoutText, stderrText)
+        function _AzRaw {
+            param([string]$Cmd, [string[]]$Args)
+            $out = & $Cmd @Args 2>&1
+            $ec  = $LASTEXITCODE
+            $so  = ($out | Where-Object { $_ -is [string] }) -join "`n"
+            $se  = ($out | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" }) -join ' '
+            return $ec, $so.Trim(), $se.Trim()
+        }
 
-        $stdoutLines = @($output | Where-Object { $_ -is [string] })
-        $stderrLines = @($output | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" })
+        # Primary query — scoped to assignee (fast, works when $uid is a GUID)
+        $subArgs = @("role","assignment","list","--assignee",$uid,"--include-inherited","--include-groups",
+                     "--query","[].roleDefinitionName","--output","json")
+        if ($subId) { $subArgs += "--subscription"; $subArgs += $subId }
+        $ec, $so, $se = _AzRaw -Cmd $azCmd -Args $subArgs
 
-        if ($exitCode -ne 0) {
-            $errMsg = if ($stderrLines) { $stderrLines -join ' ' } else { $stdoutLines -join ' ' }
+        # Fallback — mirrors Python: if --assignee failed, try --all filtered to User principals
+        if ($ec -ne 0) {
+            $fbArgs = @("role","assignment","list","--all","--include-inherited",
+                        "--query","[?principalType=='User'].roleDefinitionName","--output","json")
+            if ($subId) { $fbArgs += "--subscription"; $fbArgs += $subId }
+            $ec, $so, $se = _AzRaw -Cmd $azCmd -Args $fbArgs
+        }
+
+        if ($ec -ne 0) {
+            $errMsg = if ($se) { $se } else { $so }
             [PSCustomObject]@{ SubId = $subId; Success = $false; Roles = @(); Error = ($errMsg -replace '\r?\n', ' ').Trim() }
         } else {
-            $stdout = ($stdoutLines -join "`n").Trim()
-            $roles  = @()
-            if ($stdout) {
-                try { $roles = @($stdout | ConvertFrom-Json -Depth 5 | Where-Object { $_ }) } catch { }
+            $roles = @()
+            if ($so) {
+                try { $roles = @($so | ConvertFrom-Json -Depth 5 | Where-Object { $_ }) } catch { }
             }
             [PSCustomObject]@{ SubId = $subId; Success = $true; Roles = $roles; Error = $null }
         }
