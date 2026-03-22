@@ -1,0 +1,23 @@
+# Audit output
+cis_audit_report.html
+cis_audit_*.html
+cis_audit.csv
+cis_audit.json
+
+# Checkpoints and history
+cis_checkpoints/
+cis_run_history.json
+
+# Logs
+*.log
+
+# PowerShell
+*.ps1xml
+smoketest.ps1
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
