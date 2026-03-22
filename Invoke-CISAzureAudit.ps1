@@ -257,8 +257,23 @@ Write-AuditLog "Auditing $($subIds.Count) subscription(s): $($subIds -join ', ')
 # ── Permission preflight ─────────────────────────────────────────────────────
 
 if (-not $NoPermissionCheck) {
-    Write-Host "  Permission preflight..." -ForegroundColor White
+    $pfCount = $subIds.Count
+    Write-Host "  Checking permissions across $pfCount subscription(s)..." -ForegroundColor DarkGray
     $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames
+
+    # Show aggregated role summary (mirrors Python output)
+    if ($permCheck.Roles.Count -gt 0) {
+        $topRoles = $permCheck.Roles | Select-Object -First 5
+        $parts    = foreach ($r in $topRoles) {
+            $cnt = $permCheck.RoleSubCount[$r]
+            if ($permCheck.TotalSubs -gt 1) { "$r ($cnt/$($permCheck.TotalSubs))" } else { $r }
+        }
+        Write-Host "  Roles: $($parts -join '  |  ')" -ForegroundColor DarkCyan
+        if ($permCheck.Roles.Count -gt 5) {
+            Write-Host "  ... and $($permCheck.Roles.Count - 5) more" -ForegroundColor DarkGray
+        }
+    }
+
     if ($permCheck.Warnings.Count -gt 0) {
         foreach ($w in $permCheck.Warnings) {
             Write-Host "  WARNING: $w" -ForegroundColor DarkYellow
