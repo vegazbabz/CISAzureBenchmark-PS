@@ -38,6 +38,13 @@
 .PARAMETER Debug
     Enable debug logging.
 
+.PARAMETER ReportOnly
+    Regenerate the HTML report from saved checkpoint data without re-running any checks.
+    Requires existing checkpoint files in cis_checkpoints/.
+
+.PARAMETER NoOpen
+    Do not auto-open the HTML report in the default browser after completion.
+
 .PARAMETER LogFile
     Optional path to write a log file.
 
@@ -63,6 +70,8 @@ param(
     [ValidateSet("1","2","both")]
     [string]  $Level              = "both",
     [switch]  $DebugMode,
+    [switch]  $ReportOnly,
+    [switch]  $NoOpen,
     [string]  $LogFile            = "",
     # Catch space-separated subscription names: -Subscriptions "A" "B"
     # PowerShell can't merge named-binding and remaining-binding on the same
@@ -182,6 +191,81 @@ $typeLabel  = switch ($callerType) {
 Write-Host "  Authenticated as: $callerName  ($typeLabel)" -ForegroundColor Green
 Write-Host "  Tenant ID:        $tenantId" -ForegroundColor DarkGray
 
+# ── ReportOnly: regenerate report from checkpoints and exit ───────────────────
+
+if ($ReportOnly) {
+    Write-Host ""
+    Write-Host "  Report-only mode: loading checkpoint data..." -ForegroundColor Cyan
+
+    $checkpoints = Get-AuditCheckpoints
+    if ($checkpoints.Count -eq 0) {
+        Write-Host "  ERROR: No checkpoint data found in cis_checkpoints/. Run a full audit first." -ForegroundColor Red
+        exit 1
+    }
+
+    # Reconstruct subscription info from checkpoints
+    $subIds   = @($checkpoints.Keys)
+    $subNames = @{}
+    foreach ($sid in $subIds) { $subNames[$sid] = $checkpoints[$sid].SubscriptionName }
+
+    # Collect all results
+    $allResults = [System.Collections.Generic.List[object]]::new()
+    foreach ($sid in $subIds) {
+        foreach ($r in @($checkpoints[$sid].Results)) { $allResults.Add($r) }
+    }
+
+    Write-Host "  Loaded $($allResults.Count) results from $($subIds.Count) subscription(s)." -ForegroundColor Green
+
+    # Apply level filter
+    $finalResults = @($allResults)
+    if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
+    if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
+
+    # Summary
+    $counts = @{ PASS=0; FAIL=0; ERROR=0; INFO=0; MANUAL=0; SUPPRESSED=0 }
+    foreach ($r in $finalResults) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
+    $assessed = $counts.PASS + $counts.FAIL + $counts.ERROR
+    $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
+
+    Write-Host ""
+    Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+    Write-Host ("  COMPLETE (from checkpoints) — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
+    Write-Host "  ──────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host ("  Compliance Score  : {0}% ({1} of {2} assessed controls)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+    Write-Host ("  PASS              : {0}" -f $counts.PASS)       -ForegroundColor Green
+    Write-Host ("  FAIL              : {0}" -f $counts.FAIL)       -ForegroundColor Red
+    Write-Host ("  ERROR             : {0}" -f $counts.ERROR)      -ForegroundColor DarkYellow
+    Write-Host ("  INFO / N/A        : {0}" -f $counts.INFO)       -ForegroundColor Blue
+    Write-Host ("  MANUAL            : {0}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
+    Write-Host ("  SUPPRESSED        : {0}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
+    Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+    Write-Host ""
+
+    $scopeLabel = "All subscriptions (from checkpoint data)"
+    $scopeInfo  = @{
+        tenant        = $tenantId
+        user          = $callerName
+        caller_type   = $callerType
+        scope_label   = $scopeLabel
+        subscriptions = @($subNames.Values)
+        level_filter  = $Level
+    }
+    $subTimestamps = @{}
+    foreach ($sid in $subIds) { $subTimestamps[$subNames[$sid]] = $checkpoints[$sid].Timestamp }
+
+    $historyPath = Get-HistoryPathFor -OutputPath $Output
+    $history     = @(Get-AuditHistory -HistoryPath $historyPath)
+
+    New-CISHtmlReport -Results $finalResults -OutputPath $Output -ScopeLabel $scopeLabel -History $history -ScopeInfo $scopeInfo -SubTimestamps $subTimestamps
+
+    Write-Host "  Report: $([System.IO.Path]::GetFullPath($Output))" -ForegroundColor Cyan
+    Write-Host ""
+    if (-not $NoOpen) {
+        try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
+    }
+    exit 0
+}
+
 # ── Ensure resource-graph extension is present ───────────────────────────────
 
 $rgCheck = Invoke-AzCli -Arguments @("extension", "list", "--query", "[?name=='resource-graph'].name") -TimeoutSec 30
@@ -262,20 +346,19 @@ if (-not $NoPermissionCheck) {
     $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames
 
     # Show aggregated role summary (mirrors Python output)
-    if ($permCheck.Roles.Count -gt 0) {
-        $topRoles = $permCheck.Roles | Select-Object -First 5
-        $parts    = foreach ($r in $topRoles) {
+    $permRoles = @($permCheck.Roles)
+    if ($permRoles.Count -gt 0) {
+        Write-Host "  Roles:" -ForegroundColor DarkCyan
+        foreach ($r in $permRoles) {
             $cnt = $permCheck.RoleSubCount[$r]
-            if ($permCheck.TotalSubs -gt 1) { "$r ($cnt/$($permCheck.TotalSubs))" } else { $r }
-        }
-        Write-Host "  Roles: $($parts -join '  |  ')" -ForegroundColor DarkCyan
-        if ($permCheck.Roles.Count -gt 5) {
-            Write-Host "  ... and $($permCheck.Roles.Count - 5) more" -ForegroundColor DarkGray
+            $label = if ($permCheck.TotalSubs -gt 1) { "$r ($cnt/$($permCheck.TotalSubs))" } else { $r }
+            Write-Host "    • $label" -ForegroundColor DarkCyan
         }
     }
 
-    if ($permCheck.Warnings.Count -gt 0) {
-        foreach ($w in $permCheck.Warnings) {
+    $permWarnings = @($permCheck.Warnings)
+    if ($permWarnings.Count -gt 0) {
+        foreach ($w in $permWarnings) {
             Write-Host "  WARNING: $w" -ForegroundColor DarkYellow
             Write-AuditLog $w -Level WARNING
         }
@@ -299,6 +382,8 @@ if ($Resume -and -not $NoCheckpoint) {
 
 # ── Resource Graph prefetch ───────────────────────────────────────────────────
 
+$auditStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
 Write-AuditLog "Prefetching resource data via Azure Resource Graph..." -Level INFO
 
 # Only prefetch for subscriptions NOT covered by checkpoints
@@ -307,12 +392,14 @@ $subIdsToAudit = @($subIds | Where-Object { -not $checkpoints.ContainsKey($_) })
 $prefetchData = @{}   # key -> { sub_id_lower -> [records] }
 
 if ($subIdsToAudit.Count -gt 0) {
-    foreach ($queryName in $script:GRAPH_QUERIES.Keys) {
-        Write-AuditLog "  Prefetch: $queryName..." -Level DEBUG
+    $queryNames = @($script:GRAPH_QUERIES.Keys)
+    $qIdx = 0
+    foreach ($queryName in $queryNames) {
+        $qIdx++
         $r = Invoke-AzGraphQuery -Query $script:GRAPH_QUERIES[$queryName] -SubscriptionIds $subIdsToAudit
 
         if (-not $r.Success) {
-            Write-AuditLog "Resource Graph query '$queryName' failed: $($r.Error)" -Level WARNING
+            Write-AuditLog ("   {0,-20} {1}  {2}" -f $queryName, [char]0x26A0, $r.Error) -Level WARNING
             $prefetchData[$queryName] = @{}
             continue
         }
@@ -332,7 +419,7 @@ if ($subIdsToAudit.Count -gt 0) {
         $prefetchData[$queryName] = $final
 
         $totalRecords = ($final.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
-        Write-AuditLog "    ${queryName}: $totalRecords record(s) across $($final.Keys.Count) subscription(s)" -Level VERBOSE
+        Write-AuditLog ("   {0,-20} {1}  {2} record(s)" -f $queryName, [char]0x2705, $totalRecords) -Level INFO
     }
     Write-AuditLog "Prefetch complete. $($prefetchData.Count) resource type(s) cached." -Level INFO
 }
@@ -371,7 +458,7 @@ function Invoke-SubscriptionAudit {
 
     foreach ($group in $checkGroups) {
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        Write-AuditLog "  -> $($group.Name)" -Level DEBUG
+        Write-AuditLog "    [$SubName] $($group.Name)..." -Level INFO
         try {
             $groupResults = @(& $group.Fn)
             foreach ($r in $groupResults) {
@@ -379,11 +466,11 @@ function Invoke-SubscriptionAudit {
                 $res = if ($r.Resource) { " [$($r.Resource)]" } else { "" }
                 $det = ($r.Details -replace "`r?`n", ' ').Trim()
                 if ($det.Length -gt 90) { $det = $det.Substring(0, 90) + '...' }
-                Write-AuditLog "     [$statusPad] $($r.ControlId.PadRight(12))$res $det" -Level VERBOSE
+                Write-AuditLog "       [$statusPad] $($r.ControlId.PadRight(12))$res $det" -Level VERBOSE
                 $subResults.Add($r)
             }
             $sw.Stop()
-            Write-AuditLog "     $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level DEBUG
+            Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level DEBUG
         } catch {
             Write-AuditLog "$($group.Name) error for ${SubName}: $_" -Level WARNING
         }
@@ -407,9 +494,11 @@ $subsToProcess = @($subIdsToAudit)
 if ($subsToProcess.Count -gt 0) {
     if ($Parallel -le 1 -or $subsToProcess.Count -eq 1) {
         # Sequential execution
+        $seqIdx = 0
         foreach ($subId in $subsToProcess) {
+            $seqIdx++
             $subName = $subNames[$subId]
-            Write-AuditLog "Auditing: $subName ($subId)" -Level INFO
+            Write-AuditLog "  [$seqIdx/$($subsToProcess.Count)] Starting:  $subName" -Level INFO
 
             try {
                 $subResults = Invoke-SubscriptionAudit -SubId $subId -SubName $subName -PrefetchData $prefetchData
@@ -420,7 +509,7 @@ if ($subsToProcess.Count -gt 0) {
                     Save-AuditCheckpoint -SubscriptionId $subId -SubscriptionName $subName -Results $subResults
                 }
 
-                Write-AuditLog "  Done: $subName — $($subResults.Count) results" -Level INFO
+                Write-AuditLog "  [$seqIdx/$($subsToProcess.Count)] Completed: $subName — $($subResults.Count) results" -Level INFO
             } catch {
                 Write-AuditLog "Fatal error auditing $subName`: $_" -Level WARNING
             }
@@ -431,18 +520,25 @@ if ($subsToProcess.Count -gt 0) {
         $resultBag  = [System.Collections.Concurrent.ConcurrentBag[object]]::new()
         $moduleRoot_ = $moduleRoot
 
-        # Pre-build array of [id, name] pairs — $using: can't index into hashtables
-        $subPairs = @($subsToProcess | ForEach-Object { [PSCustomObject]@{ Id = $_; Name = $subNames[$_] } })
+        # Pre-build array of [id, name, index] — $using: can't index into hashtables
+        $subPairs = @(for ($i = 0; $i -lt $subsToProcess.Count; $i++) {
+            [PSCustomObject]@{ Id = $subsToProcess[$i]; Name = $subNames[$subsToProcess[$i]]; Idx = $i + 1 }
+        })
+        $totalToProcess = $subsToProcess.Count
 
         Write-AuditLog "Running parallel audit ($throttle concurrent workers)..." -Level INFO
 
         $subPairs | ForEach-Object -Parallel {
             $subId         = $_.Id
             $subName       = $_.Name
+            $subIdx        = $_.Idx
+            $subTotal      = $using:totalToProcess
             $pd            = $using:prefetchData
             $modRoot       = $using:moduleRoot_
             $noCheckpoint  = $using:NoCheckpoint
             $bag           = $using:resultBag
+
+            Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
 
             # Re-import all module files in the parallel runspace
             $files = @(
@@ -456,20 +552,20 @@ if ($subsToProcess.Count -gt 0) {
 
             try {
                 $checkGroups = @(
-                    @{ Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 5 (Identity)";   Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 6 (Monitoring)"; Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 7 (Networking)"; Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 8 (Security)";   Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    @{ Name = "Section 9 (Storage)";    Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
                 )
 
                 $subResults = [System.Collections.Generic.List[object]]::new()
                 foreach ($g in $checkGroups) {
+                    Write-Host "    [$subName] $($g.Name)..." -ForegroundColor DarkGray
                     try {
                         foreach ($r in @(& $g.Fn)) { $subResults.Add($r) }
                     } catch {
-                        # Log to stderr — visible in the parent host when -DebugMode is on
                         [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
                     }
                 }
@@ -479,6 +575,8 @@ if ($subsToProcess.Count -gt 0) {
                 if (-not $noCheckpoint) {
                     Save-AuditCheckpoint -SubscriptionId $subId -SubscriptionName $subName -Results $subResults.ToArray()
                 }
+
+                Write-Host "  [$subIdx/$subTotal] Completed: $subName — $($subResults.Count) results" -ForegroundColor Green
             } catch { $null = $_ <# Intentional: per-subscription errors are logged inside; prevent ForEach-Object -Parallel from terminating #> }
 
         } -ThrottleLimit $throttle
@@ -487,7 +585,10 @@ if ($subsToProcess.Count -gt 0) {
     }
 }
 
-Write-AuditLog "Audit complete. $($allResults.Count) total results." -Level INFO
+$auditStopwatch.Stop()
+$elapsed = $auditStopwatch.Elapsed
+$elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "{0}m {1}s" -f [int][math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds } else { "{0}s" -f $elapsed.TotalSeconds.ToString('F1') }
+Write-AuditLog "Audit complete. $($allResults.Count) total results in $elapsedStr." -Level INFO
 
 # ── Apply level filter ────────────────────────────────────────────────────────
 
@@ -504,7 +605,8 @@ $assessed  = $counts.PASS + $counts.FAIL + $counts.ERROR
 $score     = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
 Write-Host ""
-Write-Host "  Results Summary" -ForegroundColor White
+Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  {2} {3}" -f $finalResults.Count, $subIds.Count, [char]0x23F1, $elapsedStr) -ForegroundColor White
 Write-Host "  ──────────────────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host ("  Compliance Score  : {0}% ({1} of {2} assessed controls)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
 Write-Host ("  PASS              : {0}" -f $counts.PASS)       -ForegroundColor Green
@@ -513,6 +615,7 @@ Write-Host ("  ERROR             : {0}" -f $counts.ERROR)      -ForegroundColor 
 Write-Host ("  INFO / N/A        : {0}" -f $counts.INFO)       -ForegroundColor Blue
 Write-Host ("  MANUAL            : {0}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
 Write-Host ("  SUPPRESSED        : {0}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
+Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
 Write-Host ""
 
 # ── Generate HTML report ──────────────────────────────────────────────────────
@@ -555,3 +658,8 @@ if ($subIds.Count -gt 1 -or $Subscriptions.Count -eq 0) {
 
 Write-Host "  Report: $([System.IO.Path]::GetFullPath($Output))" -ForegroundColor Cyan
 Write-Host ""
+
+# ── Open report in default browser ─────────────────────────────────────────────
+if (-not $NoOpen) {
+    try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
+}

@@ -229,7 +229,9 @@ function Invoke-Section8Checks {
 
                 if (-not $r.Success) {
                     if (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Insufficient permissions to list keys. Grant 'Key Vault Reader' role." $sid $sname $kvName))
+                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                    } elseif (Test-FirewallError $r.Error) {
+                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                     } else {
                         $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec $r.Error $sid $sname $kvName))
                     }
@@ -259,7 +261,13 @@ function Invoke-Section8Checks {
                 ) -TimeoutSec $script:TIMEOUTS.default
 
                 if (-not $r.Success) {
-                    $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec $r.Error $sid $sname $kvName))
+                    if (Test-AuthzError $r.Error) {
+                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Insufficient permissions to list secrets. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Secret List permission." $sid $sname $kvName))
+                    } elseif (Test-FirewallError $r.Error) {
+                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    } else {
+                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec $r.Error $sid $sname $kvName))
+                    }
                 } elseif (-not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "No secrets found in vault." $sid $sname $kvName))
                 } else {
@@ -285,7 +293,13 @@ function Invoke-Section8Checks {
                 ) -TimeoutSec $script:TIMEOUTS.default
 
                 if (-not $r.Success) {
-                    $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec $r.Error $sid $sname $kvName))
+                    if (Test-AuthzError $r.Error) {
+                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
+                    } elseif (Test-FirewallError $r.Error) {
+                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    } else {
+                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec $r.Error $sid $sname $kvName))
+                    }
                 } elseif (-not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
                     $results.Add((New-InfoResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {

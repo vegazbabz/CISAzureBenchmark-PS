@@ -28,14 +28,19 @@ function Format-AzErrorMessage {
     #>
     param([string]$Message)
 
+    # If the caller already provided specific permission guidance, don't overwrite it.
+    if ($Message -imatch 'requires .+application permission') {
+        return $Message
+    }
+
     # Graph API auth errors — must precede the generic auth pattern so callers that
     # prefix messages with "Graph API error:" get Entra-specific guidance instead of
     # the ARM "Grant Reader role on subscription" advice.
-    if ($Message -imatch 'graph' -and $Message -imatch 'AuthorizationFailed|does not have authorization|is not authorized|forbidden|Access denied|does not have.*permission|Insufficient privileges') {
-        return "Microsoft Graph API permission denied — ensure the audit identity has the required Entra ID directory role (e.g. Global Reader) or Graph API application permissions (e.g. Policy.Read.All). If using az login, try: az login --scope https://graph.microsoft.com/.default"
+    if ($Message -imatch 'graph' -and $Message -imatch 'AuthorizationFailed|does not have authorization|is not authorized|forbidden|Access denied|does not have.*permission|Insufficient privileges|scopes are missing') {
+        return "Microsoft Graph API permission denied. Required scopes are missing from the token. Ensure the audit identity has the correct Graph API delegated or application permissions. Try: az login --scope https://graph.microsoft.com/.default"
     }
     if ($Message -imatch 'graph.*error|reports.*permission|beta.*reports') {
-        return "Microsoft Graph API error — the audit identity may lack Graph permissions (e.g. Reports.Read.All or AuditLog.Read.All)."
+        return "Microsoft Graph API error — the audit identity may lack the required Graph API permission for this endpoint."
     }
     if ($Message -imatch 'AuthorizationFailed|does not have authorization|is not authorized|forbidden|Access denied|does not have.*permission') {
         return "Insufficient permissions — the audit identity lacks Reader access to this resource. Grant Reader role on the subscription or resource."

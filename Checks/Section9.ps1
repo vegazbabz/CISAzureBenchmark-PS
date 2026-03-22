@@ -216,6 +216,10 @@ function Invoke-Section9Checks {
                         $results.Add((New-ErrorResult "9.2.4" "Blob Logging Read" 2 $sec "Insufficient permissions." $sid $sname $acctName))
                         $results.Add((New-ErrorResult "9.2.5" "Blob Logging Write" 2 $sec "Insufficient permissions." $sid $sname $acctName))
                         $results.Add((New-ErrorResult "9.2.6" "Blob Logging Delete" 2 $sec "Insufficient permissions." $sid $sname $acctName))
+                    } elseif (Test-FirewallError $r.Error) {
+                        foreach ($cid in @("9.2.1","9.2.2","9.2.3","9.2.4","9.2.5","9.2.6")) {
+                            $results.Add((New-ErrorResult $cid "Blob service check" 1 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
+                        }
                     } else {
                         $results.Add((New-ErrorResult "9.2.1" "Blob Soft Delete" 1 $sec $r.Error $sid $sname $acctName))
                     }
@@ -317,15 +321,25 @@ function Invoke-Section9Checks {
                     $results.Add((New-InfoResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "File service not supported." $sid $sname $acctName))
                     $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
                     $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
+                } elseif (Test-FirewallError $r.Error) {
+                    $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
                 } else {
                     $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec $r.Error $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $r.Error $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $r.Error $sid $sname $acctName))
                 }
             } else {
-                $fp      = $r.Data
-                $fsDelOn = [string]$fp.shareDeleteRetentionPolicy.enabled -eq "true" -or [string]$fp.shareDeleteRetentionPolicy.enabled -eq "True"
-                $fsDays  = [int]($fp.shareDeleteRetentionPolicy.days)
+                $fp   = $r.Data
+                $sdrp = $fp.PSObject.Properties['shareDeleteRetentionPolicy']
+                if ($sdrp -and $sdrp.Value) {
+                    $fsDelOn = [string]$sdrp.Value.enabled -eq "true" -or [string]$sdrp.Value.enabled -eq "True"
+                    $fsDays  = [int]($sdrp.Value.PSObject.Properties['days']?.Value)
+                } else {
+                    $fsDelOn = $false
+                    $fsDays  = 0
+                }
                 $fsOk    = $fsDelOn -and $fsDays -ge 7
 
                 $results.Add((New-CISResult `

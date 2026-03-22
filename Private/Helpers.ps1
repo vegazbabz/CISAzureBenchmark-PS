@@ -70,25 +70,27 @@ function Get-NsgBadRules {
         # Support both flat (Resource Graph) and nested (az CLI) shapes
         $props = if ($rule.PSObject.Properties['properties']) { $rule.properties } else { $rule }
 
-        $access    = [string]$props.access
-        $direction = [string]$props.direction
-        $srcAddr   = [string]$props.sourceAddressPrefix
-        $proto     = [string]$props.protocol
+        $access    = [string]($props.PSObject.Properties['access']?.Value)
+        $direction = [string]($props.PSObject.Properties['direction']?.Value)
+        $srcAddr   = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
+        $proto     = [string]($props.PSObject.Properties['protocol']?.Value)
 
         if ($access -ne 'Allow')   { continue }
         if ($direction -ne 'Inbound') { continue }
-        if ($script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
+        if (-not $srcAddr -or $script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
 
-        $protoUpper = $proto.ToUpper()
+        $protoUpper = if ($proto) { $proto.ToUpper() } else { '' }
         if ($protoUpper -ne '*' -and $Protocols -notcontains $proto -and $Protocols -notcontains $protoUpper) { continue }
 
         # Collect all destination port ranges
         $portRanges = [System.Collections.Generic.List[string]]::new()
-        if ($props.destinationPortRange -and [string]$props.destinationPortRange) {
-            $portRanges.Add([string]$props.destinationPortRange)
+        $dprProp = $props.PSObject.Properties['destinationPortRange']
+        if ($dprProp -and $dprProp.Value -and [string]$dprProp.Value) {
+            $portRanges.Add([string]$dprProp.Value)
         }
-        if ($props.destinationPortRanges) {
-            foreach ($pr in $props.destinationPortRanges) {
+        $dprsProp = $props.PSObject.Properties['destinationPortRanges']
+        if ($dprsProp -and $dprsProp.Value) {
+            foreach ($pr in $dprsProp.Value) {
                 if ($pr) { $portRanges.Add([string]$pr) }
             }
         }
@@ -126,16 +128,16 @@ function Get-NsgUdpBadRules {
     foreach ($rule in $Rules) {
         $props = if ($rule.PSObject.Properties['properties']) { $rule.properties } else { $rule }
 
-        $access    = [string]$props.access
-        $direction = [string]$props.direction
-        $srcAddr   = [string]$props.sourceAddressPrefix
-        $proto     = [string]$props.protocol
+        $access    = [string]($props.PSObject.Properties['access']?.Value)
+        $direction = [string]($props.PSObject.Properties['direction']?.Value)
+        $srcAddr   = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
+        $proto     = [string]($props.PSObject.Properties['protocol']?.Value)
 
         if ($access -ne 'Allow')   { continue }
         if ($direction -ne 'Inbound') { continue }
-        if ($script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
+        if (-not $srcAddr -or $script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
 
-        $protoUpper = $proto.ToUpper()
+        $protoUpper = if ($proto) { $proto.ToUpper() } else { '' }
         if ($protoUpper -ne 'UDP' -and $protoUpper -ne '*') { continue }
 
         $ruleName = if ($rule.name) { [string]$rule.name } else { "unknown-rule" }

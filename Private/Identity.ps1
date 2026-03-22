@@ -71,8 +71,8 @@ function Test-AuditPermissions {
 
         # Helper: run az and return (exitCode, stdoutText, stderrText)
         function _AzRaw {
-            param([string]$Cmd, [string[]]$Args)
-            $out = & $Cmd @Args 2>&1
+            param([string]$Cmd, [string[]]$CmdArgs)
+            $out = & $Cmd @CmdArgs 2>&1
             $ec  = $LASTEXITCODE
             $so  = ($out | Where-Object { $_ -is [string] }) -join "`n"
             $se  = ($out | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" }) -join ' '
@@ -83,14 +83,14 @@ function Test-AuditPermissions {
         $subArgs = @("role","assignment","list","--assignee",$uid,"--include-inherited","--include-groups",
                      "--query","[].roleDefinitionName","--output","json")
         if ($subId) { $subArgs += "--subscription"; $subArgs += $subId }
-        $ec, $so, $se = _AzRaw -Cmd $azCmd -Args $subArgs
+        $ec, $so, $se = _AzRaw -Cmd $azCmd -CmdArgs $subArgs
 
         # Fallback — mirrors Python: if --assignee failed, try --all filtered to User principals
         if ($ec -ne 0) {
             $fbArgs = @("role","assignment","list","--all","--include-inherited",
                         "--query","[?principalType=='User'].roleDefinitionName","--output","json")
             if ($subId) { $fbArgs += "--subscription"; $fbArgs += $subId }
-            $ec, $so, $se = _AzRaw -Cmd $azCmd -Args $fbArgs
+            $ec, $so, $se = _AzRaw -Cmd $azCmd -CmdArgs $fbArgs
         }
 
         if ($ec -ne 0) {
@@ -119,9 +119,9 @@ function Test-AuditPermissions {
     }
 
     $allRoles    = @($roleSubCount.Keys | Sort-Object)
-    $rolesLower  = $allRoles | ForEach-Object { $_.ToLower() }
-    $hasReader   = ($rolesLower | Where-Object { $_ -in @('reader', 'contributor', 'owner', 'user access administrator') }).Count -gt 0
-    $hasSecurity = ($rolesLower | Where-Object { $_ -like 'security*' }).Count -gt 0
+    $rolesLower  = @($allRoles | ForEach-Object { $_.ToLower() })
+    $hasReader   = @($rolesLower | Where-Object { $_ -in @('reader', 'contributor', 'owner', 'user access administrator') }).Count -gt 0
+    $hasSecurity = @($rolesLower | Where-Object { $_ -like 'security*' }).Count -gt 0
 
     if (-not $hasReader) {
         $warnings.Add("No 'Reader' or higher role found — most audit checks require Reader access.")

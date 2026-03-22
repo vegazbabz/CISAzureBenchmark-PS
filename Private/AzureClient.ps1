@@ -190,7 +190,8 @@ function Invoke-AzRestPaged {
 
 function Test-FirewallError {
     param([string]$Message)
-    foreach ($t in @("firewall", "network acl", "network access", "vnet rule", "public network access is disabled")) {
+    foreach ($t in @("firewall", "network acl", "network access", "vnet rule", "public network access is disabled",
+                     "failed to resolve", "getaddrinfo failed", "JSON is invalid")) {
         if ($Message -imatch [regex]::Escape($t)) { return $true }
     }
     return $false

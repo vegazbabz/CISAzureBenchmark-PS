@@ -179,13 +179,15 @@ function New-CISHtmlReport {
     if ($subRowsHtml.Length -gt 0) {
         $subTable = @"
 <div class="sub-summary-wrap">
-<h2>Subscription Summary <small>(click a row to filter the table below)</small></h2>
+<h2 id="sub-summary-toggle" style="cursor:pointer;user-select:none"><span class="sec-arrow open" id="sub-summary-arrow">&#x25BC;</span> Subscription Summary <small>(click a row to filter the table below)</small></h2>
+<div id="sub-summary-body">
 <table class="sub-summary"><thead><tr>
 <th>Subscription</th><th>Score</th><th>Breakdown</th>
 <th>&#10003; Pass</th><th>&#10007; Fail</th><th>&#9888; Error</th>
 <th>Info</th><th>Manual</th><th>&#128263; Suppressed</th>
 <th>Audited</th>
-</tr></thead><tbody>$($subRowsHtml.ToString())</tbody></table></div>
+</tr></thead><tbody>$($subRowsHtml.ToString())</tbody></table>
+</div></div>
 "@
     }
 
@@ -535,6 +537,18 @@ $subTable
   var JS_SECTIONS = $secDataJson;
   var subF = '';
   var _collapsed = {};
+
+  // Subscription summary collapse/expand toggle
+  var subToggle = document.getElementById('sub-summary-toggle');
+  var subBody   = document.getElementById('sub-summary-body');
+  var subArrow  = document.getElementById('sub-summary-arrow');
+  if (subToggle && subBody) {
+    subToggle.addEventListener('click', function(){
+      var hidden = subBody.style.display === 'none';
+      subBody.style.display = hidden ? '' : 'none';
+      if (subArrow) { subArrow.classList.toggle('closed', !hidden); subArrow.classList.toggle('open', hidden); }
+    });
+  }
 
   document.querySelectorAll('#tb tr.sh').forEach(function(hdr){
     hdr.addEventListener('click', function(){

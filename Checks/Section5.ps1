@@ -11,7 +11,7 @@ function Invoke-Check5_1_1 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error: $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal. Manual check: Entra ID > Properties > Manage Security Defaults."
     }
 
     $enabled = [string]$r.Data.isEnabled -eq "True" -or [string]$r.Data.isEnabled -eq "true"
@@ -41,7 +41,7 @@ function Invoke-Check5_1_2 {
     $r   = Invoke-AzRestPaged -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error (may need Reports.Read.All or UserAuthenticationMethod.Read.All permission): $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'UserAuthenticationMethod.Read.All' (or 'Reports.Read.All') permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with the permission > Grant admin consent > az login --service-principal."
     }
 
     $users      = @($r.Data)
@@ -72,7 +72,7 @@ function Invoke-Check5_4 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error: $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
     }
 
     $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
@@ -92,7 +92,7 @@ function Invoke-Check5_14 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error: $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
     }
 
     $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
@@ -112,7 +112,7 @@ function Invoke-Check5_15 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error: $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
     }
 
     # GuestUserRoleId:
@@ -137,7 +137,7 @@ function Invoke-Check5_16 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Graph API error: $($r.Error)"
+        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
     }
 
     # allowInvitesFrom:
@@ -239,16 +239,22 @@ function Invoke-Section5TenantChecks {
     #>
     $results = [System.Collections.Generic.List[object]]::new()
     $checks  = @(
-        { Invoke-Check5_1_1 }
-        { Invoke-Check5_1_2 }
-        { Invoke-Check5_1_3 }
-        { Invoke-Check5_4  }
-        { Invoke-Check5_14 }
-        { Invoke-Check5_15 }
-        { Invoke-Check5_16 }
+        @{ Id = '5.1.1'; Title = 'Security Defaults';       Fn = { Invoke-Check5_1_1 } }
+        @{ Id = '5.1.2'; Title = 'MFA for Admin Roles';      Fn = { Invoke-Check5_1_2 } }
+        @{ Id = '5.1.3'; Title = 'MFA Device Memory';        Fn = { Invoke-Check5_1_3 } }
+        @{ Id = '5.4';   Title = 'Restrict Tenant Creation'; Fn = { Invoke-Check5_4  } }
+        @{ Id = '5.14';  Title = 'User App Registration';    Fn = { Invoke-Check5_14 } }
+        @{ Id = '5.15';  Title = 'Guest Access Restrictions'; Fn = { Invoke-Check5_15 } }
+        @{ Id = '5.16';  Title = 'Guest Invite Restrictions'; Fn = { Invoke-Check5_16 } }
     )
     foreach ($check in $checks) {
-        try { $results.Add((& $check)) } catch { Write-AuditLog "Check error: $_" -Level WARNING }
+        try {
+            $r = & $check.Fn
+            $results.Add($r)
+            Write-AuditLog "    [$($r.Status.PadRight(8))] $($check.Id.PadRight(8)) $($check.Title)" -Level INFO
+        } catch {
+            Write-AuditLog "    [ERROR   ] $($check.Id.PadRight(8)) $($check.Title) — $_" -Level WARNING
+        }
     }
     return $results.ToArray()
 }
