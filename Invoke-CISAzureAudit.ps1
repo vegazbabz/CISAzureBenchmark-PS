@@ -187,7 +187,8 @@ $typeLabel  = switch ($callerType) {
     'user'             { 'User'              }
     default            { $callerType          }
 }
-Write-Host "`u{2705} Authenticated as: $callerName ($typeLabel)  |  Tenant: $tenantId" -ForegroundColor Green
+Write-Host "`u{2705} Authenticated as: $callerName ($typeLabel)" -ForegroundColor Green
+Write-Host "`u{2705} Tenant: $tenantId" -ForegroundColor Green
 
 # ── ReportOnly: regenerate report from checkpoints and exit ───────────────────
 
