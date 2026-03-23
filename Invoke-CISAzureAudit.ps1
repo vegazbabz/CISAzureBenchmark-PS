@@ -418,7 +418,7 @@ if (-not $Fresh -and -not $NoCheckpoint) {
 # ── Resource Graph prefetch ───────────────────────────────────────────────────
 
 $auditStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
+Write-Host ""
 Write-AuditLog "`u{1F4E1} Fetching tenant data via Resource Graph..." -Level INFO
 
 # Only prefetch for subscriptions NOT covered by checkpoints
