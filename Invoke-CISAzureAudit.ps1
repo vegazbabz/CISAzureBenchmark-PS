@@ -193,11 +193,11 @@ Write-Host "`u{2705} Authenticated as: $callerName ($typeLabel)  |  Tenant: $ten
 
 if ($ReportOnly) {
     Write-Host ""
-    Write-Host "  Report-only mode: loading checkpoint data..." -ForegroundColor Cyan
+    Write-Host "`u{1F4CA} Report-only mode..." -ForegroundColor Cyan
 
     $checkpoints = Get-AuditCheckpoints
     if ($checkpoints.Count -eq 0) {
-        Write-Host "  ERROR: No checkpoint data found in cis_checkpoints/. Run a full audit first." -ForegroundColor Red
+        Write-Host "`u{274C} No checkpoint data found in cis_checkpoints/. Run a full audit first." -ForegroundColor Red
         exit 1
     }
 
@@ -206,16 +206,26 @@ if ($ReportOnly) {
     $subNames = @{}
     foreach ($sid in $subIds) { $subNames[$sid] = $checkpoints[$sid].SubscriptionName }
 
-    # Collect all results
+    # Collect all results, showing per-subscription loading
     $allResults = [System.Collections.Generic.List[object]]::new()
     foreach ($sid in $subIds) {
         foreach ($r in @($checkpoints[$sid].Results)) { $allResults.Add($r) }
+        Write-Host "   `u{2705} Loaded: $($checkpoints[$sid].SubscriptionName)" -ForegroundColor Green
     }
 
-    Write-Host "  Loaded $($allResults.Count) results from $($subIds.Count) subscription(s)." -ForegroundColor Green
+    # Load tenant checkpoint
+    $tenantCkpt = Get-TenantCheckpoint
+    if ($null -ne $tenantCkpt) {
+        Write-Host "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCkpt.Count) results)." -ForegroundColor Green
+        foreach ($r in $tenantCkpt) { $allResults.Add($r) }
+    } else {
+        Write-Host "   `u{1F50D} No tenant checkpoint found — tenant checks will be missing from report." -ForegroundColor DarkYellow
+    }
+
+    # Deduplicate
+    $finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
 
     # Apply level filter
-    $finalResults = @($allResults)
     if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
     if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
 
@@ -226,17 +236,11 @@ if ($ReportOnly) {
     $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
     Write-Host ""
-    Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-    Write-Host ("  COMPLETE (from checkpoints) — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
-    Write-Host "  ──────────────────────────────────────────────────" -ForegroundColor DarkGray
-    Write-Host ("  Compliance Score  : {0}% ({1} of {2} assessed controls)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-    Write-Host ("  PASS              : {0}" -f $counts.PASS)       -ForegroundColor Green
-    Write-Host ("  FAIL              : {0}" -f $counts.FAIL)       -ForegroundColor Red
-    Write-Host ("  ERROR             : {0}" -f $counts.ERROR)      -ForegroundColor DarkYellow
-    Write-Host ("  INFO / N/A        : {0}" -f $counts.INFO)       -ForegroundColor Blue
-    Write-Host ("  MANUAL            : {0}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
-    Write-Host ("  SUPPRESSED        : {0}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-    Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+    Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+    Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
+    Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+    Write-Host ("  `u{2705} PASS {0,4}  `u{274C} FAIL {1,4}  `u{26A0}`u{FE0F} ERROR {2,4}  `u{2139}`u{FE0F} INFO {3,4}  `u{1F4CB} MANUAL {4,4}  `u{1F507} SUPPRESSED {5,4}" -f $counts.PASS, $counts.FAIL, $counts.ERROR, $counts.INFO, $counts.MANUAL, $counts.SUPPRESSED)
+    Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
     Write-Host ""
 
     $scopeLabel = "All subscriptions (from checkpoint data)"
@@ -629,7 +633,7 @@ Write-AuditLog "Audit complete. $($allResults.Count) total results in $elapsedSt
 
 # ── Apply level filter ────────────────────────────────────────────────────────
 
-$finalResults = @($allResults)
+$finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
 if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
 if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
 
@@ -642,17 +646,11 @@ $assessed  = $counts.PASS + $counts.FAIL + $counts.ERROR
 $score     = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
 Write-Host ""
-Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
-Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  {2} {3}" -f $finalResults.Count, $subIds.Count, [char]0x23F1, $elapsedStr) -ForegroundColor White
-Write-Host "  ──────────────────────────────────────────────────" -ForegroundColor DarkGray
-Write-Host ("  Compliance Score  : {0}% ({1} of {2} assessed controls)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-Write-Host ("  PASS              : {0}" -f $counts.PASS)       -ForegroundColor Green
-Write-Host ("  FAIL              : {0}" -f $counts.FAIL)       -ForegroundColor Red
-Write-Host ("  ERROR             : {0}" -f $counts.ERROR)      -ForegroundColor DarkYellow
-Write-Host ("  INFO / N/A        : {0}" -f $counts.INFO)       -ForegroundColor Blue
-Write-Host ("  MANUAL            : {0}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
-Write-Host ("  SUPPRESSED        : {0}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  `u{23F1} {2}" -f $finalResults.Count, $subIds.Count, $elapsedStr) -ForegroundColor White
+Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+Write-Host ("  `u{2705} PASS {0,4}  `u{274C} FAIL {1,4}  `u{26A0}`u{FE0F} ERROR {2,4}  `u{2139}`u{FE0F} INFO {3,4}  `u{1F4CB} MANUAL {4,4}  `u{1F507} SUPPRESSED {5,4}" -f $counts.PASS, $counts.FAIL, $counts.ERROR, $counts.INFO, $counts.MANUAL, $counts.SUPPRESSED)
+Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
 Write-Host ""
 
 # ── Generate HTML report ──────────────────────────────────────────────────────

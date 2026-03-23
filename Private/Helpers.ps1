@@ -29,6 +29,25 @@ function Write-AuditProgress {
 
 # ── Port helpers ─────────────────────────────────────────────────────────────
 
+function Remove-DuplicateResults {
+    <#
+    .SYNOPSIS
+    Remove identical duplicate results while preserving order.
+    Duplicates can arise from Azure Resource Graph pagination quirks.
+    #>
+    param([object[]]$Results)
+    $seen = @{}
+    $out  = [System.Collections.Generic.List[object]]::new()
+    foreach ($r in $Results) {
+        $key = "{0}|{1}|{2}|{3}|{4}" -f $r.ControlId, $r.SubscriptionId, $r.Resource, $r.Status, $r.Details
+        if (-not $seen.ContainsKey($key)) {
+            $seen[$key] = $true
+            $out.Add($r)
+        }
+    }
+    return $out.ToArray()
+}
+
 function Test-PortInRange {
     <#
     .SYNOPSIS
