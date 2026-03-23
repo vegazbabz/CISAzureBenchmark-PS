@@ -349,7 +349,6 @@ Write-AuditLog "Auditing $($subIds.Count) subscription(s): $($subIds -join ', ')
 # ── Permission preflight ─────────────────────────────────────────────────────
 
 if (-not $NoPermissionCheck) {
-    $pfCount = $subIds.Count
     Write-Host "`u{1F510} Checking permissions…" -ForegroundColor DarkGray
     $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames
 
