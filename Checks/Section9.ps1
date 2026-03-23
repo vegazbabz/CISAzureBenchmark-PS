@@ -201,7 +201,7 @@ function Invoke-Section9Checks {
                 $r = Invoke-AzCli -Arguments @(
                     "storage", "account", "blob-service-properties", "show",
                     "--account-name", $acctName, "--resource-group", $acctRg
-                ) -TimeoutSec $script:TIMEOUTS.storage_svc
+                ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.storage_svc
 
                 if (-not $r.Success) {
                     if (Test-NotApplicableError $r.Error) {
