@@ -463,6 +463,7 @@ if ($subIdsToAudit.Count -gt 0) {
     }
     Write-AuditLog "Prefetch complete. $($prefetchData.Count) resource type(s) cached." -Level INFO
 }
+Write-Host ""
 
 # ── Tenant-level checks ───────────────────────────────────────────────────────
 
