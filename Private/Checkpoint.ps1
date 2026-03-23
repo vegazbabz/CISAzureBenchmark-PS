@@ -21,7 +21,7 @@ function Save-TenantCheckpoint {
     $data = [ordered]@{
         tool_version      = $script:CIS_VERSION
         benchmark_version = $script:BENCHMARK_VER
-        timestamp         = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+        timestamp         = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         status            = "completed"
         results           = @($Results | ForEach-Object {
             [ordered]@{
@@ -109,7 +109,7 @@ function Save-AuditCheckpoint {
     $data = [ordered]@{
         tool_version      = $script:CIS_VERSION
         benchmark_version = $script:BENCHMARK_VER
-        timestamp         = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+        timestamp         = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         subscription_id   = $SubscriptionId
         subscription_name = $SubscriptionName
         status            = $Status

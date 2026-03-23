@@ -222,7 +222,13 @@ function New-CISHtmlReport {
     # ── Trend chart ───────────────────────────────────────────────────────────
     $trendBlock = ''
     if (@($History).Count -ge 2) {
-        $fh = @($History | Where-Object { $_.score -gt 0 }) | Select-Object -Last 30
+        # Filter out 0% entries and deduplicate same-day same-score pairs
+        $seen = @{}
+        $fh = @($History | Where-Object { $_.score -gt 0 } | Where-Object {
+            $day = if ($_.timestamp) { ([string]$_.timestamp) -replace 'T.*','' } else { '' }
+            $key = "$day|$($_.score)"
+            if (-not $seen.ContainsKey($key)) { $seen[$key] = $true; $true } else { $false }
+        }) | Select-Object -Last 30
         if ($fh.Count -ge 2) {
             $trendJson = ($fh | ForEach-Object {
                 $ts2 = if ($_.timestamp) { [string]$_.timestamp -replace 'T.*','' } else { '' }
@@ -280,7 +286,7 @@ function New-CISHtmlReport {
     $jsL1Json     = [PSCustomObject]@{ pass=$l1.PASS; fail=$l1.FAIL; error=$l1.ERROR } | ConvertTo-Json -Compress
     $jsL2Json     = [PSCustomObject]@{ pass=$l2.PASS; fail=$l2.FAIL; error=$l2.ERROR } | ConvertTo-Json -Compress
 
-    $ts = Get-Date -Format "yyyy-MM-dd HH:mm UTC"
+    $ts = [DateTime]::UtcNow.ToString("yyyy-MM-dd HH:mm") + " UTC"
 
     # ── Assemble HTML ─────────────────────────────────────────────────────────
     $html = @"
@@ -336,11 +342,13 @@ header p  { opacity: .8; font-size: .9rem; }
 
 .wrap  { overflow-x: auto; padding: 0 2rem 2rem; }
 table  { width: 100%; border-collapse: collapse; font-size: .84rem;
+         table-layout: fixed;
          background: #fff; border-radius: 10px; overflow: hidden;
          box-shadow: 0 1px 4px rgba(0,0,0,.08); }
 thead  { background: #1e3a5f; color: #fff; }
 th, td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
-th     { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+td     { overflow-wrap: break-word; word-wrap: break-word; }
+th     { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 
 tr.sh td { background: #f1f5f9; font-size: .8rem; color: #475569;
            border-top: 2px solid #cbd5e1; padding: .5rem .8rem; }
@@ -511,6 +519,7 @@ $subTable
 </div>
 
 <div class="wrap"><table>
+<colgroup><col style="width:6%"><col style="width:7%"><col style="width:25%"><col style="width:17%"><col style="width:8%"><col style="width:37%"></colgroup>
 <thead><tr>
   <th>Control</th><th>Level</th><th>Title</th><th>Subscription / Resource</th><th>Status</th><th>Details</th>
 </tr></thead>

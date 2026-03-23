@@ -1,4 +1,5 @@
-# Audit output
+# Audit output (contains tenant/subscription data)
+reports/
 cis_audit_report.html
 cis_audit_*.html
 cis_audit.csv
@@ -15,9 +16,14 @@ cis_run_history.json
 *.ps1xml
 smoketest.ps1
 
-# VS Code
-.vscode/
+# Local notes / AI session files
+.claude/
+Claude improvements.txt
+GitHub Copilot improvements.txt
 
-# Windows
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
 Thumbs.db
 Desktop.ini

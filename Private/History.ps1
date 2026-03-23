@@ -44,7 +44,7 @@ function Add-AuditHistoryEntry {
     $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
     $entry = [PSCustomObject]@{
-        timestamp     = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+        timestamp     = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         version       = $script:CIS_VERSION
         score         = $score
         pass          = $counts.PASS
