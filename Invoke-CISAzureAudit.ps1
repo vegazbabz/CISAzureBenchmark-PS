@@ -346,6 +346,7 @@ foreach ($s in $subObjects) {
 Write-Host ""
 
 Write-AuditLog "Auditing $($subIds.Count) subscription(s): $($subIds -join ', ')" -Level INFO
+Write-Host ""
 
 # ── Permission preflight ─────────────────────────────────────────────────────
 
