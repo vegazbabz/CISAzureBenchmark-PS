@@ -2316,6 +2316,110 @@ Describe "Invoke-Section8Checks — 8.5 DDoS Protection" {
 # SECTION 9 — STORAGE (additional coverage)
 # =============================================================================
 
+Describe "Invoke-Section9Checks — 9.3.1.1 Key Rotation Reminder" {
+    It "returns PASS when keyExpirationPeriodInDays is set" {
+        $acct = [PSCustomObject]@{
+            id = "/x"; name = "sa-keyrem"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            sku = "Standard_GRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($acct)
+        $keyData = [PSCustomObject]@{
+            keyCreationTime = [PSCustomObject]@{
+                key1 = (Get-Date).AddDays(-30).ToString("o")
+                key2 = (Get-Date).AddDays(-30).ToString("o")
+            }
+            keyExpirationPeriodInDays = 90
+        }
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "9.3.1.1" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when keyExpirationPeriodInDays is null" {
+        $acct = [PSCustomObject]@{
+            id = "/x"; name = "sa-nokeyr"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            sku = "Standard_GRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($acct)
+        $keyData = [PSCustomObject]@{
+            keyCreationTime = [PSCustomObject]@{
+                key1 = (Get-Date).AddDays(-30).ToString("o")
+                key2 = (Get-Date).AddDays(-30).ToString("o")
+            }
+            keyExpirationPeriodInDays = $null
+        }
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "9.3.1.1" }).Status | Should -Be "FAIL"
+    }
+}
+
+Describe "Invoke-Section9Checks — 9.3.1.2 Key Rotation Within 90 Days" {
+    It "returns PASS when both keys are within 90 days" {
+        $acct = [PSCustomObject]@{
+            id = "/x"; name = "sa-keyrot"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            sku = "Standard_GRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($acct)
+        $keyData = [PSCustomObject]@{
+            keyCreationTime = [PSCustomObject]@{
+                key1 = (Get-Date).AddDays(-30).ToString("o")
+                key2 = (Get-Date).AddDays(-10).ToString("o")
+            }
+            keyExpirationPeriodInDays = 90
+        }
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "9.3.1.2" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when a key is older than 90 days" {
+        $acct = [PSCustomObject]@{
+            id = "/x"; name = "sa-keyold"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            sku = "Standard_GRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($acct)
+        $keyData = [PSCustomObject]@{
+            keyCreationTime = [PSCustomObject]@{
+                key1 = (Get-Date).AddDays(-120).ToString("o")
+                key2 = (Get-Date).AddDays(-30).ToString("o")
+            }
+            keyExpirationPeriodInDays = 90
+        }
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "9.3.1.2" }).Status | Should -Be "FAIL"
+    }
+}
+
 Describe "Invoke-Section9Checks — 9.3.1.3 Shared Key Access" {
     It "returns PASS when keyAccess is false" {
         $acct = [PSCustomObject]@{

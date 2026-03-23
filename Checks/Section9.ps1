@@ -44,6 +44,7 @@ function Invoke-Section9Checks {
             ,@("9.3.2.2","Ensure That Storage Account Public Network Access Is Disabled",1)
             ,@("9.3.2.3","Ensure That Storage Account Default Network Rule Is Set to 'Deny'",1)
             ,@("9.3.5","Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",2)
+            ,@("9.3.1.1","Ensure Storage Account Key Rotation Reminders Are Enabled",1)
             ,@("9.3.1.2","Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days",1)
             ,@("9.3.6","Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",1)
             ,@("9.3.2.1","Ensure That 'Private Endpoints' Are Used for Storage Accounts",2)
@@ -390,39 +391,58 @@ function Invoke-Section9Checks {
 
         # ── Group 4: Key rotation ─────────────────────────────────────────────
 
-        # 9.3.6 — Key rotation < 90 days
+        # 9.3.1.1 — Key rotation reminder + 9.3.1.2 — Key rotation < 90 days
         try {
             $r = Invoke-AzCli -Arguments @(
                 "storage", "account", "show", "--name", $acctName, "--resource-group", $acctRg,
-                "--query", "keyCreationTime"
+                "--query", "{keyCreationTime:keyCreationTime,keyExpirationPeriodInDays:keyPolicy.keyExpirationPeriodInDays}"
             ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.default
 
             if ($r.Success -and $r.Data) {
-                $keyTimes = $r.Data
-                $now      = [datetime]::UtcNow
-                $oldKeys  = [System.Collections.Generic.List[string]]::new()
+                $acctData = $r.Data
 
-                foreach ($prop in @("key1","key2")) {
-                    $keyTime = $keyTimes.$prop
-                    if ($keyTime) {
-                        $created = [datetime]$keyTime
-                        $days    = ($now - $created).TotalDays
-                        if ($days -gt 90) { $oldKeys.Add("$prop ($([int]$days) days old)") }
-                    }
-                }
-
-                $pass = $oldKeys.Count -eq 0
+                # 9.3.1.1 — Key expiration / rotation reminder
+                $reminderDays = $acctData.keyExpirationPeriodInDays
                 $results.Add((New-CISResult `
-                    -ControlId "9.3.1.2" -Title "Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days" `
+                    -ControlId "9.3.1.1" -Title "Ensure Storage Account Key Rotation Reminders Are Enabled" `
                     -Level 1 -Section $sec `
-                    -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                    -Details $(if ($pass) { "Both access keys rotated within 90 days." } else { "Key(s) not rotated in 90 days: $($oldKeys -join '; ')" }) `
-                    -Remediation $(if (-not $pass) { "Storage account > $acctName > Security > Access keys > Rotate key" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+                    -Status $(if ($reminderDays) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Account '$acctName': keyExpirationPeriodInDays = $reminderDays" `
+                    -Remediation $(if (-not $reminderDays) { "Storage Account > Access keys > Set rotation reminder" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $(if (-not $reminderDays) { $acctName } else { "" })))
+
+                # 9.3.1.2 — Key rotation within 90 days
+                $keyTimes = $acctData.keyCreationTime
+                if ($keyTimes) {
+                    $now      = [datetime]::UtcNow
+                    $oldKeys  = [System.Collections.Generic.List[string]]::new()
+
+                    foreach ($prop in @("key1","key2")) {
+                        $keyTime = $keyTimes.$prop
+                        if ($keyTime) {
+                            $created = [datetime]$keyTime
+                            $days    = ($now - $created).TotalDays
+                            if ($days -gt 90) { $oldKeys.Add("$prop ($([int]$days) days old)") }
+                        }
+                    }
+
+                    $pass = $oldKeys.Count -eq 0
+                    $results.Add((New-CISResult `
+                        -ControlId "9.3.1.2" -Title "Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days" `
+                        -Level 1 -Section $sec `
+                        -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
+                        -Details $(if ($pass) { "Both access keys rotated within 90 days." } else { "Key(s) not rotated in 90 days: $($oldKeys -join '; ')" }) `
+                        -Remediation $(if (-not $pass) { "Storage account > $acctName > Security > Access keys > Rotate key" } else { "" }) `
+                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+                } else {
+                    $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
+                }
             } else {
+                $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec ($r.Error ?? "Could not retrieve storage account details.") $sid $sname $acctName))
                 $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec ($r.Error ?? "Could not retrieve key creation times.") $sid $sname $acctName))
             }
         } catch {
+            $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec $_.Exception.Message $sid $sname $acctName))
             $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec $_.Exception.Message $sid $sname $acctName))
         }
     }
