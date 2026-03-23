@@ -10,7 +10,7 @@ function Invoke-Section6Checks {
     )
 
     $results = [System.Collections.Generic.List[object]]::new()
-    $sec     = "6 - Management and Governance"
+    $sec     = "6 - Management & Governance"
     $sid     = $SubscriptionId
     $sname   = $SubscriptionName
 
