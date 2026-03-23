@@ -374,6 +374,21 @@ if (-not $NoPermissionCheck) {
 $checkpoints = @{}
 if ($Resume -and -not $NoCheckpoint) {
     $checkpoints = Get-AuditCheckpoints
+    # Filter to only checkpoints matching current audit scope
+    $outOfScope = @($checkpoints.Keys | Where-Object { $subIds -notcontains $_ })
+    foreach ($sk in $outOfScope) { $checkpoints.Remove($sk) }
+    # Warn about stale checkpoints (> 24 hours old)
+    foreach ($cpSid in @($checkpoints.Keys)) {
+        $cpTs = $checkpoints[$cpSid].Timestamp
+        if ($cpTs) {
+            try {
+                $age = (Get-Date) - [datetime]$cpTs
+                if ($age.TotalHours -gt 24) {
+                    Write-AuditLog "Checkpoint for $cpSid is $([int]$age.TotalHours)h old — consider a fresh run." -Level WARNING
+                }
+            } catch { <# timestamp parse failure, ignore #> }
+        }
+    }
     $resumedCount = $checkpoints.Count
     if ($resumedCount -gt 0) {
         Write-AuditLog "Resuming from $resumedCount checkpoint(s)." -Level INFO

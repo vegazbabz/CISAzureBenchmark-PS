@@ -4,10 +4,20 @@
 # Detect az executable (az.cmd on Windows, az on Linux/macOS)
 $script:AZ_CMD = if ($IsWindows -or ($env:OS -eq 'Windows_NT')) { "az.cmd" } else { "az" }
 
+function Test-TransientError {
+    <#
+    .SYNOPSIS
+    Return $true if an error message indicates a transient/retriable failure.
+    #>
+    param([string]$Message)
+    return ($Message -imatch 'TooManyRequests|\(429\)|rate limit|throttl|\(500\)|\(502\)|\(503\)|InternalServerError|BadGateway|ServiceUnavailable|ECONNRESET|connection was reset|temporarily unavailable')
+}
+
 function Invoke-AzCli {
     <#
     .SYNOPSIS
     Run an az CLI command and return a result object.
+    Retries transient failures (429/500/502/503) with exponential backoff.
 
     .OUTPUTS
     PSCustomObject with: .Success [bool], .Data [object], .Error [string], .ExitCode [int]
@@ -17,7 +27,8 @@ function Invoke-AzCli {
     param(
         [Parameter(Mandatory)][string[]]$Arguments,
         [string]$SubscriptionId = "",
-        [int]$TimeoutSec = 60   # reserved; not enforced in synchronous mode
+        [int]$TimeoutSec = 60,   # reserved; not enforced in synchronous mode
+        [int]$MaxRetries = 3
     )
 
     $cmdArgs = [System.Collections.Generic.List[string]]::new()
@@ -36,39 +47,55 @@ function Invoke-AzCli {
         $cmdArgs.Add("json")
     }
 
-    try {
-        Write-AuditLog "  az $($cmdArgs -join ' ')" -Level VERBOSE
-
-        # & handles .cmd files correctly on Windows; 2>&1 merges stderr into output
-        $output    = & $script:AZ_CMD @($cmdArgs.ToArray()) 2>&1
-        $exitCode  = $LASTEXITCODE
-
-        # Split: strings are stdout, ErrorRecord objects are stderr lines
-        $stdoutLines = @($output | Where-Object { $_ -is [string] })
-        $stderrLines = @($output | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" })
-
-        if ($exitCode -ne 0) {
-            $errMsg = if ($stderrLines) { $stderrLines -join ' ' } else { $stdoutLines -join ' ' }
-            $errMsg = ($errMsg -replace '\r?\n', ' ').Trim()
-            Write-AuditLog "  az exit=$exitCode — $($errMsg.Substring(0, [math]::Min(120, $errMsg.Length)))" -Level VERBOSE
-            return [PSCustomObject]@{ Success = $false; Data = $null; Error = $errMsg; ExitCode = $exitCode }
-        }
-
-        $stdout = ($stdoutLines -join "`n").Trim()
-
-        if (-not $stdout) {
-            return [PSCustomObject]@{ Success = $true; Data = $null; Error = $null; ExitCode = 0 }
-        }
-
+    $attempt = 0
+    while ($true) {
+        $attempt++
         try {
-            $parsed = $stdout | ConvertFrom-Json -Depth 30
-            return [PSCustomObject]@{ Success = $true; Data = $parsed; Error = $null; ExitCode = 0 }
-        } catch {
-            return [PSCustomObject]@{ Success = $false; Data = $null; Error = "JSON parse error: $_"; ExitCode = 0 }
-        }
+            Write-AuditLog "  az $($cmdArgs -join ' ')" -Level VERBOSE
 
-    } catch {
-        return [PSCustomObject]@{ Success = $false; Data = $null; Error = $_.Exception.Message; ExitCode = -1 }
+            # & handles .cmd files correctly on Windows; 2>&1 merges stderr into output
+            $output    = & $script:AZ_CMD @($cmdArgs.ToArray()) 2>&1
+            $exitCode  = $LASTEXITCODE
+
+            # Split: strings are stdout, ErrorRecord objects are stderr lines
+            $stdoutLines = @($output | Where-Object { $_ -is [string] })
+            $stderrLines = @($output | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" })
+
+            if ($exitCode -ne 0) {
+                $errMsg = if ($stderrLines) { $stderrLines -join ' ' } else { $stdoutLines -join ' ' }
+                $errMsg = ($errMsg -replace '\r?\n', ' ').Trim()
+
+                # Retry on transient failures
+                if ($attempt -le $MaxRetries -and (Test-TransientError $errMsg)) {
+                    $baseDelay = [math]::Pow(2, $attempt)  # 2, 4, 8 seconds
+                    $jitter    = Get-Random -Minimum 0.0 -Maximum 1.0
+                    $delaySec  = $baseDelay + $jitter
+                    Write-AuditLog "  Transient error (attempt $attempt/$MaxRetries): $($errMsg.Substring(0, [math]::Min(80, $errMsg.Length)))… — retrying in $([math]::Round($delaySec, 1))s" -Level VERBOSE
+                    Start-Sleep -Milliseconds ([int]($delaySec * 1000))
+                    continue
+                }
+
+                Write-AuditLog "  az exit=$exitCode — $($errMsg.Substring(0, [math]::Min(120, $errMsg.Length)))" -Level VERBOSE
+                return [PSCustomObject]@{ Success = $false; Data = $null; Error = $errMsg; ExitCode = $exitCode }
+            }
+
+            $stdout = ($stdoutLines -join "`n").Trim()
+
+            if (-not $stdout) {
+                return [PSCustomObject]@{ Success = $true; Data = $null; Error = $null; ExitCode = 0 }
+            }
+
+            try {
+                $parsed = $stdout | ConvertFrom-Json -Depth 30
+                return [PSCustomObject]@{ Success = $true; Data = $parsed; Error = $null; ExitCode = 0 }
+            } catch {
+                return [PSCustomObject]@{ Success = $false; Data = $null; Error = "JSON parse error: $_"; ExitCode = 0 }
+            }
+
+        } catch {
+            # PowerShell exception (e.g. az.cmd not found) — not retriable
+            return [PSCustomObject]@{ Success = $false; Data = $null; Error = $_.Exception.Message; ExitCode = -1 }
+        }
     }
 }
 

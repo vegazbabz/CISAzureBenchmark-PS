@@ -107,8 +107,9 @@ function Invoke-Section6Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         } else {
             $logProfile = $r.Data | Select-Object -First 1
-            $days    = [int]($logProfile.retentionPolicy.days)
-            $enabled = [string]$logProfile.retentionPolicy.enabled -eq "True"
+            $retPol  = $logProfile.PSObject.Properties['retentionPolicy']?.Value
+            $days    = if ($retPol -and $retPol.days) { [int]$retPol.days } else { 0 }
+            $enabled = $retPol -and ([string]$retPol.enabled -eq "True")
             $pass    = -not $enabled -or $days -ge 365
 
             $results.Add((New-CISResult `

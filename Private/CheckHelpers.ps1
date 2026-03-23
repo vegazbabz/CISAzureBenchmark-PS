@@ -1,5 +1,20 @@
 # Helper functions used by all check implementations
 
+function New-GraphPermissionMessage {
+    <#
+    .SYNOPSIS
+    Standard error message for checks that require a Graph API application permission
+    the az CLI cannot acquire.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Permission,
+        [string]$ManualCheck
+    )
+    $msg = "Requires '$Permission' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with $Permission (application permission) > Grant admin consent > az login --service-principal."
+    if ($ManualCheck) { $msg += " Manual check: $ManualCheck" }
+    return $msg
+}
+
 function Get-PrefetchData {
     <#
     .SYNOPSIS

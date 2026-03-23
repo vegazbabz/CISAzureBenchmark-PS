@@ -11,7 +11,7 @@ function Invoke-Check5_1_1 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal. Manual check: Entra ID > Properties > Manage Security Defaults."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Properties > Manage Security Defaults.')
     }
 
     $enabled = [string]$r.Data.isEnabled -eq "True" -or [string]$r.Data.isEnabled -eq "true"
@@ -41,7 +41,7 @@ function Invoke-Check5_1_2 {
     $r   = Invoke-AzRestPaged -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'UserAuthenticationMethod.Read.All' (or 'Reports.Read.All') permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with the permission > Grant admin consent > az login --service-principal."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'UserAuthenticationMethod.Read.All (or Reports.Read.All)')
     }
 
     $users      = @($r.Data)
@@ -72,7 +72,7 @@ function Invoke-Check5_4 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
     }
 
     $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
@@ -92,7 +92,7 @@ function Invoke-Check5_14 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
     }
 
     $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
@@ -112,7 +112,7 @@ function Invoke-Check5_15 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
     }
 
     # GuestUserRoleId:
@@ -137,7 +137,7 @@ function Invoke-Check5_16 {
     $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Requires 'Policy.Read.All' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with Policy.Read.All (application permission) > Grant admin consent > az login --service-principal."
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
     }
 
     # allowInvitesFrom:

@@ -222,10 +222,13 @@ function Invoke-Section8Checks {
 
             # 8.3.1/8.3.2 — Key expiration set (RBAC vs access-policy vault)
             $ctrlKeyExp = if ($rbac) { "8.3.1" } else { "8.3.2" }
+            $cachedKeys = $null   # cache for reuse in 8.3.9
+            $cachedKeyResult = $null
             try {
                 $r = Invoke-AzCli -Arguments @(
                     "keyvault", "key", "list", "--vault-name", $kvName
                 ) -TimeoutSec $script:TIMEOUTS.default
+                $cachedKeyResult = $r
 
                 if (-not $r.Success) {
                     if (Test-AuthzError $r.Error) {
@@ -239,6 +242,7 @@ function Invoke-Section8Checks {
                     $results.Add((New-InfoResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "No keys found in vault." $sid $sname $kvName))
                 } else {
                     $keys = @($r.Data)
+                    $cachedKeys = $keys
                     $noExpiry = @($keys | Where-Object { -not $_.attributes.expires })
                     $pass = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
@@ -361,14 +365,16 @@ function Invoke-Section8Checks {
                 -Remediation $(if ($eps -eq 0) { "Key Vault > $kvName > Networking > Private endpoint connections > Add" } else { "" }) `
                 -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
 
-            # 8.3.9 — Automatic key rotation policy set
+            # 8.3.9 — Automatic key rotation policy set (reuse cached key list from 8.3.1/8.3.2)
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "keyvault", "key", "list", "--vault-name", $kvName
-                ) -TimeoutSec $script:TIMEOUTS.default
+                $r = if ($cachedKeyResult) { $cachedKeyResult } else {
+                    Invoke-AzCli -Arguments @(
+                        "keyvault", "key", "list", "--vault-name", $kvName
+                    ) -TimeoutSec $script:TIMEOUTS.default
+                }
 
                 if ($r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0) {
-                    $keys = @($r.Data)
+                    $keys = if ($cachedKeys) { $cachedKeys } else { @($r.Data) }
                     $noRotation = [System.Collections.Generic.List[string]]::new()
 
                     foreach ($key in $keys) {

@@ -446,11 +446,13 @@ function Invoke-Section9Checks {
             $subScope = "/subscriptions/$sid".ToLower()
 
             $covering = @()
+            $acctScope = $acctId.ToLower()
             foreach ($lk in $locks) {
                 $lkId = [string]$lk.id
-                if ($lkId -imatch [regex]::Escape($acctName) -or
-                    $lkId.ToLower().StartsWith($rgScope + "/providers/microsoft.authorization/locks/") -or
-                    $lkId.ToLower().StartsWith($subScope + "/providers/microsoft.authorization/locks/")) {
+                $lkIdLower = $lkId.ToLower()
+                if ($lkIdLower.StartsWith($acctScope + "/providers/microsoft.authorization/locks/") -or
+                    $lkIdLower.StartsWith($rgScope + "/providers/microsoft.authorization/locks/") -or
+                    $lkIdLower.StartsWith($subScope + "/providers/microsoft.authorization/locks/")) {
                     $covering += [string]$lk.level
                 }
             }
