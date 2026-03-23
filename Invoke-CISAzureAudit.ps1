@@ -391,7 +391,11 @@ if ($Resume -and -not $NoCheckpoint) {
     }
     $resumedCount = $checkpoints.Count
     if ($resumedCount -gt 0) {
-        Write-AuditLog "Resuming from $resumedCount checkpoint(s)." -Level INFO
+        Write-AuditLog "`u{1F4BE} $resumedCount subscription(s) were already audited in a previous run — loading saved results." -Level INFO
+        $skippedNames = @($checkpoints.Keys | ForEach-Object { $subNames[$_] }) | Where-Object { $_ }
+        if ($skippedNames.Count -gt 0) {
+            Write-AuditLog "`u{23ED}`u{FE0F}  Skipping (already audited): $($skippedNames -join ', ')" -Level INFO
+        }
     }
 }
 
@@ -405,6 +409,11 @@ Write-AuditLog "Prefetching resource data via Azure Resource Graph..." -Level IN
 $subIdsToAudit = @($subIds | Where-Object { -not $checkpoints.ContainsKey($_) })
 
 $prefetchData = @{}   # key -> { sub_id_lower -> [records] }
+
+# ── All subscriptions already audited ─────────────────────────────────────────
+if ($subIdsToAudit.Count -eq 0 -and $checkpoints.Count -gt 0) {
+    Write-AuditLog "`u{2705} All subscriptions were already audited — nothing new to scan. Use -Resume:`$false to re-audit from scratch." -Level INFO
+}
 
 if ($subIdsToAudit.Count -gt 0) {
     $queryNames = @($script:GRAPH_QUERIES.Keys)
@@ -444,13 +453,20 @@ if ($subIdsToAudit.Count -gt 0) {
 $allResults = [System.Collections.Generic.List[object]]::new()
 
 if (-not $SkipTenantChecks) {
-    Write-AuditLog "Running tenant-level checks (Section 5)..." -Level INFO
-    try {
-        $tenantResults = @(Invoke-Section5TenantChecks)
-        foreach ($r in $tenantResults) { $allResults.Add($r) }
-        Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
-    } catch {
-        Write-AuditLog "Tenant-level check error: $_" -Level WARNING
+    $tenantCheckpoint = Get-TenantCheckpoint
+    if ($tenantCheckpoint -and $subIdsToAudit.Count -eq 0) {
+        Write-AuditLog "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCheckpoint.Count) results)." -Level INFO
+        foreach ($r in $tenantCheckpoint) { $allResults.Add($r) }
+    } else {
+        Write-AuditLog "Running tenant-level checks (Section 5)..." -Level INFO
+        try {
+            $tenantResults = @(Invoke-Section5TenantChecks)
+            foreach ($r in $tenantResults) { $allResults.Add($r) }
+            if (-not $NoCheckpoint) { Save-TenantCheckpoint -Results $tenantResults }
+            Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
+        } catch {
+            Write-AuditLog "Tenant-level check error: $_" -Level WARNING
+        }
     }
 }
 
@@ -498,7 +514,7 @@ function Invoke-SubscriptionAudit {
 foreach ($subId in $subIds) {
     if ($checkpoints.ContainsKey($subId)) {
         $cp = $checkpoints[$subId]
-        Write-AuditLog "Using checkpoint for: $($cp.SubscriptionName) ($subId) [$($cp.Timestamp)]" -Level INFO
+        Write-AuditLog "   Using checkpoint for: $($cp.SubscriptionName) ($subId) [$($cp.Timestamp)]" -Level DEBUG
         foreach ($r in @($cp.Results)) { $allResults.Add($r) }
     }
 }
