@@ -23,8 +23,9 @@
 .PARAMETER NoCheckpoint
     Disable checkpoint save/resume.
 
-.PARAMETER Resume
-    Resume from saved checkpoints (skip already-audited subscriptions).
+.PARAMETER Fresh
+    Clear all existing checkpoints and start a full re-audit.
+    Without this flag, the tool auto-resumes from saved checkpoints.
 
 .PARAMETER SkipTenantChecks
     Skip tenant-level checks (Section 5: 5.1.1, 5.1.2, etc.).
@@ -55,7 +56,7 @@
     .\Invoke-CISAzureAudit.ps1 -Subscriptions "sub-id-1","sub-id-2" -Output report.html -Parallel 5
 
 .EXAMPLE
-    .\Invoke-CISAzureAudit.ps1 -Resume
+    .\Invoke-CISAzureAudit.ps1 -Fresh
 #>
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -64,7 +65,7 @@ param(
     [string]  $Output             = "",
     [int]     $Parallel           = 3,
     [switch]  $NoCheckpoint,
-    [switch]  $Resume,
+    [switch]  $Fresh,
     [switch]  $SkipTenantChecks,
     [switch]  $NoPermissionCheck,
     [ValidateSet("1","2","both")]
@@ -369,10 +370,15 @@ if (-not $NoPermissionCheck) {
     Write-Host ""
 }
 
-# ── Load checkpoints if resuming ──────────────────────────────────────────────
+# ── Load checkpoints (auto-resume unless -Fresh or -NoCheckpoint) ─────────────
+
+if ($Fresh -and -not $NoCheckpoint) {
+    Remove-AuditCheckpoints
+    Write-AuditLog "Cleared all checkpoints (-Fresh)." -Level INFO
+}
 
 $checkpoints = @{}
-if ($Resume -and -not $NoCheckpoint) {
+if (-not $Fresh -and -not $NoCheckpoint) {
     $checkpoints = Get-AuditCheckpoints
     # Filter to only checkpoints matching current audit scope
     $outOfScope = @($checkpoints.Keys | Where-Object { $subIds -notcontains $_ })
@@ -412,7 +418,7 @@ $prefetchData = @{}   # key -> { sub_id_lower -> [records] }
 
 # ── All subscriptions already audited ─────────────────────────────────────────
 if ($subIdsToAudit.Count -eq 0 -and $checkpoints.Count -gt 0) {
-    Write-AuditLog "`u{2705} All subscriptions were already audited — nothing new to scan. Use -Resume:`$false to re-audit from scratch." -Level INFO
+    Write-AuditLog "`u{2705} All subscriptions were already audited — nothing new to scan. Use -Fresh to re-audit from scratch." -Level INFO
 }
 
 if ($subIdsToAudit.Count -gt 0) {
