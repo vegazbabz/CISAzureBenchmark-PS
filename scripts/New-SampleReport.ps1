@@ -28,9 +28,6 @@ $subs = @(
 $storageAccounts = @("stproddata01", "stprodlogs02", "ststagapp01", "stdevdata01", "stdevbackup01")
 $keyVaults       = @("kv-prod-keys", "kv-prod-secrets", "kv-stag-app", "kv-dev-test")
 $nsgs            = @("nsg-web-tier", "nsg-app-tier", "nsg-db-tier", "nsg-mgmt")
-$subnets         = @("snet-web", "snet-app", "snet-db", "snet-mgmt", "snet-gateway")
-$appGateways     = @("agw-prod-web", "agw-stag-web")
-$databricks      = @("dbw-analytics-prod", "dbw-ml-staging")
 
 # ── All 72 check definitions ─────────────────────────────────────────────────
 $checks = @(
@@ -160,7 +157,6 @@ $remediations = @{
 $rng = [System.Random]::new(42)
 
 function Get-SyntheticStatus {
-    param([int]$Level)
     # Weight toward PASS for a realistic-looking report (~65% pass, ~20% fail, ~8% error, ~5% info, ~2% manual)
     $roll = $rng.Next(100)
     if ($roll -lt 65)  { return "PASS" }
@@ -178,7 +174,7 @@ foreach ($chk in $checks) {
 
     # Tenant-level checks: one result only
     if ($chk.ContainsKey('Tenant') -and $chk.Tenant) {
-        $status = Get-SyntheticStatus -Level $chk.Level
+        $status = Get-SyntheticStatus
         $detail = switch ($status) {
             "PASS"   { "Compliant. Setting is correctly configured." }
             "FAIL"   { "Non-compliant. Setting needs to be updated." }
@@ -197,7 +193,7 @@ foreach ($chk in $checks) {
         # Resource-level checks: produce per-resource results
         if ($chk.ContainsKey('Multi') -and $chk.Multi) {
             foreach ($nsg in $nsgs) {
-                $status = Get-SyntheticStatus -Level $chk.Level
+                $status = Get-SyntheticStatus
                 $detail = switch ($status) {
                     "PASS"   { "NSG '$nsg': No internet-exposed rules found." }
                     "FAIL"   { "NSG '$nsg': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port." }
@@ -213,7 +209,7 @@ foreach ($chk in $checks) {
         }
         if ($chk.ContainsKey('Storage') -and $chk.Storage) {
             foreach ($sa in $storageAccounts) {
-                $status = Get-SyntheticStatus -Level $chk.Level
+                $status = Get-SyntheticStatus
                 $detail = switch ($status) {
                     "PASS"   { "Account '$sa': Compliant." }
                     "FAIL"   { "Account '$sa': Non-compliant. Setting needs to be enabled." }
@@ -230,7 +226,7 @@ foreach ($chk in $checks) {
         }
         if ($chk.ContainsKey('KV') -and $chk.KV) {
             foreach ($kv in $keyVaults) {
-                $status = Get-SyntheticStatus -Level $chk.Level
+                $status = Get-SyntheticStatus
                 $detail = switch ($status) {
                     "PASS"   { "Vault '$kv': Compliant." }
                     "FAIL"   { "Vault '$kv': Non-compliant. Setting needs to be enabled." }
@@ -246,7 +242,7 @@ foreach ($chk in $checks) {
         }
 
         # Standard per-subscription check: one result per sub
-        $status = Get-SyntheticStatus -Level $chk.Level
+        $status = Get-SyntheticStatus
         $detail = switch ($status) {
             "PASS"   { "Compliant." }
             "FAIL"   { "Non-compliant. Configuration update required." }
