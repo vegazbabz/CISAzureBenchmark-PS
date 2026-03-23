@@ -251,9 +251,17 @@ function Invoke-Section5TenantChecks {
         try {
             $r = & $check.Fn
             $results.Add($r)
-            Write-AuditLog "    [$($r.Status.PadRight(8))] $($check.Id.PadRight(8)) $($check.Title)" -Level INFO
+            $icon = switch ($r.Status) {
+                'PASS'   { "`u{2705}" }  # ✅
+                'FAIL'   { "`u{274C}" }  # ❌
+                'ERROR'  { "`u{26A0}`u{FE0F}" }  # ⚠️
+                'INFO'   { "`u{2139}`u{FE0F}" }  # ℹ️
+                'MANUAL' { "`u{1F4CB}" }  # 📋
+                default  { "?" }
+            }
+            Write-AuditLog "    $($check.Id.PadRight(10)) $icon  $($r.Status)" -Level INFO
         } catch {
-            Write-AuditLog "    [ERROR   ] $($check.Id.PadRight(8)) $($check.Title) — $_" -Level WARNING
+            Write-AuditLog "    $($check.Id.PadRight(10)) `u{26A0}`u{FE0F}  ERROR" -Level WARNING
         }
     }
     return $results.ToArray()
