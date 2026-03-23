@@ -7,6 +7,8 @@
 
 > **[📊 View sample report](https://htmlpreview.github.io/?https://raw.githubusercontent.com/vegazbabz/CISAzureBenchmark-PS/main/docs/sample_report.html)** — synthetic data, no real tenant information.
 
+![Sample report dashboard](docs/sample_report_dashboard.png)
+
 **Version:** 1.0.1
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
 **Coverage:** 82 automated controls across 6 sections · 1 manual control noted in output
