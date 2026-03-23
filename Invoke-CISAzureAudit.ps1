@@ -239,7 +239,12 @@ if ($ReportOnly) {
     Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
     Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
     Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-    Write-Host ("  `u{2705} PASS {0,4}  `u{274C} FAIL {1,4}  `u{26A0}`u{FE0F} ERROR {2,4}  `u{2139}`u{FE0F} INFO {3,4}  `u{1F4CB} MANUAL {4,4}  `u{1F507} SUPPRESSED {5,4}" -f $counts.PASS, $counts.FAIL, $counts.ERROR, $counts.INFO, $counts.MANUAL, $counts.SUPPRESSED)
+    Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
+    Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
+    Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
+    Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
+    Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
+    Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
     Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
     Write-Host ""
 
@@ -649,7 +654,12 @@ Write-Host ""
 Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
 Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  `u{23F1} {2}" -f $finalResults.Count, $subIds.Count, $elapsedStr) -ForegroundColor White
 Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-Write-Host ("  `u{2705} PASS {0,4}  `u{274C} FAIL {1,4}  `u{26A0}`u{FE0F} ERROR {2,4}  `u{2139}`u{FE0F} INFO {3,4}  `u{1F4CB} MANUAL {4,4}  `u{1F507} SUPPRESSED {5,4}" -f $counts.PASS, $counts.FAIL, $counts.ERROR, $counts.INFO, $counts.MANUAL, $counts.SUPPRESSED)
+Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
+Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
+Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
+Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
+Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
+Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
 Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
 Write-Host ""
 
