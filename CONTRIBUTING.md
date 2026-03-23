@@ -6,20 +6,24 @@ Thank you for considering a contribution! This document covers the basics.
 
 1. **Fork** the repository and clone your fork.
 2. Create a feature branch from `main`:
+
    ```powershell
    git checkout -b feature/my-change
    ```
+
 3. Make your changes.
 4. Run the test suite:
+
    ```powershell
    .\Tests\Run-Tests.ps1
    ```
+
 5. Push your branch and open a **Pull Request** against `main`.
 
 ## Development requirements
 
 | Tool | Version |
-|---|---|
+| --- | --- |
 | PowerShell | 7.0+ |
 | Pester | 5.0+ |
 | PSScriptAnalyzer | latest (optional, CI runs it) |
@@ -34,7 +38,7 @@ Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 ## Project layout
 
 | Path | Purpose |
-|---|---|
+| --- | --- |
 | `Invoke-CISAzureAudit.ps1` | Main entry point |
 | `Private/` | Internal helper functions |
 | `Checks/` | CIS check implementations (one file per section) |
