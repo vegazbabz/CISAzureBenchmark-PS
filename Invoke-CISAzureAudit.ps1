@@ -156,29 +156,27 @@ $script:LOG_FILE     = if ($LogFile) { $LogFile } else { $null }
 # ── Banner ────────────────────────────────────────────────────────────────────
 
 Write-Host ""
-Write-Host "  CIS Azure Benchmark Audit — PowerShell Edition" -ForegroundColor Cyan
-Write-Host "  Benchmark: CIS Microsoft Azure Foundations Benchmark v$($script:BENCHMARK_VER)" -ForegroundColor DarkCyan
-Write-Host "  Tool:      v$($script:CIS_VERSION)" -ForegroundColor DarkCyan
+Write-Host "`u{1F512} CIS Azure Foundations Benchmark v$($script:BENCHMARK_VER) — Audit Tool v$($script:CIS_VERSION)" -ForegroundColor Cyan
 Write-Host ""
 
 # ── Verify az CLI is available ────────────────────────────────────────────────
 
 $azVerResult = Invoke-AzCli -Arguments @('version') -TimeoutSec 30
 if (-not $azVerResult.Success) {
-    Write-Host "  ERROR: Azure CLI not found or not working." -ForegroundColor Red
+    Write-Host "`u{274C} Azure CLI not found or not working." -ForegroundColor Red
     if ($azVerResult.Error) { Write-Host "  Details: $($azVerResult.Error)" -ForegroundColor Red }
     Write-Host "  Install from: https://docs.microsoft.com/cli/azure/install-azure-cli" -ForegroundColor Red
     exit 1
 }
 $azCliVersion = if ($azVerResult.Data -and $azVerResult.Data.'azure-cli') { [string]$azVerResult.Data.'azure-cli' } else { '?' }
-Write-Host "  Azure CLI:        v$azCliVersion" -ForegroundColor DarkGray
+Write-Host "`u{2705} Azure CLI v$azCliVersion" -ForegroundColor Green
 
 # ── Verify authentication and display identity ────────────────────────────────
 
 $accountCtx = Invoke-AzCli -Arguments @("account", "show") -TimeoutSec 30
 if (-not $accountCtx.Success) {
     Write-Host ""
-    Write-Host "  ERROR: Not logged in to Azure CLI. Run 'az login' first." -ForegroundColor Red
+    Write-Host "`u{274C} Not logged in to Azure CLI. Run 'az login' first." -ForegroundColor Red
     exit 1
 }
 $callerName = [string]$accountCtx.Data.user.name
@@ -189,8 +187,7 @@ $typeLabel  = switch ($callerType) {
     'user'             { 'User'              }
     default            { $callerType          }
 }
-Write-Host "  Authenticated as: $callerName  ($typeLabel)" -ForegroundColor Green
-Write-Host "  Tenant ID:        $tenantId" -ForegroundColor DarkGray
+Write-Host "`u{2705} Authenticated as: $callerName ($typeLabel)  |  Tenant: $tenantId" -ForegroundColor Green
 
 # ── ReportOnly: regenerate report from checkpoints and exit ───────────────────
 
@@ -271,16 +268,16 @@ if ($ReportOnly) {
 
 $rgCheck = Invoke-AzCli -Arguments @("extension", "list", "--query", "[?name=='resource-graph'].name") -TimeoutSec 30
 if ($rgCheck.Success -and @($rgCheck.Data | Where-Object { $_ }).Count -gt 0) {
-    Write-Host "  resource-graph:   ready" -ForegroundColor DarkGray
+    Write-Host "`u{2705} resource-graph extension ready" -ForegroundColor Green
 } else {
-    Write-Host "  resource-graph:   installing extension..." -ForegroundColor DarkYellow
+    Write-Host "`u{1F4E6} Installing resource-graph extension..." -ForegroundColor DarkYellow
     $rgInstall = Invoke-AzCli -Arguments @("extension", "add", "--name", "resource-graph") -TimeoutSec 120
     if (-not $rgInstall.Success) {
-        Write-Host "  ERROR: Could not install resource-graph extension." -ForegroundColor Red
+        Write-Host "`u{274C} Could not install resource-graph extension." -ForegroundColor Red
         Write-Host "  Run manually: az extension add --name resource-graph" -ForegroundColor Red
         exit 1
     }
-    Write-Host "  resource-graph:   installed" -ForegroundColor Green
+    Write-Host "`u{2705} resource-graph extension installed" -ForegroundColor Green
 }
 Write-Host ""
 
@@ -331,9 +328,10 @@ $subIds   = @($subObjects | ForEach-Object { $_.id })
 $subNames = @{}
 foreach ($s in $subObjects) { $subNames[$s.id] = $s.name }
 
-Write-Host ("  Subscriptions ({0}):" -f $subObjects.Count) -ForegroundColor White
+Write-Host ""
+Write-Host ("`u{1F4CB} Subscriptions ({0}):" -f $subObjects.Count) -ForegroundColor White
 foreach ($s in $subObjects) {
-    Write-Host ("    • {0}  ({1})" -f ([string]$s.name), ([string]$s.id)) -ForegroundColor DarkGray
+    Write-Host ("   `u{2022} {0}  ({1})" -f ([string]$s.name), ([string]$s.id)) -ForegroundColor DarkGray
 }
 Write-Host ""
 
@@ -343,29 +341,31 @@ Write-AuditLog "Auditing $($subIds.Count) subscription(s): $($subIds -join ', ')
 
 if (-not $NoPermissionCheck) {
     $pfCount = $subIds.Count
-    Write-Host "  Checking permissions across $pfCount subscription(s)..." -ForegroundColor DarkGray
+    Write-Host "`u{1F510} Checking permissions…" -ForegroundColor DarkGray
     $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames
 
     # Show aggregated role summary (mirrors Python output)
+    if ($permCheck.UserId) {
+        Write-Host "   User: $callerName\" -ForegroundColor DarkCyan
+    }
     $permRoles = @($permCheck.Roles)
     if ($permRoles.Count -gt 0) {
-        Write-Host "  Roles:" -ForegroundColor DarkCyan
         foreach ($r in $permRoles) {
             $cnt = $permCheck.RoleSubCount[$r]
-            $label = if ($permCheck.TotalSubs -gt 1) { "$r ($cnt/$($permCheck.TotalSubs))" } else { $r }
-            Write-Host "    • $label" -ForegroundColor DarkCyan
+            $subLabel = if ($permCheck.TotalSubs -gt 1) { "  ($cnt/$($permCheck.TotalSubs) subs)" } else { "" }
+            Write-Host "   Role: $r$subLabel" -ForegroundColor DarkCyan
         }
     }
 
     $permWarnings = @($permCheck.Warnings)
     if ($permWarnings.Count -gt 0) {
         foreach ($w in $permWarnings) {
-            Write-Host "  WARNING: $w" -ForegroundColor DarkYellow
+            Write-Host "   `u{26A0}`u{FE0F}  $w" -ForegroundColor DarkYellow
             Write-AuditLog $w -Level WARNING
         }
-        Write-Host "  Some permissions could not be verified — the audit will continue but some checks may show ERROR." -ForegroundColor DarkYellow
+        Write-Host "   `u{1F4A1} Preflight could not fully verify permissions. The audit will continue, but some checks may show as ERROR." -ForegroundColor DarkYellow
     } else {
-        Write-Host "  Permission check passed." -ForegroundColor Green
+        Write-Host "   `u{2705} Preflight completed successfully." -ForegroundColor Green
     }
     Write-Host ""
 }
@@ -374,7 +374,7 @@ if (-not $NoPermissionCheck) {
 
 if ($Fresh -and -not $NoCheckpoint) {
     Remove-AuditCheckpoints
-    Write-AuditLog "Cleared all checkpoints (-Fresh)." -Level INFO
+    Write-AuditLog "`u{1F5D1}`u{FE0F}  Cleared checkpoints." -Level INFO
 }
 
 $checkpoints = @{}
@@ -409,7 +409,7 @@ if (-not $Fresh -and -not $NoCheckpoint) {
 
 $auditStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-Write-AuditLog "Prefetching resource data via Azure Resource Graph..." -Level INFO
+Write-AuditLog "`u{1F4E1} Fetching tenant data via Resource Graph..." -Level INFO
 
 # Only prefetch for subscriptions NOT covered by checkpoints
 $subIdsToAudit = @($subIds | Where-Object { -not $checkpoints.ContainsKey($_) })
