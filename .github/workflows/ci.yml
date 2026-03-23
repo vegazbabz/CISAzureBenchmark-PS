@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser
+
+      - name: Run unit tests
+        shell: pwsh
+        run: ./Tests/Run-Tests.ps1
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = @{
+            ExcludeRules = @(
+              'PSAvoidUsingWriteHost'
+              'PSAvoidUsingEmptyCatchBlock'
+              'PSUseBOMForUnicodeEncodedFile'
+              'PSUseSingularNouns'
+              'PSUseShouldProcessForStateChangingFunctions'
+            )
+          }
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings $settings -Severity Error,Warning
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            throw "$($results.Count) PSScriptAnalyzer issue(s) found"
+          }
+          Write-Host 'PSScriptAnalyzer: no issues found' -ForegroundColor Green
