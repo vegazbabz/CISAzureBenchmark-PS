@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser
+
+      - name: Run unit tests
+        shell: pwsh
+        run: ./Tests/Run-Tests.ps1
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = @{
+            ExcludeRules = @(
+              'PSAvoidUsingWriteHost'
+              'PSAvoidUsingEmptyCatchBlock'
+              'PSUseBOMForUnicodeEncodedFile'
+              'PSUseSingularNouns'
+              'PSUseShouldProcessForStateChangingFunctions'
+            )
+          }
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings $settings -Severity Error,Warning
+          if ($results) {
+            $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
+            throw "$($results.Count) PSScriptAnalyzer issue(s) found"
+          }
+
+  release:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## CISAzureBenchmark-PS ${{ github.ref_name }}
+
+            **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0
+            **Coverage:** See [README](https://github.com/${{ github.repository }}/blob/main/README.md) for current control coverage
+
+            ### Requirements
+            - PowerShell 7.0+
+            - Azure CLI (`az login` before running)
+
+            ### Quick Start
+            ```powershell
+            az login
+            .\Invoke-CISAzureAudit.ps1
+            ```
+
+            See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full documentation.
