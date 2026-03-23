@@ -236,7 +236,7 @@ if ($ReportOnly) {
     $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
     Write-Host ""
-    Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+    Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
     Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
     Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
     Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
@@ -245,7 +245,7 @@ if ($ReportOnly) {
     Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
     Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
     Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-    Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+    Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
     Write-Host ""
 
     $scopeLabel = "All subscriptions (from checkpoint data)"
@@ -651,7 +651,7 @@ $assessed  = $counts.PASS + $counts.FAIL + $counts.ERROR
 $score     = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
 Write-Host ""
-Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
 Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  `u{23F1} {2}" -f $finalResults.Count, $subIds.Count, $elapsedStr) -ForegroundColor White
 Write-Host ("  Compliance Score : {0}%  (excludes INFO/MANUAL/SUPPRESSED)" -f $score) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
 Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
@@ -660,7 +660,7 @@ Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -Foreg
 Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
 Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
 Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-Write-Host "  `u{2501}" * 60 -ForegroundColor DarkGray
+Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
 Write-Host ""
 
 # ── Generate HTML report ──────────────────────────────────────────────────────
