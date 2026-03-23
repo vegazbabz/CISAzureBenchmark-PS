@@ -242,7 +242,7 @@ function Invoke-Section7Checks {
             foreach ($subnet in $applicableSubnets) {
                 $vnetName   = [string]$subnet.vnetName
                 $subnetName = [string]$subnet.subnetName
-                $hasNsg     = [string]$subnet.hasNsg -eq "True" -or [string]$subnet.hasNsg -eq "true"
+                $hasNsg     = [string]$subnet.hasNsg -in @("True", "true", "1")
                 $resource   = "$vnetName/$subnetName"
                 $results.Add((New-CISResult `
                     -ControlId "7.11" `

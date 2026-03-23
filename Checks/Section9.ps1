@@ -91,7 +91,8 @@ function Invoke-Section9Checks {
 
         # 9.3.7 — Cross-tenant replication disabled
         $crossTenant    = [string]($acct.PSObject.Properties['crossTenant']?.Value)
-        $crossTenantOff = $crossTenant -eq "false" -or $crossTenant -eq "False"
+        # Null/empty means disabled (Azure default); only explicit "true" means enabled
+        $crossTenantOff = $crossTenant -ne "true" -and $crossTenant -ne "True"
         $results.Add((New-CISResult `
             -ControlId "9.3.7" -Title "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts" `
             -Level 1 -Section $sec `
@@ -198,8 +199,8 @@ function Invoke-Section9Checks {
         if (-not $isAdls) {
             try {
                 $r = Invoke-AzCli -Arguments @(
-                    "storage", "blob", "service-properties", "show",
-                    "--account-name", $acctName, "--auth-mode", "login"
+                    "storage", "account", "blob-service-properties", "show",
+                    "--account-name", $acctName, "--resource-group", $acctRg
                 ) -TimeoutSec $script:TIMEOUTS.storage_svc
 
                 if (-not $r.Success) {

@@ -406,6 +406,16 @@ function Invoke-Section8Checks {
                         -Details $(if ($pass) { "All keys have automatic rotation configured." } else { "Keys without automatic rotation configured: $($noRotation -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Keys > Rotation policy > Set rotation action" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
+                } elseif (-not $r.Success) {
+                    if (Test-AuthzError $r.Error) {
+                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                    } elseif (Test-FirewallError $r.Error) {
+                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    } else {
+                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec $r.Error $sid $sname $kvName))
+                    }
+                } else {
+                    $results.Add((New-InfoResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "No keys found in vault." $sid $sname $kvName))
                 }
             } catch {
                 $results.Add((New-ErrorResult "8.3.9" "Key Rotation Auto-Rotation" 2 $sec $_.Exception.Message $sid $sname $kvName))

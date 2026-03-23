@@ -826,7 +826,7 @@ Describe "Invoke-Section9Checks — 9.3.4 Secure Transfer" {
 
         Mock Invoke-AzCli {
             param($Arguments)
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }
@@ -2622,7 +2622,7 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
         }
         Mock Invoke-AzCli {
             param($Arguments)
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
@@ -2646,7 +2646,7 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
         }
         Mock Invoke-AzCli {
             param($Arguments)
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
@@ -2684,7 +2684,7 @@ Describe "Invoke-Section9Checks — 9.1.x File Service" {
         Mock Invoke-AzCli {
             param($Arguments)
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }
@@ -2708,7 +2708,7 @@ Describe "Invoke-Section9Checks — 9.1.x File Service" {
         Mock Invoke-AzCli {
             param($Arguments)
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }
@@ -2741,7 +2741,7 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
                     level = "ReadOnly"
                 }) }
             }
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }
@@ -2760,7 +2760,7 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
                     level = "CanNotDelete"
                 }) }
             }
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }
@@ -2774,7 +2774,7 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
         Mock Invoke-AzCli {
             param($Arguments)
             if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
             return [PSCustomObject]@{ Success = $true; Data = @() }
         }

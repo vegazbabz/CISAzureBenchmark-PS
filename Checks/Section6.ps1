@@ -22,7 +22,15 @@ function Invoke-Section6Checks {
         ) -TimeoutSec $script:TIMEOUTS.default
 
         $settings = @()
-        if ($r.Success -and $r.Data) { $settings = @($r.Data) }
+        if ($r.Success -and $r.Data) {
+            # CLI returns {value: [...]} for subscription diagnostic settings
+            $raw = $r.Data
+            if ($raw.PSObject.Properties['value']) {
+                $settings = @($raw.value)
+            } else {
+                $settings = @($raw)
+            }
+        }
         $hasDiag  = $settings.Count -gt 0
 
         $results.Add((New-CISResult `
