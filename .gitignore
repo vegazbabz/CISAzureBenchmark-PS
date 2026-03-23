@@ -17,8 +17,6 @@ cis_run_history.json
 smoketest.ps1
 
 # Local notes / AI session files
-.claude/
-Claude improvements.txt
 GitHub Copilot improvements.txt
 
 # Editor / OS
