@@ -189,6 +189,28 @@ docs/
 | `-DebugMode` | switch | | Verbose debug logging |
 | `-LogFile` | string | | Write log to file |
 
+### Configuration file
+
+Create a `cis_audit.json` file next to the script to set persistent defaults. CLI arguments always
+override config file values. Set the `CIS_AUDIT_CONFIG` environment variable to use a custom path.
+
+See [`cis_audit.json.example`](cis_audit.json.example) for all available settings.
+
+```json
+{
+    "audit": {
+        "parallel": 3,
+        "level": "both",
+        "exit_code": true,
+        "no_open": true
+    },
+    "timeouts": {
+        "default": 60,
+        "storage_list": 90
+    }
+}
+```
+
 ### Examples
 
 ```powershell
@@ -281,6 +303,10 @@ continue from where it left off. Use `-Fresh` to discard all checkpoints and sta
 Subscriptions run concurrently via PowerShell runspaces. The default is 3 parallel workers
 (configurable via `-Parallel`). The Resource Graph prefetch always runs once before the parallel
 loop begins.
+
+Adaptive concurrency is built-in: if Azure returns throttling responses (HTTP 429), the tool
+automatically reduces the number of concurrent workers. After two consecutive batches without
+throttling, workers are increased back towards the original value.
 
 ---
 

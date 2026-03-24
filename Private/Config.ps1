@@ -47,6 +47,82 @@ $script:DEBUG_MODE   = $false
 $script:VERBOSE_MODE = $false
 $script:LOG_FILE     = $null
 
+# ── Config file loader ───────────────────────────────────────────────────────
+
+function Read-ConfigFile {
+    <#
+    .SYNOPSIS
+    Loads cis_audit.json (or CIS_AUDIT_CONFIG env var path) and applies overrides.
+    Returns a hashtable of values that were set, for merging with CLI params.
+    #>
+    param([string]$ScriptRoot)
+
+    $configPath = $env:CIS_AUDIT_CONFIG
+    if (-not $configPath) {
+        $configPath = Join-Path $ScriptRoot "cis_audit.json"
+    } elseif (-not [System.IO.Path]::IsPathRooted($configPath)) {
+        $configPath = Join-Path $ScriptRoot $configPath
+    }
+
+    if (-not (Test-Path $configPath)) { return @{} }
+
+    try {
+        $raw = Get-Content $configPath -Raw -ErrorAction Stop
+        $cfg = $raw | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        Write-Host "  [WARN] Failed to parse config file: $configPath — $_" -ForegroundColor Yellow
+        return @{}
+    }
+
+    Write-Host "  ✅ Config: $configPath" -ForegroundColor DarkGray
+    $overrides = @{}
+
+    # [audit] section
+    if ($cfg.PSObject.Properties['audit']) {
+        $a = $cfg.audit
+        if ($a.PSObject.Properties['parallel']) {
+            $v = $a.parallel -as [int]
+            if ($v -and $v -ge 1 -and $v -le 20) { $overrides['Parallel'] = $v }
+            else { Write-Host "  [WARN] Config audit.parallel must be 1–20 (got $($a.parallel)) — ignored" -ForegroundColor Yellow }
+        }
+        if ($a.PSObject.Properties['level']) {
+            $v = [string]$a.level
+            if ($v -in @("1","2","both")) { $overrides['Level'] = $v }
+            else { Write-Host "  [WARN] Config audit.level must be 1, 2, or both (got $($a.level)) — ignored" -ForegroundColor Yellow }
+        }
+        if ($a.PSObject.Properties['checkpoint_dir']) {
+            $v = [string]$a.checkpoint_dir
+            if ($v) { $script:CHECKPOINT_DIR = $v }
+        }
+        if ($a.PSObject.Properties['suppressions_file']) {
+            $v = [string]$a.suppressions_file
+            if ($v) { $overrides['SuppressionsFile'] = $v }
+        }
+        if ($a.PSObject.Properties['exit_code']) {
+            if ($a.exit_code -eq $true) { $overrides['ExitCode'] = $true }
+        }
+        if ($a.PSObject.Properties['no_open']) {
+            if ($a.no_open -eq $true) { $overrides['NoOpen'] = $true }
+        }
+    }
+
+    # [timeouts] section
+    if ($cfg.PSObject.Properties['timeouts']) {
+        $known = @("default", "storage_list", "storage_svc", "activity_log", "graph")
+        foreach ($prop in $cfg.timeouts.PSObject.Properties) {
+            if ($prop.Name -notin $known) {
+                Write-Host "  [WARN] Unknown timeouts key '$($prop.Name)' in config — ignored" -ForegroundColor Yellow
+                continue
+            }
+            $v = $prop.Value -as [int]
+            if ($v -and $v -gt 0) { $script:TIMEOUTS[$prop.Name] = $v }
+            else { Write-Host "  [WARN] timeouts.$($prop.Name) must be a positive integer (got $($prop.Value)) — ignored" -ForegroundColor Yellow }
+        }
+    }
+
+    return $overrides
+}
+
 # Resource Graph Kusto queries (one per resource type)
 $script:GRAPH_QUERIES = @{
 

@@ -100,31 +100,6 @@ if ($_ExtraSubscriptions.Count -gt 0) {
 
 $moduleRoot = $PSScriptRoot
 
-# Resolve output path relative to the script directory (not the caller's cwd)
-if (-not $Output) {
-    $Output = Join-Path $PSScriptRoot ("reports\cis_audit_report_" + (Get-Date -Format 'yyyyMMdd_HHmmss') + ".html")
-} elseif (-not [System.IO.Path]::IsPathRooted($Output)) {
-    $Output = Join-Path $PSScriptRoot $Output
-}
-
-# Resolve LogFile path if relative
-if ($LogFile -and -not [System.IO.Path]::IsPathRooted($LogFile)) {
-    $LogFile = Join-Path $PSScriptRoot $LogFile
-}
-
-# Resolve SuppressionsFile path if relative
-if ($SuppressionsFile -and -not [System.IO.Path]::IsPathRooted($SuppressionsFile)) {
-    $SuppressionsFile = Join-Path $PSScriptRoot $SuppressionsFile
-}
-
-# Ensure output and log directories exist before any writes happen
-foreach ($filePath_ in @($Output, $LogFile) | Where-Object { $_ }) {
-    $dir_ = [System.IO.Path]::GetDirectoryName($filePath_)
-    if ($dir_ -and -not (Test-Path $dir_)) {
-        New-Item -ItemType Directory -Path $dir_ -Force | Out-Null
-    }
-}
-
 foreach ($__f in @(
     "Private\Config.ps1",
     "Private\Models.ps1",
@@ -150,6 +125,42 @@ foreach ($__f in @(
 }
 Remove-Variable __f, __full -ErrorAction SilentlyContinue
 
+# ── Load config file (cis_audit.json) — override defaults for unbound params ─
+$_cfgOverrides = Read-ConfigFile -ScriptRoot $PSScriptRoot
+foreach ($__key in $_cfgOverrides.Keys) {
+    if (-not $PSBoundParameters.ContainsKey($__key)) {
+        Set-Variable -Name $__key -Value $_cfgOverrides[$__key] -Scope 0
+    }
+}
+Remove-Variable _cfgOverrides, __key -ErrorAction SilentlyContinue
+
+# ── Resolve paths relative to script directory ───────────────────────────────
+
+# Resolve output path relative to the script directory (not the caller's cwd)
+if (-not $Output) {
+    $Output = Join-Path $PSScriptRoot ("reports\cis_audit_report_" + (Get-Date -Format 'yyyyMMdd_HHmmss') + ".html")
+} elseif (-not [System.IO.Path]::IsPathRooted($Output)) {
+    $Output = Join-Path $PSScriptRoot $Output
+}
+
+# Resolve LogFile path if relative
+if ($LogFile -and -not [System.IO.Path]::IsPathRooted($LogFile)) {
+    $LogFile = Join-Path $PSScriptRoot $LogFile
+}
+
+# Resolve SuppressionsFile path if relative
+if ($SuppressionsFile -and -not [System.IO.Path]::IsPathRooted($SuppressionsFile)) {
+    $SuppressionsFile = Join-Path $PSScriptRoot $SuppressionsFile
+}
+
+# Ensure output and log directories exist before any writes happen
+foreach ($filePath_ in @($Output, $LogFile) | Where-Object { $_ }) {
+    $dir_ = [System.IO.Path]::GetDirectoryName($filePath_)
+    if ($dir_ -and -not (Test-Path $dir_)) {
+        New-Item -ItemType Directory -Path $dir_ -Force | Out-Null
+    }
+}
+
 # ── Apply settings ────────────────────────────────────────────────────────────
 
 $script:DEBUG_MODE   = $DebugMode.IsPresent
@@ -161,6 +172,23 @@ if ($DebugMode.IsPresent -and $Parallel -gt 1) {
     Write-Host "  [DebugMode] Forcing sequential execution for full visibility." -ForegroundColor DarkYellow
 }
 $script:LOG_FILE     = if ($LogFile) { $LogFile } else { $null }
+
+# Shared process registry for Ctrl+C cleanup
+$script:_runningProcs = [System.Collections.Concurrent.ConcurrentDictionary[int, System.Diagnostics.Process]]::new()
+
+$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    foreach ($proc in $script:_runningProcs.Values) {
+        try {
+            if (-not $proc.HasExited) {
+                if ($IsWindows -or ($env:OS -eq 'Windows_NT')) {
+                    $null = Start-Process -FilePath 'taskkill.exe' -ArgumentList "/PID $($proc.Id) /T /F" -NoNewWindow -Wait -PassThru 2>$null
+                } else {
+                    $proc.Kill($true)
+                }
+            }
+        } catch { <# already exited #> }
+    }
+}
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 
@@ -580,8 +608,9 @@ if ($subsToProcess.Count -gt 0) {
             }
         }
     } else {
-        # Parallel execution using PS7 ForEach-Object -Parallel
-        $throttle   = [math]::Min($Parallel, $subsToProcess.Count)
+        # Adaptive parallel execution — process subscriptions in batches,
+        # adjusting concurrency based on throttling signals from Azure.
+        $currentParallel = [math]::Min($Parallel, $subsToProcess.Count)
         $resultBag  = [System.Collections.Concurrent.ConcurrentBag[object]]::new()
         $moduleRoot_ = $moduleRoot
 
@@ -590,61 +619,100 @@ if ($subsToProcess.Count -gt 0) {
             [PSCustomObject]@{ Id = $subsToProcess[$i]; Name = $subNames[$subsToProcess[$i]]; Idx = $i + 1 }
         })
         $totalToProcess = $subsToProcess.Count
+        $stableBatches  = 0
+        $_procRegistry  = $script:_runningProcs
 
-        Write-AuditLog "Running parallel audit ($throttle concurrent workers)..." -Level INFO
+        Write-AuditLog "Running parallel audit ($currentParallel concurrent workers)..." -Level INFO
 
-        $subPairs | ForEach-Object -Parallel {
-            $subId         = $_.Id
-            $subName       = $_.Name
-            $subIdx        = $_.Idx
-            $subTotal      = $using:totalToProcess
-            $pd            = $using:prefetchData
-            $modRoot       = $using:moduleRoot_
-            $noCheckpoint  = $using:NoCheckpoint
-            $bag           = $using:resultBag
+        $batchIdx = 0
+        while ($batchIdx -lt $subPairs.Count) {
+            $batchSize = [math]::Min($currentParallel, $subPairs.Count - $batchIdx)
+            $batch     = @($subPairs[$batchIdx..($batchIdx + $batchSize - 1)])
+            $throttleBag = [System.Collections.Concurrent.ConcurrentBag[int]]::new()
 
-            Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
+            $batch | ForEach-Object -Parallel {
+                $subId         = $_.Id
+                $subName       = $_.Name
+                $subIdx        = $_.Idx
+                $subTotal      = $using:totalToProcess
+                $pd            = $using:prefetchData
+                $modRoot       = $using:moduleRoot_
+                $noCheckpoint  = $using:NoCheckpoint
+                $bag           = $using:resultBag
+                $tBag          = $using:throttleBag
+                $pReg          = $using:_procRegistry
 
-            # Re-import all module files in the parallel runspace
-            $files = @(
-                "Private\Config.ps1","Private\Models.ps1","Private\AzureClient.ps1",
-                "Private\Helpers.ps1","Private\CheckHelpers.ps1","Private\Identity.ps1",
-                "Private\Checkpoint.ps1","Private\History.ps1","Private\Report.ps1",
-                "Checks\Section2.ps1","Checks\Section5.ps1","Checks\Section6.ps1",
-                "Checks\Section7.ps1","Checks\Section8.ps1","Checks\Section9.ps1"
-            )
-            foreach ($f in $files) { . (Join-Path $modRoot $f) }
+                Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
 
-            try {
-                $checkGroups = @(
-                    @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Name = "Section 5 (Identity)";   Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Name = "Section 6 (Monitoring)"; Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Name = "Section 7 (Networking)"; Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Name = "Section 8 (Security)";   Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                    @{ Name = "Section 9 (Storage)";    Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                # Re-import all module files in the parallel runspace
+                $files = @(
+                    "Private\Config.ps1","Private\Models.ps1","Private\AzureClient.ps1",
+                    "Private\Helpers.ps1","Private\CheckHelpers.ps1","Private\Identity.ps1",
+                    "Private\Checkpoint.ps1","Private\History.ps1","Private\Report.ps1",
+                    "Checks\Section2.ps1","Checks\Section5.ps1","Checks\Section6.ps1",
+                    "Checks\Section7.ps1","Checks\Section8.ps1","Checks\Section9.ps1"
                 )
+                foreach ($f in $files) { . (Join-Path $modRoot $f) }
 
-                $subResults = [System.Collections.Generic.List[object]]::new()
-                foreach ($g in $checkGroups) {
-                    Write-Host "    [$subName] $($g.Name)..." -ForegroundColor DarkGray
-                    try {
-                        foreach ($r in @(& $g.Fn)) { $subResults.Add($r) }
-                    } catch {
-                        [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
+                # Wire up shared state for adaptive concurrency and Ctrl+C cleanup
+                $script:_throttleBag  = $tBag
+                $script:_runningProcs = $pReg
+
+                try {
+                    $checkGroups = @(
+                        @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 5 (Identity)";   Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 6 (Monitoring)"; Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 7 (Networking)"; Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 8 (Security)";   Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 9 (Storage)";    Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                    )
+
+                    $subResults = [System.Collections.Generic.List[object]]::new()
+                    foreach ($g in $checkGroups) {
+                        Write-Host "    [$subName] $($g.Name)..." -ForegroundColor DarkGray
+                        try {
+                            foreach ($r in @(& $g.Fn)) { $subResults.Add($r) }
+                        } catch {
+                            [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
+                        }
                     }
+
+                    foreach ($r in $subResults) { $bag.Add($r) }
+
+                    if (-not $noCheckpoint) {
+                        Save-AuditCheckpoint -SubscriptionId $subId -SubscriptionName $subName -Results $subResults.ToArray()
+                    }
+
+                    Write-Host "  [$subIdx/$subTotal] Completed: $subName — $($subResults.Count) results" -ForegroundColor Green
+                } catch { $null = $_ <# Intentional: per-subscription errors are logged inside; prevent ForEach-Object -Parallel from terminating #> }
+
+            } -ThrottleLimit $batchSize
+
+            # Adaptive concurrency adjustment
+            $throttleCount  = $throttleBag.Count
+            $remaining      = $subPairs.Count - $batchIdx - $batchSize
+            $reduceThreshold = [math]::Max(2, $batchSize)
+
+            if ($throttleCount -ge $reduceThreshold -and $currentParallel -gt 1) {
+                $currentParallel--
+                Write-AuditLog ("Detected $throttleCount throttle retries in batch; " +
+                    "reducing workers to $currentParallel") -Level WARNING
+                $stableBatches = 0
+            } elseif ($throttleCount -eq 0 -and $currentParallel -lt $Parallel -and $remaining -gt 0) {
+                $stableBatches++
+                if ($stableBatches -ge 2) {
+                    $currentParallel++
+                    Write-AuditLog ("No throttling for $stableBatches batches; " +
+                        "increasing workers to $currentParallel") -Level INFO
+                    $stableBatches = 0
                 }
+            } else {
+                $stableBatches = 0
+            }
 
-                foreach ($r in $subResults) { $bag.Add($r) }
-
-                if (-not $noCheckpoint) {
-                    Save-AuditCheckpoint -SubscriptionId $subId -SubscriptionName $subName -Results $subResults.ToArray()
-                }
-
-                Write-Host "  [$subIdx/$subTotal] Completed: $subName — $($subResults.Count) results" -ForegroundColor Green
-            } catch { $null = $_ <# Intentional: per-subscription errors are logged inside; prevent ForEach-Object -Parallel from terminating #> }
-
-        } -ThrottleLimit $throttle
+            $batchIdx += $batchSize
+        }
 
         foreach ($r in $resultBag) { $allResults.Add($r) }
     }
