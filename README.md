@@ -174,16 +174,18 @@ docs/
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
-| `-Subscriptions` | string[] | all | One or more subscription IDs to audit |
+| `-Subscriptions` | string[] | all | One or more subscription names or IDs to audit |
 | `-Output` | string | `cis_audit_report.html` | HTML report path |
 | `-Parallel` | int | 3 | Concurrent subscription workers |
 | `-Level` | 1 \| 2 \| both | both | CIS level filter |
 | `-Fresh` | switch | | Clear all checkpoints and start a full re-audit |
 | `-ReportOnly` | switch | | Regenerate report from existing checkpoints — no API calls |
 | `-NoCheckpoint` | switch | | Disable checkpoint save |
-| `-SkipTenantChecks` | switch | | Skip tenant-level (Section 5) checks |
+| `-SkipTenantChecks` | switch | | Skip tenant-level checks (Section 3 and 5) |
 | `-NoPermissionCheck` | switch | | Skip preflight permission check |
 | `-NoOpen` | switch | | Do not auto-open the report in the browser |
+| `-ExitCode` | switch | | Exit with code 2 when FAIL or ERROR results are found (for CI/CD) |
+| `-SuppressionsFile` | string | `suppressions.json` | Path to the suppressions file (see *Suppressing Findings*) |
 | `-DebugMode` | switch | | Verbose debug logging |
 | `-LogFile` | string | | Write log to file |
 
@@ -213,6 +215,9 @@ docs/
 
 # Interrupted run? Just re-run — it resumes automatically
 .\Invoke-CISAzureAudit.ps1
+
+# Show what findings are currently suppressed
+.\Invoke-CISAzureAudit.ps1 -ReportOnly  # suppressions applied during report generation
 ```
 
 ---
@@ -318,6 +323,49 @@ The generated report is a self-contained HTML file with no external dependencies
 Loads all existing checkpoints and regenerates the HTML — no Azure API calls are made.
 Useful after upgrading the tool or changing the `-Level` filter.
 
+### Output files
+
+Every run writes three files alongside the HTML report:
+
+| File | Format | Purpose |
+| --- | --- | --- |
+| `cis_audit_report.html` | HTML | Interactive visual report (auto-opened unless `-NoOpen`) |
+| `cis_audit_report.json` | JSON | Machine-readable results for downstream tooling |
+| `cis_audit_report.csv` | CSV | Spreadsheet-friendly format for compliance teams |
+
+Use `-Output report.html` to change the base path — `.json` and `.csv` extensions are derived automatically.
+
+---
+
+## Suppressing Findings (Accepted Risks)
+
+Create a `suppressions.json` file in the project root to mark specific findings as accepted risks.
+Suppressed findings are reclassified as **SUPPRESSED** in the report and excluded from the FAIL/ERROR counts.
+
+### suppressions.json format
+
+```json
+[
+  {
+    "control_id": "9.5",
+    "justification": "Legacy storage account — migration planned for Q3",
+    "expires": "2025-09-30",
+    "resource": "/subscriptions/.../storageAccounts/legacy01",
+    "subscription": "Production"
+  }
+]
+```
+
+### Suppression rules
+
+- `control_id` (required) — CIS control ID to suppress (e.g. `"9.5"`).
+- `justification` (required) — human-readable reason for the suppression.
+- `expires` (required) — expiry date in `YYYY-MM-DD` format. Maximum 365 days from today.
+- `resource` (optional) — resource ID to match. Omit to suppress all resources for this control.
+- `subscription` (optional) — subscription name or ID. Omit to suppress across all subscriptions.
+
+Expired entries are silently ignored. The summary banner shows active suppression count.
+
 ---
 
 ## Controls Covered
@@ -331,6 +379,20 @@ Useful after upgrading the tool or changing the `-Level` filter.
 | 2.1.9 | No Public IP enabled | L1 |
 | 2.1.10 | Public network access disabled | L1 |
 | 2.1.11 | Private endpoints used to access workspaces | L2 |
+
+> **2.1.1** (Databricks in customer-managed VNet) — pending implementation.
+
+### Section 3 — Compute Services (1 manual)
+
+| Control | Title | Level | Notes |
+| --- | --- | --- | --- |
+| 3.1.1 | Only MFA-enabled identities can access privileged VMs | L2 | **Manual** — requires correlating role assignments with MFA status |
+
+> **Sections 3 and 4** of the CIS Azure Foundations Benchmark v5.0.0 are largely reference
+> sections — most Compute and Database controls have been relocated to the
+> *CIS Microsoft Azure Compute Services Benchmark* and *CIS Microsoft Azure Database
+> Services Benchmark* respectively. Only 3.1.1 (Virtual Machines) remains in the
+> Foundations Benchmark as an auditable control.
 
 ### Section 5 — Identity Services (9 automated · 2 manual)
 
@@ -489,6 +551,43 @@ A GitHub Actions pipeline runs on every push and pull request:
 
 The workflow file lives at `.github/workflows/ci.yml`.
 
+#### Using this tool in your own CI/CD pipeline
+
+Add `-ExitCode` to make the tool exit with code 2 when any FAIL or ERROR results are found.
+This lets Azure DevOps, GitHub Actions, and similar systems fail the build on compliance regressions:
+
+```yaml
+# GitHub Actions example
+- name: Azure foundations audit
+  shell: pwsh
+  run: |
+    .\Invoke-CISAzureAudit.ps1 `
+      -Subscriptions "Production" `
+      -NoOpen `
+      -ExitCode
+  # Step fails (exit code 2) if any controls are non-compliant
+```
+
+```yaml
+# Azure DevOps example
+- task: PowerShell@2
+  displayName: 'Azure Foundations audit'
+  inputs:
+    targetType: inline
+    pwsh: true
+    script: |
+      .\Invoke-CISAzureAudit.ps1 -Subscriptions $(SUB_NAME) -NoOpen -ExitCode
+  # Marks the pipeline stage as failed when FAIL/ERROR results are found
+```
+
+Exit code summary:
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Audit completed — all controls passed (or all failures are suppressed) |
+| `1` | Tool setup error — az CLI missing, not logged in, or authentication failed |
+| `2` | Compliance failure — one or more FAIL or ERROR results detected (only with `-ExitCode`) |
+
 ---
 
 ## Checkpoint Files
@@ -552,8 +651,8 @@ The runner account needs Key Vault data plane access. For RBAC-enabled vaults as
 The ERROR message in the report states exactly what is missing.
 
 **Subscription not found**
-Subscription IDs must be exact GUIDs. Run `az account list --output table` to see the available
-subscriptions.
+Values passed to `-Subscriptions` must match an existing subscription name or ID exactly.
+Run `az account list --output table` to see the available subscriptions.
 
 **Interrupted run**
 Re-run the same command to resume from where it stopped, or add `-Fresh` to start over.
