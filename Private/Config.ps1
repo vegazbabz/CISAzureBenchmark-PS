@@ -3,7 +3,7 @@
 
 Set-StrictMode -Version Latest
 
-$script:CIS_VERSION   = "1.3.0"
+$script:CIS_VERSION   = "1.3.1"
 $script:BENCHMARK_VER = "5.0.0"
 
 # Status constants — avoid $Error which is a PS reserved variable
