@@ -1,8 +1,12 @@
 # Azure CLI subprocess layer
-# Uses PowerShell's & operator, which correctly handles az.cmd on Windows
+# Uses System.Diagnostics.Process for timeout enforcement and stdout/stderr capture
 
-# Detect az executable (az.cmd on Windows, az on Linux/macOS)
-$script:AZ_CMD = if ($IsWindows -or ($env:OS -eq 'Windows_NT')) { "az.cmd" } else { "az" }
+# On Windows, az is installed as az.cmd — must be launched via cmd.exe /c
+# for the batch file's environment setup to work with System.Diagnostics.Process.
+$script:IS_WINDOWS = $IsWindows -or ($env:OS -eq 'Windows_NT')
+
+# Used by Identity.ps1 in ForEach-Object -Parallel where Invoke-AzCli is unavailable
+$script:AZ_CMD = if ($script:IS_WINDOWS) { "az.cmd" } else { "az" }
 
 function Test-TransientError {
     <#
@@ -22,12 +26,12 @@ function Invoke-AzCli {
     .OUTPUTS
     PSCustomObject with: .Success [bool], .Data [object], .Error [string], .ExitCode [int]
     #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'TimeoutSec', Justification='Reserved for future async/timeout support')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification='All parameters used in retry loop')]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string[]]$Arguments,
         [string]$SubscriptionId = "",
-        [int]$TimeoutSec = 60,   # reserved; not enforced in synchronous mode
+        [int]$TimeoutSec = 60,
         [int]$MaxRetries = 3
     )
 
@@ -53,16 +57,72 @@ function Invoke-AzCli {
         try {
             Write-AuditLog "  az $($cmdArgs -join ' ')" -Level VERBOSE
 
-            # & handles .cmd files correctly on Windows; 2>&1 merges stderr into output
-            $output    = & $script:AZ_CMD @($cmdArgs.ToArray()) 2>&1
-            $exitCode  = $LASTEXITCODE
+            # Use System.Diagnostics.Process for timeout enforcement
+            $argStr = ($cmdArgs.ToArray() | ForEach-Object {
+                if ($_ -match '[\s"]') { '"{0}"' -f ($_ -replace '"', '\"') } else { $_ }
+            }) -join ' '
 
-            # Split: strings are stdout, ErrorRecord objects are stderr lines
-            $stdoutLines = @($output | Where-Object { $_ -is [string] })
-            $stderrLines = @($output | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" })
+            $psi = [System.Diagnostics.ProcessStartInfo]::new()
+            if ($script:IS_WINDOWS) {
+                # az.cmd must be launched through cmd.exe for its batch-file
+                # environment setup (Python path etc.) to work correctly.
+                $psi.FileName  = 'cmd.exe'
+                $psi.Arguments = "/c az $argStr"
+            } else {
+                $psi.FileName  = 'az'
+                $psi.Arguments = $argStr
+            }
+            $psi.UseShellExecute        = $false
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError  = $true
+            $psi.CreateNoWindow         = $true
+
+            $proc = [System.Diagnostics.Process]::new()
+            $proc.StartInfo = $psi
+
+            $proc.Start() | Out-Null
+
+            $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
+            $stderrTask = $proc.StandardError.ReadToEndAsync()
+
+            $completed = $proc.WaitForExit($TimeoutSec * 1000)
+
+            if (-not $completed) {
+                # Kill the process tree — on Windows, cmd.exe may have child
+                # processes (python.exe for az) that Kill() alone won't reach.
+                try {
+                    if ($script:IS_WINDOWS) {
+                        $null = Start-Process -FilePath 'taskkill.exe' -ArgumentList "/PID $($proc.Id) /T /F" -NoNewWindow -Wait -PassThru 2>$null
+                    } else {
+                        $proc.Kill($true)  # $true = kill entire process tree (.NET 5+)
+                    }
+                } catch { <# already exited #> }
+                $proc.Dispose()
+                $errMsg = "Command timed out after ${TimeoutSec}s: az $($cmdArgs -join ' ')"
+                Write-AuditLog "  $errMsg" -Level VERBOSE
+
+                if ($attempt -le $MaxRetries) {
+                    $baseDelay = [math]::Pow(2, $attempt)
+                    $jitter    = Get-Random -Minimum 0.0 -Maximum 1.0
+                    $delaySec  = $baseDelay + $jitter
+                    Write-AuditLog "  Timeout (attempt $attempt/$MaxRetries) — retrying in $([math]::Round($delaySec, 1))s" -Level VERBOSE
+                    Start-Sleep -Milliseconds ([int]($delaySec * 1000))
+                    continue
+                }
+                return [PSCustomObject]@{ Success = $false; Data = $null; Error = $errMsg; ExitCode = -1 }
+            }
+
+            # Ensure async reads complete
+            [void]$stdoutTask.Wait(5000)
+            [void]$stderrTask.Wait(5000)
+
+            $stdoutStr = $stdoutTask.Result
+            $stderrStr = $stderrTask.Result
+            $exitCode  = $proc.ExitCode
+            $proc.Dispose()
 
             if ($exitCode -ne 0) {
-                $errMsg = if ($stderrLines) { $stderrLines -join ' ' } else { $stdoutLines -join ' ' }
+                $errMsg = if ($stderrStr.Trim()) { $stderrStr.Trim() } else { $stdoutStr.Trim() }
                 $errMsg = ($errMsg -replace '\r?\n', ' ').Trim()
 
                 # Retry on transient failures
@@ -79,7 +139,7 @@ function Invoke-AzCli {
                 return [PSCustomObject]@{ Success = $false; Data = $null; Error = $errMsg; ExitCode = $exitCode }
             }
 
-            $stdout = ($stdoutLines -join "`n").Trim()
+            $stdout = $stdoutStr.Trim()
 
             if (-not $stdout) {
                 return [PSCustomObject]@{ Success = $true; Data = $null; Error = $null; ExitCode = 0 }

@@ -760,4 +760,38 @@ $subTable
 "@
 
     [System.IO.File]::WriteAllText($OutputPath, $html, [System.Text.Encoding]::UTF8)
+
+    # ── JSON export ───────────────────────────────────────────────────────────
+    $jsonPath = [System.IO.Path]::ChangeExtension($OutputPath, '.json')
+    $jsonData = @($Results | ForEach-Object {
+        [ordered]@{
+            control      = $_.ControlId
+            level        = $_.Level
+            title        = $_.Title
+            subscription = if ($_.SubscriptionName) { $_.SubscriptionName } else { '' }
+            resource     = if ($_.Resource) { $_.Resource } else { '' }
+            status       = $_.Status
+            details      = $_.Details
+        }
+    })
+    $jsonText = $jsonData | ConvertTo-Json -Depth 5
+    [System.IO.File]::WriteAllText($jsonPath, $jsonText, [System.Text.Encoding]::UTF8)
+
+    # ── CSV export ────────────────────────────────────────────────────────────
+    $csvPath = [System.IO.Path]::ChangeExtension($OutputPath, '.csv')
+    $csvLines = [System.Collections.Generic.List[string]]::new()
+    $csvLines.Add('control,level,title,subscription,resource,status,details')
+    foreach ($r in $Results) {
+        $fields = @(
+            $r.ControlId,
+            $r.Level,
+            ($r.Title -replace '"', '""'),
+            $(if ($r.SubscriptionName) { $r.SubscriptionName } else { '' }),
+            $(if ($r.Resource) { $r.Resource -replace '"', '""' } else { '' }),
+            $r.Status,
+            ($r.Details -replace '"', '""')
+        )
+        $csvLines.Add('"' + ($fields -join '","') + '"')
+    }
+    [System.IO.File]::WriteAllText($csvPath, ($csvLines -join "`n"), [System.Text.Encoding]::UTF8)
 }
