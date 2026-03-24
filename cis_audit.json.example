@@ -1,0 +1,20 @@
+{
+    "_comment": "CIS Azure Audit Tool — configuration file. Copy to cis_audit.json and customise. CLI arguments always override these values. All fields are optional — remove or comment out any you don't need.",
+
+    "audit": {
+        "parallel": 3,
+        "level": "both",
+        "checkpoint_dir": "cis_checkpoints",
+        "suppressions_file": "suppressions.json",
+        "exit_code": false,
+        "no_open": false
+    },
+
+    "timeouts": {
+        "default": 60,
+        "storage_list": 90,
+        "storage_svc": 45,
+        "activity_log": 75,
+        "graph": 180
+    }
+}

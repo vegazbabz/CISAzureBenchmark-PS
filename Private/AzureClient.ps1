@@ -8,6 +8,14 @@ $script:IS_WINDOWS = $IsWindows -or ($env:OS -eq 'Windows_NT')
 # Used by Identity.ps1 in ForEach-Object -Parallel where Invoke-AzCli is unavailable
 $script:AZ_CMD = if ($script:IS_WINDOWS) { "az.cmd" } else { "az" }
 
+# Shared throttle counter — set to a ConcurrentBag by the caller when adaptive
+# concurrency is active.  Each transient retry adds an entry.
+$script:_throttleBag = $null
+
+# Process registry for Ctrl+C cleanup — set to a ConcurrentDictionary by the
+# caller so all runspaces share the same instance.
+$script:_runningProcs = $null
+
 function Test-TransientError {
     <#
     .SYNOPSIS
@@ -82,6 +90,10 @@ function Invoke-AzCli {
 
             $proc.Start() | Out-Null
 
+            # Track for Ctrl+C cleanup
+            $procId = $proc.Id
+            if ($script:_runningProcs) { $script:_runningProcs.TryAdd($procId, $proc) | Out-Null }
+
             $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
             $stderrTask = $proc.StandardError.ReadToEndAsync()
 
@@ -97,11 +109,13 @@ function Invoke-AzCli {
                         $proc.Kill($true)  # $true = kill entire process tree (.NET 5+)
                     }
                 } catch { <# already exited #> }
+                if ($script:_runningProcs) { $script:_runningProcs.TryRemove($procId, [ref]$null) | Out-Null }
                 $proc.Dispose()
                 $errMsg = "Command timed out after ${TimeoutSec}s: az $($cmdArgs -join ' ')"
                 Write-AuditLog "  $errMsg" -Level VERBOSE
 
                 if ($attempt -le $MaxRetries) {
+                    if ($script:_throttleBag) { $script:_throttleBag.Add(1) }
                     $baseDelay = [math]::Pow(2, $attempt)
                     $jitter    = Get-Random -Minimum 0.0 -Maximum 1.0
                     $delaySec  = $baseDelay + $jitter
@@ -119,6 +133,7 @@ function Invoke-AzCli {
             $stdoutStr = $stdoutTask.Result
             $stderrStr = $stderrTask.Result
             $exitCode  = $proc.ExitCode
+            if ($script:_runningProcs) { $script:_runningProcs.TryRemove($procId, [ref]$null) | Out-Null }
             $proc.Dispose()
 
             if ($exitCode -ne 0) {
@@ -127,6 +142,7 @@ function Invoke-AzCli {
 
                 # Retry on transient failures
                 if ($attempt -le $MaxRetries -and (Test-TransientError $errMsg)) {
+                    if ($script:_throttleBag) { $script:_throttleBag.Add(1) }
                     $baseDelay = [math]::Pow(2, $attempt)  # 2, 4, 8 seconds
                     $jitter    = Get-Random -Minimum 0.0 -Maximum 1.0
                     $delaySec  = $baseDelay + $jitter
@@ -278,7 +294,7 @@ function Invoke-AzRestPaged {
 function Test-FirewallError {
     param([string]$Message)
     foreach ($t in @("firewall", "network acl", "network access", "vnet rule", "public network access is disabled",
-                     "failed to resolve", "getaddrinfo failed", "JSON is invalid")) {
+                     "failed to resolve", "getaddrinfo failed")) {
         if ($Message -imatch [regex]::Escape($t)) { return $true }
     }
     return $false
