@@ -96,8 +96,7 @@ function Invoke-Section6Checks {
         $results.Add((New-ErrorResult "6.1.1.2" "Ensure Diagnostic Setting Captures Required Log Categories" 1 $sec $_.Exception.Message $sid $sname))
     }
 
-    # ── 6.1.1.3 — Subscription activity log retention >= 365 days (PS bonus) ─
-    # Note: This is a PS-specific check (not in CIS Python implementation).
+    # ── 6.1.1.3 — Subscription activity log retention >= 365 days ──────────────
     # Log profiles are the classic mechanism; modern approach uses diagnostic settings.
     try {
         $r = Invoke-AzCli -Arguments @(
