@@ -11,7 +11,7 @@
 
 **Version:** 1.3.1
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
-**Coverage:** 98 automated controls across 6 sections · 2 manual controls noted in output
+**Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
 
 ---
 
@@ -148,11 +148,12 @@ Private/
   Report.ps1                  HTML report generation
 Checks/
   Section2.ps1                Databricks checks (5 controls)
+  Section3.ps1                Compute checks (1 manual control)
   Section5.ps1                Identity & access checks (11 controls)
   Section6.ps1                Logging & monitoring checks (17 controls)
   Section7.ps1                Networking checks (13 controls)
   Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (24 controls — 100 total)
+  Section9.ps1                Storage checks (24 controls — 101 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (178 tests)
   Run-Tests.ps1               Test runner
@@ -706,4 +707,4 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 **Version:** 1.0.1
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
-**Coverage:** 98 automated controls across 6 sections · 2 manual controls noted in output
+**Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
