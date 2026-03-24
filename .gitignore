@@ -17,7 +17,8 @@ cis_run_history.json
 smoketest.ps1
 
 # Local notes / AI session files
-GitHub Copilot improvements.txt
+*improvements.txt
+REVIEW_TODO.md
 
 # Editor / OS
 .vscode/
