@@ -625,6 +625,7 @@ if ($subsToProcess.Count -gt 0) {
         Write-AuditLog "Running parallel audit ($currentParallel concurrent workers)..." -Level INFO
 
         $batchIdx = 0
+        $completedCounter = [System.Collections.Concurrent.ConcurrentBag[int]]::new()
         while ($batchIdx -lt $subPairs.Count) {
             $batchSize = [math]::Min($currentParallel, $subPairs.Count - $batchIdx)
             $batch     = @($subPairs[$batchIdx..($batchIdx + $batchSize - 1)])
@@ -641,6 +642,7 @@ if ($subsToProcess.Count -gt 0) {
                 $bag           = $using:resultBag
                 $tBag          = $using:throttleBag
                 $pReg          = $using:_procRegistry
+                $cBag          = $using:completedCounter
 
                 Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
 
@@ -684,7 +686,9 @@ if ($subsToProcess.Count -gt 0) {
                         Save-AuditCheckpoint -SubscriptionId $subId -SubscriptionName $subName -Results $subResults.ToArray()
                     }
 
-                    Write-Host "  [$subIdx/$subTotal] Completed: $subName — $($subResults.Count) results" -ForegroundColor Green
+                    $cBag.Add(1)
+                    $doneN = $cBag.Count
+                    Write-Host "  [$doneN/$subTotal] Completed: $subName — $($subResults.Count) results" -ForegroundColor Green
                 } catch { $null = $_ <# Intentional: per-subscription errors are logged inside; prevent ForEach-Object -Parallel from terminating #> }
 
             } -ThrottleLimit $batchSize
