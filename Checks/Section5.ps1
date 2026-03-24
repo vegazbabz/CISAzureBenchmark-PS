@@ -65,6 +65,13 @@ function Invoke-Check5_1_3 {
         -Remediation "Disable 'Allow users to remember MFA on trusted devices' in the legacy MFA portal, or migrate to Conditional Access sign-in frequency policies."
 }
 
+function Invoke-Check5_28 {
+    $cid = "5.28"; $title = "Ensure Privileged Users Are Protected by Phishing-Resistant MFA"; $level = 1; $sec = "5 - Identity Services"
+    New-CISResult $cid $title $level $sec $script:MANUAL `
+        -Details "Manual verification required — review privileged-role MFA methods in the Entra ID portal." `
+        -Remediation "Entra ID > Users > Per-user MFA, or Conditional Access > Grant > Require authentication strength > Phishing-resistant MFA for all privileged roles."
+}
+
 function Invoke-Check5_4 {
     $cid = "5.4"; $title = "Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
 
@@ -242,6 +249,7 @@ function Invoke-Section5TenantChecks {
         @{ Id = '5.1.1'; Title = 'Security Defaults';       Fn = { Invoke-Check5_1_1 } }
         @{ Id = '5.1.2'; Title = 'MFA for Admin Roles';      Fn = { Invoke-Check5_1_2 } }
         @{ Id = '5.1.3'; Title = 'MFA Device Memory';        Fn = { Invoke-Check5_1_3 } }
+        @{ Id = '5.28';  Title = 'Phishing-Resistant MFA';   Fn = { Invoke-Check5_28 } }
         @{ Id = '5.4';   Title = 'Restrict Tenant Creation'; Fn = { Invoke-Check5_4  } }
         @{ Id = '5.14';  Title = 'User App Registration';    Fn = { Invoke-Check5_14 } }
         @{ Id = '5.15';  Title = 'Guest Access Restrictions'; Fn = { Invoke-Check5_15 } }

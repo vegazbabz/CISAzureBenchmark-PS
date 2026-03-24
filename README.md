@@ -11,7 +11,7 @@
 
 **Version:** 1.0.1
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
-**Coverage:** 82 automated controls across 6 sections · 1 manual control noted in output
+**Coverage:** 98 automated controls across 6 sections · 2 manual controls noted in output
 
 ---
 
@@ -148,11 +148,11 @@ Private/
   Report.ps1                  HTML report generation
 Checks/
   Section2.ps1                Databricks checks (5 controls)
-  Section5.ps1                Identity & access checks (10 controls)
+  Section5.ps1                Identity & access checks (11 controls)
   Section6.ps1                Logging & monitoring checks (17 controls)
   Section7.ps1                Networking checks (13 controls)
-  Section8.ps1                Security services checks (14 controls)
-  Section9.ps1                Storage checks (24 controls — 82 total)
+  Section8.ps1                Security services checks (30 controls)
+  Section9.ps1                Storage checks (24 controls — 100 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (178 tests)
   Run-Tests.ps1               Test runner
@@ -332,13 +332,14 @@ Useful after upgrading the tool or changing the `-Level` filter.
 | 2.1.10 | Public network access disabled | L1 |
 | 2.1.11 | Private endpoints used to access workspaces | L2 |
 
-### Section 5 — Identity Services (9 automated · 1 manual)
+### Section 5 — Identity Services (9 automated · 2 manual)
 
 | Control | Title | Level | Notes |
 | --- | --- | --- | --- |
 | 5.1.1 | Security defaults enabled | L1 | |
 | 5.1.2 | MFA enabled for all users | L1 | |
 | 5.1.3 | Allow users to remember MFA on trusted devices disabled | L1 | **Manual** |
+| 5.28 | Privileged users protected by phishing-resistant MFA | L1 | **Manual** |
 | 5.3.3 | User Access Administrator role restricted | L1 | |
 | 5.4 | Restrict non-admin users from creating tenants | L1 | |
 | 5.14 | Users cannot register applications | L1 | |
@@ -353,7 +354,7 @@ Useful after upgrading the tool or changing the `-Level` filter.
 | --- | --- | --- |
 | 6.1.1.1 | Diagnostic Setting exists for Subscription Activity Logs | L1 |
 | 6.1.1.2 | Diagnostic Setting captures required categories | L1 |
-| 6.1.1.3 | Ensure App Service logs are captured | L1 |
+| 6.1.1.3 | Activity log retention >= 365 days | L1 |
 | 6.1.1.4 | Key Vault diagnostic logging enabled | L1 |
 | 6.1.1.6 | Azure AppService HTTP logs enabled | L2 |
 | 6.1.2.1 | Activity Log Alert: Create Policy Assignment | L1 |
@@ -387,16 +388,32 @@ Useful after upgrading the tool or changing the `-Level` filter.
 | 7.14 | WAF request body inspection enabled | L2 |
 | 7.15 | WAF bot protection enabled | L2 |
 
-### Section 8 — Security Services (14 automated)
+### Section 8 — Security Services (30 automated)
 
 | Control | Title | Level |
 | --- | --- | --- |
+| 8.1.1.1 | Microsoft Defender CSPM | L2 |
+| 8.1.2.1 | Microsoft Defender for APIs | L2 |
+| 8.1.3.1 | Microsoft Defender for Servers | L2 |
 | 8.1.3.3 | Endpoint protection (WDATP) component | L2 |
+| 8.1.4.1 | Microsoft Defender for Containers | L2 |
+| 8.1.5.1 | Microsoft Defender for Storage | L2 |
+| 8.1.6.1 | Microsoft Defender for App Services | L2 |
+| 8.1.7.1 | Microsoft Defender for Azure Cosmos DB | L2 |
+| 8.1.7.2 | Microsoft Defender for Open-Source Relational DBs | L2 |
+| 8.1.7.3 | Microsoft Defender for SQL (Managed Instance) | L2 |
+| 8.1.7.4 | Microsoft Defender for SQL Servers on Machines | L2 |
+| 8.1.8.1 | Microsoft Defender for Key Vault | L2 |
+| 8.1.9.1 | Microsoft Defender for Resource Manager | L2 |
 | 8.1.10 | Defender configured to check VM OS updates | L1 |
 | 8.1.12 | Security alerts notify subscription Owners | L1 |
 | 8.1.13 | Additional email addresses for security contact | L1 |
 | 8.1.14 | Alert severity notifications configured | L1 |
 | 8.1.15 | Attack path notifications configured | L1 |
+| 8.3.1 | Key expiration set — RBAC Key Vaults | L1 |
+| 8.3.2 | Key expiration set — non-RBAC Key Vaults | L1 |
+| 8.3.3 | Secret expiration set — RBAC Key Vaults | L1 |
+| 8.3.4 | Secret expiration set — non-RBAC Key Vaults | L1 |
 | 8.3.5 | Key Vault purge protection enabled | L1 |
 | 8.3.6 | Key Vault RBAC authorization enabled | L2 |
 | 8.3.7 | Key Vault public network access disabled | L1 |
@@ -416,9 +433,9 @@ Useful after upgrading the tool or changing the `-Level` filter.
 | 9.2.1 | Blob soft delete enabled | L1 |
 | 9.2.2 | Container soft delete enabled | L1 |
 | 9.2.3 | Blob versioning enabled | L2 |
-| 9.2.4 | Immutable blob storage configured | L2 |
-| 9.2.5 | Blob change feed enabled | L2 |
-| 9.2.6 | Point-in-time restore for blob data enabled | L2 |
+| 9.2.4 | Storage logging enabled for Blob Service read requests | L2 |
+| 9.2.5 | Storage logging enabled for Blob Service write requests | L2 |
+| 9.2.6 | Storage logging enabled for Blob Service delete requests | L2 |
 | 9.3.1.1 | Key rotation reminders enabled | L1 |
 | 9.3.1.2 | Access keys regenerated within 90 days | L1 |
 | 9.3.1.3 | Storage account key access disabled | L1 |
@@ -564,4 +581,4 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 **Version:** 1.0.1
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
-**Coverage:** 82 automated controls across 6 sections · 1 manual control noted in output
+**Coverage:** 98 automated controls across 6 sections · 2 manual controls noted in output

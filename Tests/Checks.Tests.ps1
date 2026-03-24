@@ -429,6 +429,14 @@ Describe "Invoke-Check5_1_3 — Remember MFA on Trusted Devices" {
     }
 }
 
+Describe "Invoke-Check5_28 — Phishing-Resistant MFA for Privileged Users" {
+    It "returns MANUAL status" {
+        $r = Invoke-Check5_28
+        $r.Status    | Should -Be "MANUAL"
+        $r.ControlId | Should -Be "5.28"
+    }
+}
+
 Describe "Invoke-Check5_4 — Restrict Non-Admin Tenant Creation" {
     It "returns PASS when allowedToCreateTenants is false" {
         $policy = [PSCustomObject]@{
