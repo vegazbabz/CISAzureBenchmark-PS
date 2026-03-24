@@ -74,6 +74,8 @@ param(
     [switch]  $ReportOnly,
     [switch]  $NoOpen,
     [string]  $LogFile            = "",
+    [switch]  $ExitCode,
+    [string]  $SuppressionsFile   = "suppressions.json",
     # Catch space-separated subscription names: -Subscriptions "A" "B"
     # PowerShell can't merge named-binding and remaining-binding on the same
     # parameter, so overflow values land here and are merged below.
@@ -110,6 +112,11 @@ if ($LogFile -and -not [System.IO.Path]::IsPathRooted($LogFile)) {
     $LogFile = Join-Path $PSScriptRoot $LogFile
 }
 
+# Resolve SuppressionsFile path if relative
+if ($SuppressionsFile -and -not [System.IO.Path]::IsPathRooted($SuppressionsFile)) {
+    $SuppressionsFile = Join-Path $PSScriptRoot $SuppressionsFile
+}
+
 # Ensure output and log directories exist before any writes happen
 foreach ($filePath_ in @($Output, $LogFile) | Where-Object { $_ }) {
     $dir_ = [System.IO.Path]::GetDirectoryName($filePath_)
@@ -128,7 +135,9 @@ foreach ($__f in @(
     "Private\Checkpoint.ps1",
     "Private\History.ps1",
     "Private\Report.ps1",
+    "Private\Suppressions.ps1",
     "Checks\Section2.ps1",
+    "Checks\Section3.ps1",
     "Checks\Section5.ps1",
     "Checks\Section6.ps1",
     "Checks\Section7.ps1",
@@ -226,6 +235,10 @@ if ($ReportOnly) {
     # Deduplicate
     $finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
 
+    # Apply suppressions
+    $suppressions = @(Get-Suppressions -Path $SuppressionsFile)
+    $finalResults = @(Invoke-Suppressions -Results $finalResults -Suppressions $suppressions)
+
     # Apply level filter
     if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
     if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
@@ -270,6 +283,10 @@ if ($ReportOnly) {
     Write-Host ""
     if (-not $NoOpen) {
         try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
+    }
+
+    if ($ExitCode -and ($counts.FAIL + $counts.ERROR) -gt 0) {
+        exit 2
     }
     exit 0
 }
@@ -475,9 +492,9 @@ if (-not $SkipTenantChecks) {
         Write-AuditLog "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCheckpoint.Count) results)." -Level INFO
         foreach ($r in $tenantCheckpoint) { $allResults.Add($r) }
     } else {
-        Write-AuditLog "Running tenant-level checks (Section 5)..." -Level INFO
+        Write-AuditLog "Running tenant-level checks (Section 3, Section 5)..." -Level INFO
         try {
-            $tenantResults = @(Invoke-Section5TenantChecks)
+            $tenantResults = @(Invoke-Section3TenantChecks) + @(Invoke-Section5TenantChecks)
             foreach ($r in $tenantResults) { $allResults.Add($r) }
             if (-not $NoCheckpoint) { Save-TenantCheckpoint -Results $tenantResults }
             Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
@@ -638,9 +655,15 @@ $elapsed = $auditStopwatch.Elapsed
 $elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "{0}m {1}s" -f [int][math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds } else { "{0}s" -f $elapsed.TotalSeconds.ToString('F1') }
 Write-AuditLog "Audit complete. $($allResults.Count) total results in $elapsedStr." -Level INFO
 
-# ── Apply level filter ────────────────────────────────────────────────────────
+# ── Apply suppressions ────────────────────────────────────────────────────────
+
+$suppressions = @(Get-Suppressions -Path $SuppressionsFile)
 
 $finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
+$finalResults = @(Invoke-Suppressions -Results $finalResults -Suppressions $suppressions)
+
+# ── Apply level filter ────────────────────────────────────────────────────────
+
 if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
 if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
 
@@ -709,4 +732,9 @@ Write-Host ""
 # ── Open report in default browser ─────────────────────────────────────────────
 if (-not $NoOpen) {
     try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
+}
+
+# ── Exit code for CI/CD ───────────────────────────────────────────────────────
+if ($ExitCode -and ($counts.FAIL + $counts.ERROR) -gt 0) {
+    exit 2
 }
