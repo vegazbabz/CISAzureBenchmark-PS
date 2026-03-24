@@ -441,7 +441,7 @@ function Invoke-Section8Checks {
         $results.Add((New-InfoResult "8.5" "Ensure That Azure DDoS Network Protection Is Enabled" 2 $sec "No VNets found." $sid $sname))
     } else {
         foreach ($vnet in $vnets) {
-            $hasDdos = [string]$vnet.hasDdos -eq "True" -or [string]$vnet.hasDdos -eq "true"
+            $hasDdos = [string]$vnet.hasDdos -in @("True", "true", "1")
             $results.Add((New-CISResult `
                 -ControlId "8.5" -Title "Ensure That Azure DDoS Network Protection Is Enabled" -Level 2 -Section $sec `
                 -Status $(if ($hasDdos) { $script:PASS } else { $script:FAIL }) `
