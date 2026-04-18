@@ -45,17 +45,21 @@ function Invoke-Check5_1_2 {
     }
 
     $users      = @($r.Data)
-    $noMfa      = @($users | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
-    $noMfaCount = $noMfa.Count
+    # Filter to users assigned to at least one admin role — the isAdmin field is
+    # populated by the userRegistrationDetails endpoint and reflects membership
+    # in any Azure AD directory role.
+    $adminUsers  = @($users | Where-Object { [string]$_.isAdmin -eq 'True' -or [string]$_.isAdmin -eq 'true' })
+    $noMfa       = @($adminUsers | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
+    $noMfaCount  = $noMfa.Count
 
     if ($noMfaCount -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($users.Count) users have MFA registered."
+        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($adminUsers.Count) admin user(s) (of $($users.Count) total) have MFA registered."
     }
 
     $sample = ($noMfa | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
     New-CISResult $cid $title $level $sec $script:FAIL `
-        -Details "$noMfaCount user(s) without MFA registered (of $($users.Count) total). Sample: $sample" `
-        -Remediation "Entra ID > Per-user MFA or Conditional Access > Require MFA for all users."
+        -Details "$noMfaCount admin user(s) without MFA registered (of $($adminUsers.Count) admin users, $($users.Count) total). Sample: $sample" `
+        -Remediation "Entra ID > Per-user MFA or Conditional Access > Require MFA for all administrative roles."
 }
 
 function Invoke-Check5_1_3 {

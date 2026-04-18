@@ -192,9 +192,13 @@ function Invoke-Section9Checks {
 
         # ── Group 2: Blob service properties (dynamic call per account) ───────
 
-        # Skip blob/file checks for Azure Data Lake Gen2 (no blob service API)
+        # Skip blob/file checks for Azure Data Lake Storage Gen2 (HNS-enabled accounts
+        # do not expose a separate blob service properties API).
+        # Use the isHns property from Resource Graph (preferred); fall back to kind
+        # for the direct az CLI path which projects kind from the account object.
         $acctSku = [string]($acct.PSObject.Properties['sku']?.Value)
-        $isAdls = $kind -eq "StorageV2" -and ($acctSku -match "HNS" -or $acctSku -match "Premium")
+        $isHnsProp = [string]($acct.PSObject.Properties['isHns']?.Value)
+        $isAdls = $isHnsProp -eq 'true' -or $isHnsProp -eq 'True'
 
         if (-not $isAdls) {
             try {

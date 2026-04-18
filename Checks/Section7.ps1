@@ -155,7 +155,7 @@ function Invoke-Section7Checks {
             foreach ($fl in $allFlowLogs) {
                 $days = [int]($fl.retentionPolicy.days)
                 $en   = [string]$fl.retentionPolicy.enabled -eq "True" -or [string]$fl.retentionPolicy.enabled -eq "true"
-                $pass = -not $en -or $days -ge 90
+                $pass = $en -and $days -ge 90
                 $results.Add((New-CISResult `
                     -ControlId "7.5" `
                     -Title "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'" `

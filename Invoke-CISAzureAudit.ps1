@@ -401,7 +401,7 @@ if (-not $NoPermissionCheck) {
 
     # Show aggregated role summary (mirrors Python output)
     if ($permCheck.UserId) {
-        Write-Host "   User: $callerName\" -ForegroundColor DarkCyan
+        Write-Host "   User: $callerName" -ForegroundColor DarkCyan
     }
     $permRoles = @($permCheck.Roles)
     if ($permRoles.Count -gt 0) {

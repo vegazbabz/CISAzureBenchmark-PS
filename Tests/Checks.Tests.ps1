@@ -145,6 +145,29 @@ Describe "Get-NsgBadRules" {
         $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
         $result | Should -HaveCount 0
     }
+
+    It "flags rule when internet source is in sourceAddressPrefixes array (regression)" {
+        # Internet source expressed as an array (sourceAddressPrefixes) must still be flagged
+        $rule = [PSCustomObject]@{
+            name = "array-ssh"; access = "Allow"; direction = "Inbound"
+            protocol = "TCP"; sourceAddressPrefix = ""; destinationPortRange = "22"
+            sourceAddressPrefixes = @("10.0.0.0/8", "*")
+            destinationPortRanges = @()
+        }
+        $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
+        $result | Should -Contain "array-ssh"
+    }
+
+    It "does not flag rule when all sourceAddressPrefixes entries are private" {
+        $rule = [PSCustomObject]@{
+            name = "priv-array-ssh"; access = "Allow"; direction = "Inbound"
+            protocol = "TCP"; sourceAddressPrefix = ""; destinationPortRange = "22"
+            sourceAddressPrefixes = @("10.0.0.0/8", "192.168.0.0/16")
+            destinationPortRanges = @()
+        }
+        $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
+        $result | Should -HaveCount 0
+    }
 }
 
 Describe "Get-NsgUdpBadRules" {
@@ -172,6 +195,17 @@ Describe "Get-NsgUdpBadRules" {
         }
         $result = Get-NsgUdpBadRules -Rules @($rule)
         $result | Should -Contain "any-proto"
+    }
+
+    It "flags UDP rule when internet source is in sourceAddressPrefixes array (regression)" {
+        $rule = [PSCustomObject]@{
+            name = "array-udp"; access = "Allow"; direction = "Inbound"
+            protocol = "UDP"; sourceAddressPrefix = ""
+            sourceAddressPrefixes = @("10.0.0.0/8", "Internet")
+            destinationPortRange = "*"; destinationPortRanges = @()
+        }
+        $result = Get-NsgUdpBadRules -Rules @($rule)
+        $result | Should -Contain "array-udp"
     }
 }
 
@@ -389,23 +423,23 @@ Describe "Invoke-Check5_1_1 — Security Defaults" {
 Describe "Invoke-Check5_1_2 — MFA All Users" {
     It "returns PASS when all users have MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true; isAdmin = $true }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "PASS"
     }
 
-    It "returns FAIL when a user lacks MFA" {
+    It "returns FAIL when an admin user lacks MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true;  isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false; isAdmin = $true }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "FAIL"
-        $r.Details | Should -Match "1 user"
+        $r.Details | Should -Match "1 admin user"
     }
 
     It "returns ERROR on API failure" {
@@ -418,6 +452,29 @@ Describe "Invoke-Check5_1_2 — MFA All Users" {
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "PASS"
+    }
+
+    It "returns PASS when only non-admin user lacks MFA (admin-scope regression)" {
+        # A non-admin user without MFA must NOT cause a FAIL — the control only covers admins.
+        $users = @(
+            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $true;  isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
+        )
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
+        $r = Invoke-Check5_1_2
+        $r.Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when admin has no MFA even if non-admin also has no MFA" {
+        $users = @(
+            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $false; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
+        )
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
+        $r = Invoke-Check5_1_2
+        $r.Status   | Should -Be "FAIL"
+        $r.Details  | Should -Match "1 admin user"
+        $r.Details  | Should -Match "admin@test.com"
     }
 }
 
@@ -1569,6 +1626,29 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
+    }
+
+    It "returns FAIL when flow log retention is disabled even with 0 days (regression)" {
+        # Previously the logic was '-not $en -or $days -ge 90' which would PASS a disabled log.
+        # Correct behaviour: disabled retention must FAIL regardless of days.
+        $pd = Merge-PD @(
+            (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
+            (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
+        )
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "flow-log") {
+                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
+                    name = "fl-disabled"; targetResourceId = "/sub/x/nsg/nsg1"
+                    retentionPolicy = [PSCustomObject]@{ enabled = "False"; days = 0 }
+                }) }
+            }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
     }
@@ -2789,5 +2869,63 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.9" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.3.10" }).Status | Should -Be "FAIL"
+    }
+}
+
+# =============================================================================
+# SECTION 9 — ADLS Gen2 HNS detection (regression)
+# =============================================================================
+
+Describe "Invoke-Section9Checks — ADLS Gen2 HNS detection (regression)" {
+    It "skips blob-service-properties call for HNS-enabled account (isHns=true)" {
+        # StorageV2 account with Standard_LRS SKU and isHnsEnabled=true.
+        # The old SKU heuristic would not detect it as ADLS and would wrongly call
+        # blob-service-properties, which is unsupported for HNS accounts.
+        $adlsAcct = [PSCustomObject]@{
+            id = "/x"; name = "sa-adls"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            isHns = "true"; sku = "Standard_LRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($adlsAcct)
+        $script:blobApiCalled = $false
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "blob-service-properties") { $script:blobApiCalled = $true }
+            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd | Out-Null
+        $script:blobApiCalled | Should -BeFalse
+    }
+
+    It "calls blob-service-properties for a regular StorageV2 account (isHns=null)" {
+        # A standard StorageV2 account (isHns null/false) must still call the blob API.
+        $regularAcct = [PSCustomObject]@{
+            id = "/x"; name = "sa-regular"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            isHns = $null; sku = "Standard_LRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($regularAcct)
+        $script:blobApiCalled = $false
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "blob-service-properties") {
+                $script:blobApiCalled = $true
+                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{
+                    deleteRetentionPolicy          = [PSCustomObject]@{ enabled = $true; days = 7 }
+                    containerDeleteRetentionPolicy = [PSCustomObject]@{ enabled = $true; days = 7 }
+                    isVersioningEnabled            = $true
+                    logging = [PSCustomObject]@{ read = "true"; write = "true"; delete = "true" }
+                } }
+            }
+            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd | Out-Null
+        $script:blobApiCalled | Should -BeTrue
     }
 }

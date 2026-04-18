@@ -91,12 +91,24 @@ function Get-NsgBadRules {
 
         $access    = [string]($props.PSObject.Properties['access']?.Value)
         $direction = [string]($props.PSObject.Properties['direction']?.Value)
-        $srcAddr   = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
         $proto     = [string]($props.PSObject.Properties['protocol']?.Value)
 
-        if ($access -ne 'Allow')   { continue }
+        if ($access -ne 'Allow')      { continue }
         if ($direction -ne 'Inbound') { continue }
-        if (-not $srcAddr -or $script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
+
+        # Normalise both singular and plural source address fields into one list
+        $srcAddrs = [System.Collections.Generic.List[string]]::new()
+        $sap = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
+        if ($sap) { $srcAddrs.Add($sap) }
+        $sapProp = $props.PSObject.Properties['sourceAddressPrefixes']
+        if ($sapProp -and $sapProp.Value) {
+            foreach ($sa in $sapProp.Value) { if ($sa) { $srcAddrs.Add([string]$sa) } }
+        }
+        $isInternet = $false
+        foreach ($sa in $srcAddrs) {
+            if ($script:INTERNET_SRCS -contains $sa.ToLower()) { $isInternet = $true; break }
+        }
+        if (-not $isInternet) { continue }
 
         $protoUpper = if ($proto) { $proto.ToUpper() } else { '' }
         if ($protoUpper -ne '*' -and $Protocols -notcontains $proto -and $Protocols -notcontains $protoUpper) { continue }
@@ -149,12 +161,24 @@ function Get-NsgUdpBadRules {
 
         $access    = [string]($props.PSObject.Properties['access']?.Value)
         $direction = [string]($props.PSObject.Properties['direction']?.Value)
-        $srcAddr   = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
         $proto     = [string]($props.PSObject.Properties['protocol']?.Value)
 
-        if ($access -ne 'Allow')   { continue }
+        if ($access -ne 'Allow')      { continue }
         if ($direction -ne 'Inbound') { continue }
-        if (-not $srcAddr -or $script:INTERNET_SRCS -notcontains $srcAddr.ToLower()) { continue }
+
+        # Normalise both singular and plural source address fields into one list
+        $srcAddrs = [System.Collections.Generic.List[string]]::new()
+        $sap = [string]($props.PSObject.Properties['sourceAddressPrefix']?.Value)
+        if ($sap) { $srcAddrs.Add($sap) }
+        $sapProp = $props.PSObject.Properties['sourceAddressPrefixes']
+        if ($sapProp -and $sapProp.Value) {
+            foreach ($sa in $sapProp.Value) { if ($sa) { $srcAddrs.Add([string]$sa) } }
+        }
+        $isInternet = $false
+        foreach ($sa in $srcAddrs) {
+            if ($script:INTERNET_SRCS -contains $sa.ToLower()) { $isInternet = $true; break }
+        }
+        if (-not $isInternet) { continue }
 
         $protoUpper = if ($proto) { $proto.ToUpper() } else { '' }
         if ($protoUpper -ne 'UDP' -and $protoUpper -ne '*') { continue }
