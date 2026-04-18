@@ -61,7 +61,7 @@ function Get-Suppressions {
         @()
     }
     if (-not $entries -or $entries.Count -eq 0) {
-        Write-AuditLog "Suppression file '$Path' has no entries." -Level WARNING
+        Write-AuditLog "Suppression file '$Path' has no entries." -Level INFO
         return @()
     }
 

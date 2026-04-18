@@ -1048,14 +1048,14 @@ Describe "Invoke-Section2Checks — 2.1.7 Diagnostic Logging" {
 
     It "returns PASS when diagnostic settings exist" {
         $pd = Merge-PD @((New-PD "databricks" @($ws2)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "diag1" }) } }
+        Mock Get-AzDiagnosticSetting { [PSCustomObject]@{ name = "diag1" } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.7" }).Status | Should -Be "PASS"
     }
 
     It "returns FAIL when no diagnostic settings" {
         $pd = Merge-PD @((New-PD "databricks" @($ws2)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzDiagnosticSetting { @() }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.7" }).Status | Should -Be "FAIL"
     }
@@ -1091,20 +1091,22 @@ Describe "Invoke-Section2Checks — 2.1.11 Private Endpoints" {
 
 Describe "Invoke-Check5_23 — No Custom Owner Roles" {
     It "returns PASS when no custom wildcard roles" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzRoleDefinition { @() }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "PASS"
     }
 
     It "returns FAIL when custom wildcard role found" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "SuperOwner"; id = "xyz" }) } }
+        Mock Get-AzRoleDefinition {
+            [PSCustomObject]@{ Name = "SuperOwner"; Id = "xyz"; Actions = @("*") }
+        }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "FAIL"
         $r.Details | Should -Match "SuperOwner"
     }
 
-    It "returns ERROR on CLI failure" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $false; Data = $null; Error = "timeout" } }
+    It "returns ERROR on API failure" {
+        Mock Get-AzRoleDefinition { throw "Role definition API failed" }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "ERROR"
     }
@@ -1120,25 +1122,16 @@ Describe "Invoke-Section6Checks — 6.1.1.1 Diagnostic Setting Exists" {
     }
 
     It "returns PASS when subscription diagnostic settings exist" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @([PSCustomObject]@{ enabled = "True"; category = "Security" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Administrative" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Alert" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Policy" })
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @([PSCustomObject]@{ enabled = "True"; category = "Security" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Administrative" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Alert" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Policy" })
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1146,19 +1139,10 @@ Describe "Invoke-Section6Checks — 6.1.1.1 Diagnostic Setting Exists" {
     }
 
     It "returns FAIL when no diagnostic settings" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1172,27 +1156,18 @@ Describe "Invoke-Section6Checks — 6.1.1.2 Required Log Categories" {
     }
 
     It "returns PASS when all four categories enabled" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @(
-                        [PSCustomObject]@{ enabled = "True"; category = "Security" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Administrative" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Alert" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Policy" }
-                    )
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @(
+                    [PSCustomObject]@{ enabled = "True"; category = "Security" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Administrative" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Alert" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Policy" }
+                )
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1200,24 +1175,15 @@ Describe "Invoke-Section6Checks — 6.1.1.2 Required Log Categories" {
     }
 
     It "returns FAIL when missing required categories" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @(
-                        [PSCustomObject]@{ enabled = "True"; category = "Security" }
-                    )
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @(
+                    [PSCustomObject]@{ enabled = "True"; category = "Security" }
+                )
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1231,18 +1197,8 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns PASS when retention >= 365" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile {
+            [PSCustomObject]@{ RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 365 } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1251,18 +1207,8 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns FAIL when retention < 365" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 30 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile {
+            [PSCustomObject]@{ RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 30 } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1271,18 +1217,9 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns FAIL when no log profiles" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1291,28 +1228,16 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns PASS when no log profile but subscription diagnostic settings route Administrative logs" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                $diagData = [PSCustomObject]@{
-                    value = @([PSCustomObject]@{
-                        name        = "subscriptionToLa"
-                        workspaceId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/law"
-                        logs        = @(
-                            [PSCustomObject]@{ category = "Administrative"; enabled = "True" }
-                            [PSCustomObject]@{ category = "Security";       enabled = "True" }
-                        )
-                    })
-                }
-                return [PSCustomObject]@{ Success = $true; Data = $diagData }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name        = "subscriptionToLa"
+                workspaceId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/law"
+                logs        = @(
+                    [PSCustomObject]@{ category = "Administrative"; enabled = "True" }
+                    [PSCustomObject]@{ category = "Security";       enabled = "True" }
+                )
+            }) } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1321,18 +1246,9 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns FAIL when no log profile and no subscription diagnostic settings" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1346,24 +1262,13 @@ Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {
         $kv = [PSCustomObject]@{ id = "/sub/x/kv/kv1"; name = "kv1" }
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "app_services" @()))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'kv1') {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    logs = @([PSCustomObject]@{ enabled = "True"; categoryGroup = "audit" })
-                }) }
+        Mock Get-AzDiagnosticSetting {
+            [PSCustomObject]@{
+                Log = @([PSCustomObject]@{ Enabled = $true; CategoryGroup = "audit"; Category = $null })
             }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1420,20 +1325,14 @@ Describe "Invoke-Section6Checks — 6.1.1.6 App Service Resource Logs" {
         $app = [PSCustomObject]@{ id = "/sub/x/sites/app1"; name = "app1"; kind = "app" }
         $pd = Merge-PD @((New-PD "keyvaults" @()), (New-PD "app_services" @($app)))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'app1') {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    logs = @([PSCustomObject]@{ enabled = "True"; retentionPolicy = $null })
-                }) }
+        Mock Get-AzDiagnosticSetting {
+            [PSCustomObject]@{
+                Log = @([PSCustomObject]@{ Enabled = $true; RetentionPolicyEnabled = $false; RetentionPolicyDay = 0 })
+                StorageAccountId = $null
             }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1494,17 +1393,15 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns PASS for 6.1.2.1 when policy assignment alert exists" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-                ) }
+        Mock Get-AzActivityLogAlert {
+            [PSCustomObject]@{
+                Condition = [PSCustomObject]@{
+                    AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" })
+                }
             }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1512,13 +1409,9 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns FAIL for 6.1.2.1 when no matching alert" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzActivityLogAlert { @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1526,27 +1419,23 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns PASS for all 6.1.2.x when all alerts configured" {
-        $allAlerts = @(
-            (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-            (New-AlertRule "operationName" "microsoft.authorization/policyassignments/delete")
-            (New-AlertRule "operationName" "microsoft.network/networksecuritygroups/write")
-            (New-AlertRule "operationName" "microsoft.network/networksecuritygroups/delete")
-            (New-AlertRule "operationName" "microsoft.security/securitysolutions/write")
-            (New-AlertRule "operationName" "microsoft.security/securitysolutions/delete")
-            (New-AlertRule "operationName" "microsoft.sql/servers/firewallrules/write")
-            (New-AlertRule "operationName" "microsoft.sql/servers/firewallrules/delete")
-            (New-AlertRule "operationName" "microsoft.network/publicipaddresses/write")
-            (New-AlertRule "operationName" "microsoft.network/publicipaddresses/delete")
-            (New-AlertRule "category" "servicehealth")
-        )
-
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = $allAlerts } }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzActivityLogAlert {
+            @(
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/networksecuritygroups/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/networksecuritygroups/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.security/securitysolutions/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.security/securitysolutions/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.sql/servers/firewallrules/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.sql/servers/firewallrules/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/publicipaddresses/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/publicipaddresses/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "category"; Equal = "servicehealth" }) } }
+            )
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1556,17 +1445,11 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns FAIL for 6.1.2.11 when no ServiceHealth alert" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-                ) }
-            }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzActivityLogAlert {
+            @([PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) } })
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1680,19 +1563,15 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
     It "returns PASS when flow log retention >= 90 days" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "flow-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "fl1"; targetResourceId = "/sub/x/nsg/nsg1"
-                    retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 90 }
-                }) }
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "fl1"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/networkSecurityGroups/nsg1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 90 }
             }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "PASS"
@@ -1714,19 +1593,15 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
         # Correct behaviour: disabled retention must FAIL regardless of days.
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "flow-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "fl-disabled"; targetResourceId = "/sub/x/nsg/nsg1"
-                    retentionPolicy = [PSCustomObject]@{ enabled = "False"; days = 0 }
-                }) }
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "fl-disabled"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/networkSecurityGroups/nsg1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $false; Days = 0 }
             }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
@@ -1737,10 +1612,11 @@ Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
     It "returns PASS when watchers cover all regions" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
+        Mock Get-AzNetworkWatcherFlowLog { @() }
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "PASS"
@@ -1749,10 +1625,11 @@ Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
     It "returns FAIL when watcher missing in a region" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" }, [PSCustomObject]@{ location = "westus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
+        Mock Get-AzNetworkWatcherFlowLog { @() }
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "FAIL"
@@ -1763,19 +1640,15 @@ Describe "Invoke-Section7Checks — 7.8 VNet Flow Logs" {
     It "returns PASS when VNet flow log with >= 90 day retention" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "flow-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "vfl1"; targetResourceId = "/sub/x/virtualnetworks/vnet1"
-                    retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 90 }
-                }) }
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "vfl1"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 90 }
             }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.8" }).Status | Should -Be "PASS"

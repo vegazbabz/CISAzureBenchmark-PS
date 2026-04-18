@@ -19,7 +19,8 @@
 
 A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
 
-Zero external module dependencies — only PowerShell 7+ and the Azure CLI.
+Zero Azure CLI dependency — authentication and all API calls use the Az PowerShell module.
+Install the required modules once, then run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
 can be resumed without re-running completed work. Output is a self-contained HTML report with
@@ -34,8 +35,20 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 | Requirement | Details |
 | --- | --- |
 | PowerShell | [7.0 or higher](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) |
-| Azure CLI | Any recent version — <https://aka.ms/install-azure-cli> |
-| Azure login | `az login` completed before running |
+| Az.Accounts | `Install-Module Az.Accounts` — authentication, context, REST calls |
+| Az.ResourceGraph | `Install-Module Az.ResourceGraph` — resource prefetch queries |
+| Az.Monitor | `Install-Module Az.Monitor` — log profiles, diagnostic settings, activity log alerts |
+| Az.Network | `Install-Module Az.Network` — network watcher flow logs |
+| Az.Storage | `Install-Module Az.Storage` — storage account enumeration |
+| Az.KeyVault | `Install-Module Az.KeyVault` — key rotation policies |
+| Az.Resources | `Install-Module Az.Resources` — role definitions |
+| Azure CLI | Any recent version — <https://aka.ms/install-azure-cli> (used for some sub-checks) |
+| Azure login | `Connect-AzAccount` completed before running |
+
+> **Install all at once:**
+> ```powershell
+> Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources -Scope CurrentUser
+> ```
 
 ### Azure permissions
 
@@ -57,10 +70,13 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 ## Quick Start
 
 ```powershell
-# 1. Login to Azure
-az login
+# 1. Install required Az PowerShell modules (one-time)
+Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources -Scope CurrentUser
 
-# 2. Run the audit (audits all enabled subscriptions)
+# 2. Log in to Azure
+Connect-AzAccount
+
+# 3. Run the audit (audits all enabled subscriptions)
 .\Invoke-CISAzureAudit.ps1
 ```
 
@@ -91,6 +107,16 @@ New to PowerShell or the Azure CLI? Follow these steps to get the tool running o
    az --version
    ```
 
+### Step 2b — Install the required Az PowerShell modules
+
+Run this once in a PowerShell 7 terminal:
+
+```powershell
+Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources -Scope CurrentUser
+```
+
+If prompted to install from an untrusted repository, type `Y` and press Enter.
+
 ### Step 3 — Get the tool
 
 **Option A — Clone with Git** (recommended — makes updating easy):
@@ -109,7 +135,7 @@ cd CISAzureBenchmark-PS
 ### Step 4 — Log in to Azure
 
 ```powershell
-az login
+Connect-AzAccount
 ```
 
 A browser window will open for you to sign in. The account you use needs at minimum **Reader**

@@ -1,0 +1,2456 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE report PUBLIC "-//JACOCO//DTD Report 1.1//EN" "report.dtd"[]>
+<report name="Pester (04/18/2026 14:12:17)">
+  <sessioninfo id="this" start="1776521518635" dump="1776521537397" />
+  <package name="CISAzureBenchmark-PS/Checks">
+    <class name="CISAzureBenchmark-PS/Checks/Section2" sourcefilename="Checks/Section2.ps1">
+      <method name="Invoke-Section2Checks" desc="()" line="12">
+        <counter type="INSTRUCTION" missed="4" covered="111" />
+        <counter type="LINE" missed="2" covered="54" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="4" covered="111" />
+      <counter type="LINE" missed="2" covered="54" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section3" sourcefilename="Checks/Section3.ps1">
+      <method name="Invoke-Check3_1_1" desc="()" line="19">
+        <counter type="INSTRUCTION" missed="7" covered="0" />
+        <counter type="LINE" missed="7" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-Section3TenantChecks" desc="()" line="39">
+        <counter type="INSTRUCTION" missed="23" covered="0" />
+        <counter type="LINE" missed="16" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="30" covered="0" />
+      <counter type="LINE" missed="23" covered="0" />
+      <counter type="METHOD" missed="2" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section5" sourcefilename="Checks/Section5.ps1">
+      <method name="Invoke-Check5_1_1" desc="()" line="8">
+        <counter type="INSTRUCTION" missed="0" covered="30" />
+        <counter type="LINE" missed="0" covered="16" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_1_2" desc="()" line="38">
+        <counter type="INSTRUCTION" missed="0" covered="26" />
+        <counter type="LINE" missed="0" covered="13" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_1_3" desc="()" line="62">
+        <counter type="INSTRUCTION" missed="0" covered="5" />
+        <counter type="LINE" missed="0" covered="2" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_28" desc="()" line="69">
+        <counter type="INSTRUCTION" missed="0" covered="5" />
+        <counter type="LINE" missed="0" covered="2" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_4" desc="()" line="76">
+        <counter type="INSTRUCTION" missed="1" covered="24" />
+        <counter type="LINE" missed="0" covered="12" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_14" desc="()" line="96">
+        <counter type="INSTRUCTION" missed="3" covered="22" />
+        <counter type="LINE" missed="1" covered="11" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_15" desc="()" line="116">
+        <counter type="INSTRUCTION" missed="3" covered="22" />
+        <counter type="LINE" missed="1" covered="12" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_16" desc="()" line="141">
+        <counter type="INSTRUCTION" missed="4" covered="24" />
+        <counter type="LINE" missed="1" covered="11" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_3_3" desc="()" line="167">
+        <counter type="INSTRUCTION" missed="1" covered="22" />
+        <counter type="LINE" missed="0" covered="12" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_23" desc="()" line="195">
+        <counter type="INSTRUCTION" missed="0" covered="19" />
+        <counter type="LINE" missed="0" covered="11" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Check5_27" desc="()" line="223">
+        <counter type="INSTRUCTION" missed="0" covered="21" />
+        <counter type="LINE" missed="0" covered="10" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Invoke-Section5TenantChecks" desc="()" line="247">
+        <counter type="INSTRUCTION" missed="58" covered="0" />
+        <counter type="LINE" missed="23" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-Section5SubscriptionChecks" desc="()" line="286">
+        <counter type="INSTRUCTION" missed="11" covered="0" />
+        <counter type="LINE" missed="5" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="81" covered="220" />
+      <counter type="LINE" missed="31" covered="112" />
+      <counter type="METHOD" missed="2" covered="11" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section6" sourcefilename="Checks/Section6.ps1">
+      <method name="Invoke-Section6Checks" desc="()" line="12">
+        <counter type="INSTRUCTION" missed="39" covered="284" />
+        <counter type="LINE" missed="15" covered="150" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="39" covered="284" />
+      <counter type="LINE" missed="15" covered="150" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section7" sourcefilename="Checks/Section7.ps1">
+      <method name="Invoke-Section7Checks" desc="()" line="12">
+        <counter type="INSTRUCTION" missed="22" covered="337" />
+        <counter type="LINE" missed="11" covered="163" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="22" covered="337" />
+      <counter type="LINE" missed="11" covered="163" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section8" sourcefilename="Checks/Section8.ps1">
+      <method name="Invoke-Section8Checks" desc="()" line="12">
+        <counter type="INSTRUCTION" missed="79" covered="447" />
+        <counter type="LINE" missed="42" covered="206" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="79" covered="447" />
+      <counter type="LINE" missed="42" covered="206" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Checks/Section9" sourcefilename="Checks/Section9.ps1">
+      <method name="Invoke-Section9Checks" desc="()" line="12">
+        <counter type="INSTRUCTION" missed="76" covered="505" />
+        <counter type="LINE" missed="39" covered="242" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="76" covered="505" />
+      <counter type="LINE" missed="39" covered="242" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <sourcefile name="Checks/Section2.ps1">
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="16" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="18" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="19" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="21" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="22" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="23" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="24" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="27" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="28" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="33" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="36" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="37" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="41" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="0" ci="6" mb="0" cb="0" />
+      <line nr="44" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="45" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="50" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="51" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="58" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="59" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="63" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="64" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="68" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="69" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="70" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="73" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="79" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="84" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="85" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="89" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="90" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="91" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="95" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="96" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="97" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="101" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="102" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="103" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="108" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="109" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="113" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="4" covered="111" />
+      <counter type="LINE" missed="2" covered="54" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Checks/Section3.ps1">
+      <line nr="19" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="20" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="21" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="22" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="24" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="25" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="28" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="39" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="40" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="41" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="45" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="46" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="47" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="48" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="50" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="51" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="52" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="53" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="55" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="60" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="30" covered="0" />
+      <counter type="LINE" missed="23" covered="0" />
+      <counter type="METHOD" missed="2" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </sourcefile>
+    <sourcefile name="Checks/Section5.ps1">
+      <line nr="8" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="10" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="11" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="17" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="21" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="22" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="23" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="24" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="25" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="29" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="30" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="41" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="43" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="44" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="47" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="48" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="51" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="52" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="55" mi="0" ci="5" mb="0" cb="0" />
+      <line nr="56" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="57" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="62" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="63" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="69" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="70" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="76" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="79" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="81" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="82" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="85" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="86" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="87" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="89" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="90" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="91" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="92" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="96" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="98" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="99" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="101" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="102" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="105" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="106" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="109" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="110" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="111" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="112" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="116" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="118" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="119" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="121" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="122" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="129" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="130" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="131" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="132" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="134" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="135" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="136" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="137" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="141" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="143" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="144" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="146" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="147" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="153" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="154" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="155" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="157" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="158" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="159" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="160" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="167" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="168" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="170" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="171" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="172" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="176" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="177" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="182" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="183" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="184" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="185" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="187" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="195" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="196" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="198" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="199" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="203" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="204" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="207" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="208" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="209" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="214" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="215" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="223" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="224" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="226" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="228" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="229" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="232" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="234" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="235" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="236" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="238" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="247" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="248" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="249" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="250" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="251" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="252" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="253" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="254" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="255" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="256" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="258" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="260" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="261" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="262" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="263" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="264" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="265" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="266" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="267" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="268" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="270" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="272" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="275" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="286" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="288" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="289" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="290" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="292" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="81" covered="220" />
+      <counter type="LINE" missed="31" covered="112" />
+      <counter type="METHOD" missed="2" covered="11" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Checks/Section6.ps1">
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="19" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="24" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="25" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="27" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="28" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="29" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="36" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="41" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="42" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="50" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="52" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="53" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="54" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="55" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="56" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="57" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="58" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="64" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="65" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="67" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="68" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="75" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="76" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="87" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="92" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="95" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="96" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="103" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="108" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="116" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="117" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="118" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="119" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="120" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="122" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="126" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="128" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="132" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="137" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="139" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="140" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="142" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="143" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="144" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="145" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="149" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="150" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="154" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="155" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="158" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="159" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="160" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="161" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="162" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="163" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="164" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="165" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="166" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="168" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="171" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="175" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="176" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="177" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="182" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="192" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="194" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="196" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="197" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="198" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="199" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="201" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="202" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="203" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="204" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="206" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="207" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="211" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="212" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="216" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="217" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="218" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="220" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="221" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="222" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="224" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="225" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="226" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="228" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="229" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="230" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="233" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="235" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="237" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="241" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="242" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="247" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="248" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="255" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="265" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="273" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="274" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="278" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="279" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="281" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="282" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="283" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="284" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="285" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="286" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="287" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="288" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="289" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="290" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="291" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="294" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="295" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="296" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="297" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="298" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="299" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="300" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="301" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="302" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="305" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="307" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="311" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="312" mi="0" ci="5" mb="0" cb="0" />
+      <line nr="313" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="318" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="319" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="320" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="321" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="322" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="323" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="324" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="325" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="328" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="330" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="334" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="335" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="336" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="340" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="341" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="347" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="348" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="350" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="351" mi="0" ci="5" mb="0" cb="0" />
+      <line nr="353" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="357" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="358" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="359" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="362" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="365" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="39" covered="284" />
+      <counter type="LINE" missed="15" covered="150" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Checks/Section7.ps1">
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="17" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="18" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="19" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="21" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="26" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="27" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="29" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="30" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="33" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="37" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="39" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="44" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="50" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="52" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="53" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="54" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="55" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="56" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="60" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="61" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="62" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="63" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="67" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="72" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="73" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="75" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="76" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="77" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="79" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="84" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="85" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="86" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="90" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="95" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="96" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="98" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="99" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="100" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="101" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="103" mi="0" ci="9" mb="0" cb="0" />
+      <line nr="106" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="112" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="113" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="114" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="118" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="125" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="128" mi="0" ci="8" mb="0" cb="0" />
+      <line nr="129" mi="0" ci="8" mb="0" cb="0" />
+      <line nr="133" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="134" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="135" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="136" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="139" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="140" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="146" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="147" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="155" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="156" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="157" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="158" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="159" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="163" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="164" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="165" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="166" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="170" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="175" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="177" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="178" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="179" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="180" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="182" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="185" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="188" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="193" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="198" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="199" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="202" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="203" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="211" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="212" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="213" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="214" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="215" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="219" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="220" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="221" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="222" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="226" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="231" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="232" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="233" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="234" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="237" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="238" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="239" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="240" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="242" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="243" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="244" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="245" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="246" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="247" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="251" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="252" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="253" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="258" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="266" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="267" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="268" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="269" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="270" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="271" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="272" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="273" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="275" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="278" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="280" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="281" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="282" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="283" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="284" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="285" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="288" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="289" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="293" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="294" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="295" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="299" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="300" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="304" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="305" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="306" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="310" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="311" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="315" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="317" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="321" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="322" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="323" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="324" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="325" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="326" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="330" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="332" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="336" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="337" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="338" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="342" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="343" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="344" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="347" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="348" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="351" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="352" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="355" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="356" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="357" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="361" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="366" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="369" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="22" covered="337" />
+      <counter type="LINE" missed="11" covered="163" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Checks/Section8.ps1">
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="17" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="18" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="19" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="23" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="24" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="25" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="26" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="27" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="28" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="29" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="30" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="33" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="35" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="41" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="44" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="45" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="50" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="51" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="55" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="56" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="57" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="60" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="66" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="67" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="69" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="70" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="72" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="73" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="77" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="79" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="88" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="89" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="91" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="92" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="94" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="95" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="96" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="97" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="98" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="100" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="104" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="105" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="106" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="110" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="116" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="117" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="118" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="119" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="120" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="121" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="125" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="126" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="127" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="128" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="129" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="130" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="131" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="132" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="135" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="139" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="140" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="141" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="145" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="146" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="147" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="148" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="149" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="152" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="156" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="157" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="158" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="162" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="163" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="164" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="165" mi="1" ci="3" mb="0" cb="0" />
+      <line nr="166" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="169" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="173" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="174" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="175" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="179" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="180" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="181" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="182" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="183" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="184" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="185" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="186" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="187" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="188" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="190" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="193" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="197" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="198" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="199" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="203" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="204" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="209" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="210" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="211" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="214" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="215" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="218" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="219" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="220" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="221" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="224" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="225" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="226" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="228" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="229" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="231" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="233" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="234" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="235" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="236" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="237" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="239" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="241" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="242" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="244" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="245" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="246" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="247" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="248" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="251" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="252" mi="0" ci="6" mb="0" cb="0" />
+      <line nr="253" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="257" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="261" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="263" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="264" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="267" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="268" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="269" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="270" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="271" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="273" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="275" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="276" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="278" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="279" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="280" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="281" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="284" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="285" mi="0" ci="11" mb="0" cb="0" />
+      <line nr="286" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="290" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="295" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="296" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="299" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="300" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="301" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="302" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="303" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="305" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="307" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="308" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="310" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="311" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="312" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="313" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="314" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="315" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="316" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="318" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="319" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="322" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="323" mi="0" ci="8" mb="0" cb="0" />
+      <line nr="324" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="328" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="332" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="335" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="336" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="337" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="341" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="344" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="345" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="346" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="350" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="351" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="354" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="355" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="356" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="360" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="363" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="364" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="365" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="370" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="371" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="372" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="376" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="377" mi="2" ci="2" mb="0" cb="0" />
+      <line nr="378" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="380" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="381" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="382" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="383" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="387" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="389" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="390" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="391" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="392" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="395" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="397" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="401" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="402" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="405" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="406" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="407" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="409" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="410" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="411" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="412" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="413" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="415" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="418" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="421" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="427" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="428" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="430" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="431" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="433" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="434" mi="0" ci="8" mb="0" cb="0" />
+      <line nr="435" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="440" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="441" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="443" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="444" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="445" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="447" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="448" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="449" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="450" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="454" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="79" covered="447" />
+      <counter type="LINE" missed="42" covered="206" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Checks/Section9.ps1">
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="17" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="21" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="22" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="25" mi="2" ci="1" mb="0" cb="0" />
+      <line nr="28" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="29" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="30" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="33" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="35" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="36" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="37" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="39" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="40" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="41" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="42" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="43" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="44" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="45" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="46" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="47" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="48" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="49" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="50" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="51" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="52" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="53" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="54" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="56" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="57" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="59" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="62" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="63" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="64" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="65" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="66" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="71" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="72" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="73" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="76" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="77" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="82" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="84" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="87" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="88" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="89" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="93" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="95" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="96" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="99" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="100" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="101" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="105" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="106" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="110" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="111" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="112" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="116" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="117" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="118" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="121" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="122" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="123" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="127" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="128" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="129" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="130" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="131" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="134" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="135" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="138" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="140" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="144" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="145" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="148" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="150" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="154" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="155" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="156" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="159" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="160" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="161" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="165" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="166" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="169" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="170" mi="0" ci="5" mb="0" cb="0" />
+      <line nr="171" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="175" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="178" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="179" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="180" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="184" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="185" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="188" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="189" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="190" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="196" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="197" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="199" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="201" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="202" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="206" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="207" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="208" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="209" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="210" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="211" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="212" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="213" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="214" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="215" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="216" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="217" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="218" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="219" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="220" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="221" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="222" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="223" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="226" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="229" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="232" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="233" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="234" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="235" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="236" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="237" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="240" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="242" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="246" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="247" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="248" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="249" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="250" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="251" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="254" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="256" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="260" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="261" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="262" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="265" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="266" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="267" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="271" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="272" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="273" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="274" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="275" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="276" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="277" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="279" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="282" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="284" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="287" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="290" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="292" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="295" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="298" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="300" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="304" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="307" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="308" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="316" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="317" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="321" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="322" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="323" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="324" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="325" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="326" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="327" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="328" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="329" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="331" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="332" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="333" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="336" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="337" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="338" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="339" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="340" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="342" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="343" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="345" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="347" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="350" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="352" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="357" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="358" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="359" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="360" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="361" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="362" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="364" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="365" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="366" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="369" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="370" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="371" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="374" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="375" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="378" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="379" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="380" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="383" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="384" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="388" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="389" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="390" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="397" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="398" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="402" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="403" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="406" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="407" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="410" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="412" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="413" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="416" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="417" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="418" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="419" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="421" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="422" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="423" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="424" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="425" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="426" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="430" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="431" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="434" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="435" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="436" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="439" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="442" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="443" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="446" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="447" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="455" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="456" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="459" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="460" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="462" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="463" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="464" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="465" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="466" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="467" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="469" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="470" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="471" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="472" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="473" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="474" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="477" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="480" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="481" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="482" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="483" mi="0" ci="4" mb="0" cb="0" />
+      <line nr="486" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="489" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="490" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="491" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="495" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="498" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="499" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="500" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="504" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="505" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="508" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="76" covered="505" />
+      <counter type="LINE" missed="39" covered="242" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <counter type="INSTRUCTION" missed="331" covered="1904" />
+    <counter type="LINE" missed="163" covered="927" />
+    <counter type="METHOD" missed="4" covered="16" />
+    <counter type="CLASS" missed="1" covered="6" />
+  </package>
+  <package name="CISAzureBenchmark-PS/Private">
+    <class name="CISAzureBenchmark-PS/Private/AzureClient" sourcefilename="Private/AzureClient.ps1">
+      <method name="&lt;script&gt;" desc="()" line="6">
+        <counter type="INSTRUCTION" missed="1" covered="6" />
+        <counter type="LINE" missed="0" covered="4" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Test-TransientError" desc="()" line="25">
+        <counter type="INSTRUCTION" missed="2" covered="0" />
+        <counter type="LINE" missed="1" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-AzCli" desc="()" line="46">
+        <counter type="INSTRUCTION" missed="129" covered="0" />
+        <counter type="LINE" missed="74" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-AzGraphQuery" desc="()" line="194">
+        <counter type="INSTRUCTION" missed="40" covered="0" />
+        <counter type="LINE" missed="26" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-AzRest" desc="()" line="252">
+        <counter type="INSTRUCTION" missed="6" covered="0" />
+        <counter type="LINE" missed="4" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-AzRestPaged" desc="()" line="272">
+        <counter type="INSTRUCTION" missed="19" covered="0" />
+        <counter type="LINE" missed="12" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Test-FirewallError" desc="()" line="296">
+        <counter type="INSTRUCTION" missed="5" covered="0" />
+        <counter type="LINE" missed="3" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Test-AuthzError" desc="()" line="305">
+        <counter type="INSTRUCTION" missed="5" covered="0" />
+        <counter type="LINE" missed="3" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Test-NotApplicableError" desc="()" line="313">
+        <counter type="INSTRUCTION" missed="5" covered="0" />
+        <counter type="LINE" missed="3" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="212" covered="6" />
+      <counter type="LINE" missed="126" covered="4" />
+      <counter type="METHOD" missed="8" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/CheckHelpers" sourcefilename="Private/CheckHelpers.ps1">
+      <method name="New-GraphPermissionMessage" desc="()" line="13">
+        <counter type="INSTRUCTION" missed="0" covered="4" />
+        <counter type="LINE" missed="0" covered="3" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Get-PrefetchData" desc="()" line="30">
+        <counter type="INSTRUCTION" missed="3" covered="8" />
+        <counter type="LINE" missed="0" covered="7" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Format-AzErrorMessage" desc="()" line="47">
+        <counter type="INSTRUCTION" missed="9" covered="14" />
+        <counter type="LINE" missed="9" covered="13" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="New-ErrorResult" desc="()" line="99">
+        <counter type="INSTRUCTION" missed="0" covered="2" />
+        <counter type="LINE" missed="0" covered="2" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="New-InfoResult" desc="()" line="117">
+        <counter type="INSTRUCTION" missed="0" covered="1" />
+        <counter type="LINE" missed="0" covered="1" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="New-ManualResult" desc="()" line="131">
+        <counter type="INSTRUCTION" missed="1" covered="0" />
+        <counter type="LINE" missed="1" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="13" covered="29" />
+      <counter type="LINE" missed="10" covered="26" />
+      <counter type="METHOD" missed="1" covered="5" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Checkpoint" sourcefilename="Private/Checkpoint.ps1">
+      <method name="&lt;script&gt;" desc="()" line="4">
+        <counter type="INSTRUCTION" missed="0" covered="1" />
+        <counter type="LINE" missed="0" covered="1" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Save-TenantCheckpoint" desc="()" line="13">
+        <counter type="INSTRUCTION" missed="32" covered="0" />
+        <counter type="LINE" missed="26" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Get-TenantCheckpoint" desc="()" line="55">
+        <counter type="INSTRUCTION" missed="29" covered="0" />
+        <counter type="LINE" missed="22" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Save-AuditCheckpoint" desc="()" line="100">
+        <counter type="INSTRUCTION" missed="35" covered="0" />
+        <counter type="LINE" missed="29" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Get-AuditCheckpoints" desc="()" line="145">
+        <counter type="INSTRUCTION" missed="31" covered="0" />
+        <counter type="LINE" missed="25" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Remove-AuditCheckpoints" desc="()" line="188">
+        <counter type="INSTRUCTION" missed="11" covered="0" />
+        <counter type="LINE" missed="8" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="138" covered="1" />
+      <counter type="LINE" missed="110" covered="1" />
+      <counter type="METHOD" missed="5" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Config" sourcefilename="Private/Config.ps1">
+      <method name="&lt;script&gt;" desc="()" line="4">
+        <counter type="INSTRUCTION" missed="0" covered="40" />
+        <counter type="LINE" missed="0" covered="39" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Read-ConfigFile" desc="()" line="60">
+        <counter type="INSTRUCTION" missed="58" covered="0" />
+        <counter type="LINE" missed="41" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="58" covered="40" />
+      <counter type="LINE" missed="41" covered="39" />
+      <counter type="METHOD" missed="1" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Helpers" sourcefilename="Private/Helpers.ps1">
+      <method name="Write-AuditLog" desc="()" line="9">
+        <counter type="INSTRUCTION" missed="12" covered="0" />
+        <counter type="LINE" missed="10" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Write-AuditProgress" desc="()" line="27">
+        <counter type="INSTRUCTION" missed="1" covered="0" />
+        <counter type="LINE" missed="1" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Remove-DuplicateResults" desc="()" line="39">
+        <counter type="INSTRUCTION" missed="8" covered="0" />
+        <counter type="LINE" missed="8" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Test-PortInRange" desc="()" line="59">
+        <counter type="INSTRUCTION" missed="1" covered="8" />
+        <counter type="LINE" missed="1" covered="4" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Get-NsgBadRules" desc="()" line="81">
+        <counter type="INSTRUCTION" missed="6" covered="39" />
+        <counter type="LINE" missed="2" covered="30" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Get-NsgUdpBadRules" desc="()" line="143">
+        <counter type="INSTRUCTION" missed="4" covered="24" />
+        <counter type="LINE" missed="0" covered="16" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Get-ControlSortKey" desc="()" line="177">
+        <counter type="INSTRUCTION" missed="0" covered="4" />
+        <counter type="LINE" missed="0" covered="1" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="32" covered="75" />
+      <counter type="LINE" missed="22" covered="51" />
+      <counter type="METHOD" missed="3" covered="4" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/History" sourcefilename="Private/History.ps1">
+      <method name="&lt;script&gt;" desc="()" line="3">
+        <counter type="INSTRUCTION" missed="0" covered="1" />
+        <counter type="LINE" missed="0" covered="1" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="Get-AuditHistory" desc="()" line="13">
+        <counter type="INSTRUCTION" missed="10" covered="0" />
+        <counter type="LINE" missed="5" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Add-AuditHistoryEntry" desc="()" line="35">
+        <counter type="INSTRUCTION" missed="38" covered="0" />
+        <counter type="LINE" missed="24" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Get-HistoryPathFor" desc="()" line="74">
+        <counter type="INSTRUCTION" missed="5" covered="0" />
+        <counter type="LINE" missed="3" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="53" covered="1" />
+      <counter type="LINE" missed="32" covered="1" />
+      <counter type="METHOD" missed="3" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Identity" sourcefilename="Private/Identity.ps1">
+      <method name="Get-SignedInUserId" desc="()" line="8">
+        <counter type="INSTRUCTION" missed="9" covered="0" />
+        <counter type="LINE" missed="7" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Get-SubscriptionList" desc="()" line="27">
+        <counter type="INSTRUCTION" missed="7" covered="0" />
+        <counter type="LINE" missed="5" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Test-AuditPermissions" desc="()" line="51">
+        <counter type="INSTRUCTION" missed="96" covered="0" />
+        <counter type="LINE" missed="48" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="_AzRaw" desc="()" line="75">
+        <counter type="INSTRUCTION" missed="13" covered="0" />
+        <counter type="LINE" missed="5" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="125" covered="0" />
+      <counter type="LINE" missed="65" covered="0" />
+      <counter type="METHOD" missed="4" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Models" sourcefilename="Private/Models.ps1">
+      <method name="New-CISResult" desc="()" line="19">
+        <counter type="INSTRUCTION" missed="0" covered="11" />
+        <counter type="LINE" missed="0" covered="11" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <counter type="INSTRUCTION" missed="0" covered="11" />
+      <counter type="LINE" missed="0" covered="11" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Report" sourcefilename="Private/Report.ps1">
+      <method name="&lt;script&gt;" desc="()" line="3">
+        <counter type="INSTRUCTION" missed="0" covered="1" />
+        <counter type="LINE" missed="0" covered="1" />
+        <counter type="METHOD" missed="0" covered="1" />
+      </method>
+      <method name="New-CISHtmlReport" desc="()" line="17">
+        <counter type="INSTRUCTION" missed="371" covered="0" />
+        <counter type="LINE" missed="187" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="371" covered="1" />
+      <counter type="LINE" missed="187" covered="1" />
+      <counter type="METHOD" missed="1" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </class>
+    <class name="CISAzureBenchmark-PS/Private/Suppressions" sourcefilename="Private/Suppressions.ps1">
+      <method name="&lt;script&gt;" desc="()" line="32">
+        <counter type="INSTRUCTION" missed="1" covered="0" />
+        <counter type="LINE" missed="1" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Get-Suppressions" desc="()" line="41">
+        <counter type="INSTRUCTION" missed="64" covered="0" />
+        <counter type="LINE" missed="43" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Invoke-Suppressions" desc="()" line="132">
+        <counter type="INSTRUCTION" missed="24" covered="0" />
+        <counter type="LINE" missed="20" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Find-SuppressionMatch" desc="()" line="173">
+        <counter type="INSTRUCTION" missed="6" covered="0" />
+        <counter type="LINE" missed="6" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <method name="Show-Suppressions" desc="()" line="192">
+        <counter type="INSTRUCTION" missed="25" covered="0" />
+        <counter type="LINE" missed="14" covered="0" />
+        <counter type="METHOD" missed="1" covered="0" />
+      </method>
+      <counter type="INSTRUCTION" missed="120" covered="0" />
+      <counter type="LINE" missed="84" covered="0" />
+      <counter type="METHOD" missed="5" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </class>
+    <sourcefile name="Private/AzureClient.ps1">
+      <line nr="6" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="9" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="17" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="25" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="46" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="47" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="52" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="53" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="58" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="59" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="62" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="64" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="66" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="69" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="70" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="80" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="81" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="83" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="84" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="85" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="86" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="88" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="89" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="91" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="94" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="95" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="97" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="98" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="100" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="106" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="107" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="109" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="114" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="115" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="118" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="119" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="120" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="121" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="122" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="123" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="126" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="130" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="131" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="133" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="134" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="135" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="136" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="137" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="139" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="140" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="141" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="144" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="145" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="146" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="147" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="148" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="149" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="150" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="154" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="155" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="158" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="160" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="161" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="165" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="166" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="168" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="173" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="194" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="195" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="196" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="197" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="200" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="201" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="203" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="204" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="205" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="208" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="209" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="212" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="213" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="214" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="215" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="218" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="220" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="221" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="224" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="225" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="229" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="230" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="231" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="232" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="233" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="238" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="252" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="255" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="256" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="258" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="272" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="273" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="275" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="276" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="277" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="278" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="280" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="281" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="283" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="284" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="285" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="289" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="296" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="298" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="300" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="305" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="306" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="308" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="313" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="314" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="316" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="212" covered="6" />
+      <counter type="LINE" missed="126" covered="4" />
+      <counter type="METHOD" missed="8" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/CheckHelpers.ps1">
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="30" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="31" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="32" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="33" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="35" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="36" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="47" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="48" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="54" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="55" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="58" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="60" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="61" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="64" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="66" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="67" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="69" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="70" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="72" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="75" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="76" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="79" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="83" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="84" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="99" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="100" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="117" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="131" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="13" covered="29" />
+      <counter type="LINE" missed="10" covered="26" />
+      <counter type="METHOD" missed="1" covered="5" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Checkpoint.ps1">
+      <line nr="4" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="14" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="15" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="18" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="19" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="21" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="22" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="23" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="24" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="25" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="26" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="27" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="28" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="29" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="30" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="31" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="32" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="33" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="34" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="35" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="36" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="37" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="42" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="44" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="46" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="55" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="56" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="60" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="62" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="66" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="67" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="68" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="71" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="72" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="75" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="76" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="79" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="80" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="81" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="82" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="85" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="100" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="101" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="105" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="106" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="107" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="109" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="110" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="111" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="114" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="115" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="116" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="118" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="119" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="120" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="121" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="122" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="123" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="124" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="125" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="126" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="127" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="132" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="133" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="134" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="136" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="145" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="146" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="148" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="150" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="151" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="153" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="155" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="157" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="158" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="159" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="160" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="161" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="162" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="163" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="164" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="165" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="166" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="167" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="168" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="171" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="172" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="173" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="174" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="177" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="181" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="188" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="189" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="191" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="192" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="194" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="195" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="196" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="197" mi="2" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="138" covered="1" />
+      <counter type="LINE" missed="110" covered="1" />
+      <counter type="METHOD" missed="5" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Config.ps1">
+      <line nr="4" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="6" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="7" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="10" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="11" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="12" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="14" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="15" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="18" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="19" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="22" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="25" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="26" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="34" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="35" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="36" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="37" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="38" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="39" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="43" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="46" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="47" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="48" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="60" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="61" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="62" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="64" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="67" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="70" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="71" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="81" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="82" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="83" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="84" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="85" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="86" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="88" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="89" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="90" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="91" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="93" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="94" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="95" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="97" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="98" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="99" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="101" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="104" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="105" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="110" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="111" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="114" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="118" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="119" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="123" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="127" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="129" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="134" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="150" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="159" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="165" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="177" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="182" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="187" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="192" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="196" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="209" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="220" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="229" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="236" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="58" covered="40" />
+      <counter type="LINE" missed="41" covered="39" />
+      <counter type="METHOD" missed="1" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Helpers.ps1">
+      <line nr="9" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="10" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="12" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="13" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="14" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="15" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="16" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="17" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="20" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="21" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="27" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="39" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="40" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="41" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="42" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="44" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="45" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="48" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="59" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="60" mi="0" ci="3" mb="0" cb="0" />
+      <line nr="61" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="62" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="64" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="81" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="84" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="86" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="88" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="90" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="92" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="93" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="94" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="95" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="97" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="98" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="99" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="101" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="102" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="105" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="106" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="107" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="108" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="110" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="111" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="118" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="119" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="120" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="121" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="122" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="127" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="128" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="129" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="133" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="143" mi="1" ci="1" mb="0" cb="0" />
+      <line nr="145" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="147" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="148" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="150" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="151" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="152" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="153" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="155" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="156" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="157" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="159" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="160" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="162" mi="1" ci="2" mb="0" cb="0" />
+      <line nr="163" mi="0" ci="2" mb="0" cb="0" />
+      <line nr="166" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="177" mi="0" ci="4" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="32" covered="75" />
+      <counter type="LINE" missed="22" covered="51" />
+      <counter type="METHOD" missed="3" covered="4" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </sourcefile>
+    <sourcefile name="Private/History.ps1">
+      <line nr="3" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="13" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="15" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="16" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="18" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="19" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="35" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="36" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="38" mi="7" ci="0" mb="0" cb="0" />
+      <line nr="39" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="40" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="44" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="46" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="47" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="48" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="50" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="51" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="52" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="53" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="54" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="55" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="56" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="60" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="61" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="64" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="65" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="75" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="76" mi="3" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="53" covered="1" />
+      <counter type="LINE" missed="32" covered="1" />
+      <counter type="METHOD" missed="3" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Identity.ps1">
+      <line nr="8" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="9" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="10" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="13" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="14" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="15" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="17" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="27" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="28" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="31" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="32" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="34" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="51" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="52" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="54" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="55" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="56" mi="7" ci="0" mb="0" cb="0" />
+      <line nr="59" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="61" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="62" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="67" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="68" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="69" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="70" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="75" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="76" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="6" ci="0" mb="0" cb="0" />
+      <line nr="79" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="83" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="85" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="86" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="89" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="90" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="92" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="93" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="96" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="97" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="98" mi="6" ci="0" mb="0" cb="0" />
+      <line nr="100" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="101" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="104" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="109" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="110" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="111" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="116" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="121" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="122" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="123" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="124" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="126" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="127" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="129" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="130" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="133" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="134" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="135" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="136" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="137" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="138" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="139" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="125" covered="0" />
+      <counter type="LINE" missed="65" covered="0" />
+      <counter type="METHOD" missed="4" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </sourcefile>
+    <sourcefile name="Private/Models.ps1">
+      <line nr="19" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="20" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="21" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="22" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="23" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="24" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="25" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="26" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="27" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="28" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="29" mi="0" ci="1" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="0" covered="11" />
+      <counter type="LINE" missed="0" covered="11" />
+      <counter type="METHOD" missed="0" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Report.ps1">
+      <line nr="3" mi="0" ci="1" mb="0" cb="0" />
+      <line nr="17" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="18" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="19" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="20" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="21" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="22" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="23" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="27" mi="7" ci="0" mb="0" cb="0" />
+      <line nr="28" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="29" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="30" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="31" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="34" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="35" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="36" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="37" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="38" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="39" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="41" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="42" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="43" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="44" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="45" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="46" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="49" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="50" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="51" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="52" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="53" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="58" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="59" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="60" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="61" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="62" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="64" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="66" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="69" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="70" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="71" mi="6" ci="0" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="75" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="76" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="79" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="84" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="87" mi="6" ci="0" mb="0" cb="0" />
+      <line nr="89" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="90" mi="6" ci="0" mb="0" cb="0" />
+      <line nr="92" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="93" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="95" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="97" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="98" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="101" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="102" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="103" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="106" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="107" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="109" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="110" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="111" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="114" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="115" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="118" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="124" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="125" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="126" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="127" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="128" mi="8" ci="0" mb="0" cb="0" />
+      <line nr="129" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="132" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="133" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="134" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="135" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="137" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="138" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="139" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="140" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="141" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="142" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="143" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="144" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="145" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="149" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="151" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="152" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="154" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="155" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="156" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="157" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="158" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="159" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="160" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="161" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="163" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="168" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="169" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="170" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="171" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="172" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="173" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="178" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="179" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="180" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="189" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="195" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="196" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="197" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="198" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="200" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="201" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="202" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="205" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="206" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="207" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="210" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="211" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="212" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="213" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="215" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="216" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="218" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="219" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="223" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="224" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="226" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="227" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="228" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="229" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="230" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="231" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="232" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="233" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="234" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="235" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="236" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="237" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="239" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="285" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="286" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="287" mi="5" ci="0" mb="0" cb="0" />
+      <line nr="289" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="292" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="459" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="465" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="466" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="467" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="468" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="469" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="470" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="479" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="485" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="491" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="526" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="531" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="532" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="762" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="765" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="766" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="767" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="768" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="769" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="770" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="771" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="772" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="773" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="774" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="777" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="778" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="781" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="782" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="783" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="784" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="785" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="786" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="788" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="789" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="790" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="792" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="794" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="796" mi="2" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="371" covered="1" />
+      <counter type="LINE" missed="187" covered="1" />
+      <counter type="METHOD" missed="1" covered="1" />
+      <counter type="CLASS" missed="0" covered="1" />
+    </sourcefile>
+    <sourcefile name="Private/Suppressions.ps1">
+      <line nr="32" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="41" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="44" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="45" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="47" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="48" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="53" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="54" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="55" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="56" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="57" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="59" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="61" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="63" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="64" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="65" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="68" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="69" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="70" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="72" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="73" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="74" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="77" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="78" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="79" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="80" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="81" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="85" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="89" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="91" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="96" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="97" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="98" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="103" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="104" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="105" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="108" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="109" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="110" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="111" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="112" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="113" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="117" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="118" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="132" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="134" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="135" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="136" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="137" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="141" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="142" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="143" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="144" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="145" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="146" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="147" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="148" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="149" mi="4" ci="0" mb="0" cb="0" />
+      <line nr="150" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="151" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="152" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="153" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="156" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="160" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="173" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="174" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="175" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="176" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="177" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="179" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="192" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="193" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="197" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="198" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="199" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="200" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="201" mi="1" ci="0" mb="0" cb="0" />
+      <line nr="202" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="203" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="204" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="205" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="206" mi="3" ci="0" mb="0" cb="0" />
+      <line nr="207" mi="2" ci="0" mb="0" cb="0" />
+      <line nr="209" mi="1" ci="0" mb="0" cb="0" />
+      <counter type="INSTRUCTION" missed="120" covered="0" />
+      <counter type="LINE" missed="84" covered="0" />
+      <counter type="METHOD" missed="5" covered="0" />
+      <counter type="CLASS" missed="1" covered="0" />
+    </sourcefile>
+    <counter type="INSTRUCTION" missed="1122" covered="164" />
+    <counter type="LINE" missed="677" covered="134" />
+    <counter type="METHOD" missed="31" covered="15" />
+    <counter type="CLASS" missed="3" covered="7" />
+  </package>
+  <counter type="INSTRUCTION" missed="1453" covered="2068" />
+  <counter type="LINE" missed="840" covered="1061" />
+  <counter type="METHOD" missed="35" covered="31" />
+  <counter type="CLASS" missed="4" covered="13" />
+</report>

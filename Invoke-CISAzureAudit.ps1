@@ -196,32 +196,30 @@ Write-Host ""
 Write-Host "`u{1F512} CIS Azure Foundations Benchmark v$($script:BENCHMARK_VER) — Audit Tool v$($script:CIS_VERSION)" -ForegroundColor Cyan
 Write-Host ""
 
-# ── Verify az CLI is available ────────────────────────────────────────────────
+# ── Verify Az PowerShell module is available ─────────────────────────────────
 
-$azVerResult = Invoke-AzCli -Arguments @('version') -TimeoutSec 30
-if (-not $azVerResult.Success) {
-    Write-Host "`u{274C} Azure CLI not found or not working." -ForegroundColor Red
-    if ($azVerResult.Error) { Write-Host "  Details: $($azVerResult.Error)" -ForegroundColor Red }
-    Write-Host "  Install from: https://docs.microsoft.com/cli/azure/install-azure-cli" -ForegroundColor Red
+$azAccountsModule = Get-Module -ListAvailable Az.Accounts | Sort-Object Version -Descending | Select-Object -First 1
+if (-not $azAccountsModule) {
+    Write-Host "`u{274C} Az PowerShell module not found." -ForegroundColor Red
+    Write-Host "  Install with: Install-Module -Name Az -AllowClobber -Scope CurrentUser" -ForegroundColor Red
     exit 1
 }
-$azCliVersion = if ($azVerResult.Data -and $azVerResult.Data.'azure-cli') { [string]$azVerResult.Data.'azure-cli' } else { '?' }
-Write-Host "`u{2705} Azure CLI v$azCliVersion" -ForegroundColor Green
+Write-Host "`u{2705} Az.Accounts v$($azAccountsModule.Version)" -ForegroundColor Green
 
 # ── Verify authentication and display identity ────────────────────────────────
 
-$accountCtx = Invoke-AzCli -Arguments @("account", "show") -TimeoutSec 30
-if (-not $accountCtx.Success) {
+$azCtx = Get-AzContext -ErrorAction SilentlyContinue
+if (-not $azCtx) {
     Write-Host ""
-    Write-Host "`u{274C} Not logged in to Azure CLI. Run 'az login' first." -ForegroundColor Red
+    Write-Host "`u{274C} Not logged in to Azure. Run 'Connect-AzAccount' first." -ForegroundColor Red
     exit 1
 }
-$callerName = [string]$accountCtx.Data.user.name
-$callerType = [string]$accountCtx.Data.user.type
-$tenantId   = [string]$accountCtx.Data.tenantId
+$callerName = [string]$azCtx.Account.Id
+$callerType = [string]$azCtx.Account.Type
+$tenantId   = [string]$azCtx.Tenant.Id
 $typeLabel  = switch ($callerType) {
-    'servicePrincipal' { 'Service Principal' }
-    'user'             { 'User'              }
+    'ServicePrincipal' { 'Service Principal' }
+    'User'             { 'User'              }
     default            { $callerType          }
 }
 Write-Host "`u{2705} Authenticated as: $callerName ($typeLabel)" -ForegroundColor Green
@@ -319,21 +317,13 @@ if ($ReportOnly) {
     exit 0
 }
 
-# ── Ensure resource-graph extension is present ───────────────────────────────
+# ── Ensure Az.ResourceGraph module is available ──────────────────────────────
 
-$rgCheck = Invoke-AzCli -Arguments @("extension", "list", "--query", "[?name=='resource-graph'].name") -TimeoutSec 30
-if ($rgCheck.Success -and @($rgCheck.Data | Where-Object { $_ }).Count -gt 0) {
-    Write-Host "`u{2705} resource-graph extension ready" -ForegroundColor Green
-} else {
-    Write-Host "`u{1F4E6} Installing resource-graph extension..." -ForegroundColor DarkYellow
-    $rgInstall = Invoke-AzCli -Arguments @("extension", "add", "--name", "resource-graph") -TimeoutSec 120
-    if (-not $rgInstall.Success) {
-        Write-Host "`u{274C} Could not install resource-graph extension." -ForegroundColor Red
-        Write-Host "  Run manually: az extension add --name resource-graph" -ForegroundColor Red
-        exit 1
-    }
-    Write-Host "`u{2705} resource-graph extension installed" -ForegroundColor Green
+if (-not (Get-Module -ListAvailable Az.ResourceGraph)) {
+    Write-Host "`u{274C} Az.ResourceGraph module not found. Run: Install-Module Az.ResourceGraph" -ForegroundColor Red
+    exit 1
 }
+Write-Host "`u{2705} Az.ResourceGraph module ready" -ForegroundColor Green
 Write-Host ""
 
 # ── Resolve subscription list ─────────────────────────────────────────────────
@@ -365,7 +355,24 @@ if ($Subscriptions.Count -eq 0) {
             if ($anyState.Count -gt 0) {
                 Write-AuditLog "Subscription '$req' found but state is '$([string]$anyState[0].state)' — skipping." -Level WARNING
             } else {
-                Write-AuditLog "Subscription '$req' not found or not accessible. Check 'az account list --all'." -Level WARNING
+                Write-AuditLog "Subscription '$req' not found or not accessible." -Level WARNING
+                # It may belong to a different tenant — look up which one and guide the user
+                try {
+                    $allTenants = @(Get-AzTenant -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+                    $otherTenants = @($allTenants | Where-Object { [string]$_.Id -ne $tenantId })
+                    if ($otherTenants.Count -gt 0) {
+                        Write-Host ""
+                        Write-Host "   `u{1F4A1} '$req' may belong to a different tenant. Try authenticating to:" -ForegroundColor Yellow
+                        foreach ($t in $otherTenants) {
+                            $tLabel = if ($t.Name) { $t.Name } else { $t.Id }
+                            Write-Host "      Connect-AzAccount -TenantId $($t.Id)  # $tLabel" -ForegroundColor Cyan
+                        }
+                        Write-Host "   Then re-run the audit." -ForegroundColor Yellow
+                        Write-Host ""
+                    } else {
+                        Write-Host "   Check 'az account list --all' to verify the subscription exists." -ForegroundColor DarkYellow
+                    }
+                } catch { $null = $_ }
             }
         }
     }
@@ -453,7 +460,7 @@ if (-not $Fresh -and -not $NoCheckpoint) {
     $resumedCount = $checkpoints.Count
     if ($resumedCount -gt 0) {
         Write-AuditLog "`u{1F4BE} $resumedCount subscription(s) were already audited in a previous run — loading saved results." -Level INFO
-        $skippedNames = @($checkpoints.Keys | ForEach-Object { $subNames[$_] }) | Where-Object { $_ }
+        $skippedNames = @(@($checkpoints.Keys | ForEach-Object { $subNames[$_] }) | Where-Object { $_ })
         if ($skippedNames.Count -gt 0) {
             Write-AuditLog "`u{23ED}`u{FE0F}  Skipping (already audited): $($skippedNames -join ', ')" -Level INFO
         }
@@ -515,8 +522,8 @@ Write-Host ""
 $allResults = [System.Collections.Generic.List[object]]::new()
 
 if (-not $SkipTenantChecks) {
-    $tenantCheckpoint = Get-TenantCheckpoint
-    if ($tenantCheckpoint -and $subIdsToAudit.Count -eq 0) {
+    $tenantCheckpoint = @(Get-TenantCheckpoint | Where-Object { $null -ne $_ })
+    if ($tenantCheckpoint.Count -gt 0 -and $subIdsToAudit.Count -eq 0) {
         Write-AuditLog "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCheckpoint.Count) results)." -Level INFO
         foreach ($r in $tenantCheckpoint) { $allResults.Add($r) }
     } else {
@@ -539,6 +546,13 @@ function Invoke-SubscriptionAudit {
     param([string]$SubId, [string]$SubName, [hashtable]$PrefetchData)
 
     $subResults = [System.Collections.Generic.List[object]]::new()
+
+    # Ensure the Az context is set to this subscription so PS cmdlets that use
+    # the current context (Get-AzLogProfile, Get-AzActivityLogAlert, etc.) target
+    # the right subscription.
+    # 3>$null suppresses the Az SDK "Unable to acquire token for tenant" warning
+    # that fires when the account has access to multiple tenants (expected/harmless).
+    $null = Set-AzContext -SubscriptionId $SubId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
 
     $checkGroups = @(
         @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
@@ -656,6 +670,11 @@ if ($subsToProcess.Count -gt 0) {
                 )
                 foreach ($f in $files) { . (Join-Path $modRoot $f) }
 
+                # Set Az context so PS cmdlets (Get-AzLogProfile, etc.) target this subscription
+                # 3>$null suppresses the Az SDK "Unable to acquire token for tenant" warning
+                # that fires when the account has access to multiple tenants (expected/harmless).
+                $null = Set-AzContext -SubscriptionId $subId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
+
                 # Wire up shared state for adaptive concurrency and Ctrl+C cleanup
                 $script:_throttleBag  = $tBag
                 $script:_runningProcs = $pReg
@@ -769,14 +788,14 @@ $scopeLabel = if ($Subscriptions.Count -eq 0) {
 }
 
 # ── Collect identity context for report scope block ─────────────────────────
-# $accountCtx was collected at startup (az account show); reuse it here.
+# Use the Az context variables already captured at startup ($callerName, $tenantId, $callerType)
 $scopeInfo   = @{
-    tenant       = if ($accountCtx.Success -and $accountCtx.Data.tenantId) { [string]$accountCtx.Data.tenantId } else { '' }
-    user         = if ($accountCtx.Success -and $accountCtx.Data.user)     { [string]$accountCtx.Data.user.name } else { '' }
-    caller_type  = if ($accountCtx.Success -and $accountCtx.Data.user)     { [string]$accountCtx.Data.user.type } else { '' }
-    scope_label  = $scopeLabel
+    tenant        = $tenantId
+    user          = $callerName
+    caller_type   = $callerType
+    scope_label   = $scopeLabel
     subscriptions = @($subObjects | ForEach-Object { [string]$_.name })
-    level_filter = $Level
+    level_filter  = $Level
 }
 
 # Subscription → audit timestamp (prefer checkpoint timestamp for resumed subs)

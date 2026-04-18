@@ -128,17 +128,15 @@ function Invoke-Section7Checks {
     $regionList  = @(@($locations | ForEach-Object { [string]$_.location }) | Select-Object -Unique | Where-Object { $pseudoLocations -notcontains $_ })
     $watcherLocs = @(@($watchers | Where-Object { [string]$_.state -eq "Succeeded" } | ForEach-Object { [string]$_.location }) | Select-Object -Unique)
 
-    # Collect all flow logs ONCE — only from regions where Network Watcher is
-    # actually running.  Querying regions without a watcher causes errors or hangs.
+    # Collect all flow logs ONCE — only from watchers that are actually running.
     $allFlowLogs = [System.Collections.Generic.List[object]]::new()
-    foreach ($loc in $watcherLocs) {
-        $rl = Invoke-AzCli -Arguments @(
-            "network", "watcher", "flow-log", "list",
-            "--location", $loc
-        ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.default
-        if ($rl.Success -and $rl.Data) {
-            foreach ($fl in @($rl.Data)) { $allFlowLogs.Add($fl) }
-        }
+    foreach ($watcher in @($watchers | Where-Object { [string]$_.state -eq "Succeeded" })) {
+        $watcherId   = [string]$watcher.id
+        $parts       = $watcherId -split '/'
+        $watcherRg   = $parts[4]
+        $watcherName = $parts[-1]
+        $fls = @(Get-AzNetworkWatcherFlowLog -NetworkWatcherName $watcherName -ResourceGroupName $watcherRg -ErrorAction SilentlyContinue)
+        foreach ($fl in $fls) { $allFlowLogs.Add($fl) }
     }
 
     # ── 7.5 — NSG Flow Log retention >= 90 days ────────────────────────
@@ -153,17 +151,17 @@ function Invoke-Section7Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         } else {
             foreach ($fl in $allFlowLogs) {
-                $days = [int]($fl.retentionPolicy.days)
-                $en   = [string]$fl.retentionPolicy.enabled -eq "True" -or [string]$fl.retentionPolicy.enabled -eq "true"
+                $days = [int]$fl.RetentionPolicy.Days
+                $en   = $fl.RetentionPolicy.Enabled
                 $pass = $en -and $days -ge 90
                 $results.Add((New-CISResult `
                     -ControlId "7.5" `
                     -Title "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'" `
                     -Level 2 -Section $sec `
                     -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Retention: $days days (enabled: $en). Flow log: $([string]$fl.name)" `
-                    -Remediation $(if (-not $pass) { "Network Watcher > NSG flow logs > $([string]$fl.name) > Retention >= 90 days" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource ([string]$fl.name)))
+                    -Details "Retention: $days days (enabled: $en). Flow log: $([string]$fl.Name)" `
+                    -Remediation $(if (-not $pass) { "Network Watcher > NSG flow logs > $([string]$fl.Name) > Retention >= 90 days" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource ([string]$fl.Name)))
             }
         }
     } catch {
@@ -196,7 +194,7 @@ function Invoke-Section7Checks {
     # ── 7.8 — VNet flow log retention >= 90 days ─────────────────────────────
     try {
         $allVnetFlowLogs = @($allFlowLogs | Where-Object {
-            [string]$_.targetResourceId -match '(?i)/virtualnetworks/'
+            [string]$_.TargetResourceId -match '(?i)/virtualnetworks/'
         })
 
         if ($allVnetFlowLogs.Count -eq 0) {
@@ -209,17 +207,17 @@ function Invoke-Section7Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         } else {
             foreach ($fl in $allVnetFlowLogs) {
-                $days = [int]($fl.retentionPolicy.days)
-                $en   = [string]$fl.retentionPolicy.enabled -eq "True" -or [string]$fl.retentionPolicy.enabled -eq "true"
+                $days = [int]$fl.RetentionPolicy.Days
+                $en   = $fl.RetentionPolicy.Enabled
                 $pass = $en -and $days -ge 90
                 $results.Add((New-CISResult `
                     -ControlId "7.8" `
                     -Title "Ensure That VNet Flow Log Retention Period Is 'Greater than 90 Days'" `
                     -Level 2 -Section $sec `
                     -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                    -Details "VNet flow log '$([string]$fl.name)': $days days, enabled = $en" `
+                    -Details "VNet flow log '$([string]$fl.Name)': $days days, enabled = $en" `
                     -Remediation $(if (-not $pass) { "Network Watcher > Flow logs > Set retention >= 90 days" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource ([string]$fl.name)))
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource ([string]$fl.Name)))
             }
         }
     } catch {

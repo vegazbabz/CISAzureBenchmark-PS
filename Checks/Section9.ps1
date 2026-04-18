@@ -16,13 +16,17 @@ function Invoke-Section9Checks {
 
     $accounts = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "storage" -SubscriptionId $sid)
 
-    # Fallback: if prefetch returned nothing, fetch directly
-    if ($accounts.Count -eq 0) {
-        $r = Invoke-AzCli -Arguments @(
-            "storage", "account", "list", "--subscription", $sid,
-            "--query", "[].{id:id,name:name,resourceGroup:resourceGroup,isHns:isHnsEnabled,sku:sku}"
-        ) -TimeoutSec $script:TIMEOUTS.storage_list
-        if ($r.Success -and $r.Data) { $accounts = @($r.Data) }
+    # Fallback: only if the "storage" key was never prefetched at all (not just empty)
+    if ($accounts.Count -eq 0 -and (-not $PrefetchData.ContainsKey("storage"))) {
+        $rawAccts = @(Get-AzStorageAccount -ErrorAction SilentlyContinue)
+        if ($rawAccts.Count -gt 0) {
+            $accounts = @($rawAccts | Select-Object `
+                @{N='id';E={$_.Id}},
+                @{N='name';E={$_.StorageAccountName}},
+                @{N='resourceGroup';E={$_.ResourceGroupName}},
+                @{N='isHns';E={[string]$_.EnableHierarchicalNamespace}},
+                @{N='sku';E={$_.Sku.Name}})
+        }
     }
 
     if ($accounts.Count -eq 0) {
@@ -201,10 +205,7 @@ function Invoke-Section9Checks {
 
         if (-not $isAdls) {
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "storage", "account", "blob-service-properties", "show",
-                    "--account-name", $acctName, "--resource-group", $acctRg
-                ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.storage_svc
+                $r = Invoke-AzCli @("storage", "account", "blob-service-properties", "show", "--account-name", $acctName, "--resource-group", $acctRg) -SubscriptionId $sid
 
                 if (-not $r.Success) {
                     if (Test-NotApplicableError $r.Error) {
@@ -229,6 +230,7 @@ function Invoke-Section9Checks {
                         $results.Add((New-ErrorResult "9.2.1" "Blob Soft Delete" 1 $sec $r.Error $sid $sname $acctName))
                     }
                 } else {
+                    # CLI returns blob service properties directly (no properties wrapper)
                     $bp = $r.Data
 
                     # 9.2.1 — Blob soft delete enabled
@@ -316,95 +318,77 @@ function Invoke-Section9Checks {
 
         # 9.1.1 — File share soft delete
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "storage", "account", "file-service-properties", "show",
-                "--account-name", $acctName, "--resource-group", $acctRg
-            ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.storage_svc
+            $rFile = Invoke-AzCli @("storage", "account", "file-service-properties", "show", "--account-name", $acctName, "--resource-group", $acctRg) -SubscriptionId $sid
+            if (-not $rFile.Success) { throw $rFile.Error }
+            $fp = $rFile.Data
 
-            if (-not $r.Success) {
-                if (Test-NotApplicableError $r.Error) {
-                    $results.Add((New-InfoResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "File service not supported." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
-                } elseif (Test-FirewallError $r.Error) {
-                    $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                } else {
-                    $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec $r.Error $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $r.Error $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $r.Error $sid $sname $acctName))
-                }
-            } else {
-                $fp   = $r.Data
-                $sdrp = $fp.PSObject.Properties['shareDeleteRetentionPolicy']
-                if ($sdrp -and $sdrp.Value) {
-                    $fsDelOn = [string]$sdrp.Value.enabled -eq "true" -or [string]$sdrp.Value.enabled -eq "True"
-                    $fsDays  = [int]($sdrp.Value.PSObject.Properties['days']?.Value)
-                } else {
-                    $fsDelOn = $false
-                    $fsDays  = 0
-                }
-                $fsOk    = $fsDelOn -and $fsDays -ge 7
+            $fsDelOn = $fp.ShareDeleteRetentionPolicy?.Enabled
+            $fsDays  = [int]($fp.ShareDeleteRetentionPolicy?.Days)
+            $fsOk    = $fsDelOn -and $fsDays -ge 7
 
+            $results.Add((New-CISResult `
+                -ControlId "9.1.1" -Title "Ensure Soft Delete Is Enabled for Azure File Shares" `
+                -Level 1 -Section $sec `
+                -Status $(if ($fsOk) { $script:PASS } else { $script:FAIL }) `
+                -Details "File share soft delete: enabled=$fsDelOn, days=$fsDays" `
+                -Remediation $(if (-not $fsOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for file shares (>= 7 days)" } else { "" }) `
+                -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+            # 9.1.2 — SMB protocol version >= 3.1.1
+            # 9.1.3 — SMB channel encryption AES-256-GCM or higher
+            $smb     = $fp.ProtocolSettings?.Smb
+            $smbVers = if ($smb) { [string]$smb.Versions } else { "" }
+            $smbEnc  = if ($smb) { [string]$smb.ChannelEncryption } else { "" }
+            $goodVers = @("SMB3.1.1","SMB3.11")
+            $goodEnc  = @("AES-256-GCM","AES256GCM")
+
+            if ($smb) {
+                $hasGoodVer = @($smbVers -split '[;, ]' | Where-Object { $goodVers -contains $_.Trim() }).Count -gt 0
                 $results.Add((New-CISResult `
-                    -ControlId "9.1.1" -Title "Ensure Soft Delete Is Enabled for Azure File Shares" `
+                    -ControlId "9.1.2" -Title "Ensure SMB Access Is Restricted to SMB 3.1.1+" `
                     -Level 1 -Section $sec `
-                    -Status $(if ($fsOk) { $script:PASS } else { $script:FAIL }) `
-                    -Details "File share soft delete: enabled=$fsDelOn, days=$fsDays" `
-                    -Remediation $(if (-not $fsOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for file shares (>= 7 days)" } else { "" }) `
+                    -Status $(if ($hasGoodVer) { $script:PASS } else { $script:FAIL }) `
+                    -Details "SMB protocol versions: $(if($smbVers){$smbVers}else{'Not configured'})" `
+                    -Remediation $(if (-not $hasGoodVer) { "Storage account > $acctName > File shares > SMB settings > Protocol version: SMB 3.1.1" } else { "" }) `
                     -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
 
-                # 9.1.2 — SMB protocol version >= 3.1.1
-                # 9.1.3 — SMB channel encryption AES-256-GCM or higher
-                $smbProt  = $fp.PSObject.Properties['protocolSettings']?.Value
-                $smb      = if ($smbProt) { $smbProt.PSObject.Properties['smb']?.Value } else { $null }
-                $smbVers  = if ($smb) { [string]($smb.PSObject.Properties['versions']?.Value) } else { "" }
-                $smbEnc   = if ($smb) { [string]($smb.PSObject.Properties['channelEncryption']?.Value) } else { "" }
-                $goodVers = @("SMB3.1.1","SMB3.11")
-                $goodEnc  = @("AES-256-GCM","AES256GCM")
-
-                if ($smb) {
-                    $hasGoodVer = @($smbVers -split '[;, ]' | Where-Object { $goodVers -contains $_.Trim() }).Count -gt 0
-                    $results.Add((New-CISResult `
-                        -ControlId "9.1.2" -Title "Ensure SMB Access Is Restricted to SMB 3.1.1+" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($hasGoodVer) { $script:PASS } else { $script:FAIL }) `
-                        -Details "SMB protocol versions: $(if($smbVers){$smbVers}else{'Not configured'})" `
-                        -Remediation $(if (-not $hasGoodVer) { "Storage account > $acctName > File shares > SMB settings > Protocol version: SMB 3.1.1" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    $hasGoodEnc = @($smbEnc -split '[;, ]' | Where-Object { $goodEnc -contains $_.Trim() }).Count -gt 0
-                    $results.Add((New-CISResult `
-                        -ControlId "9.1.3" -Title "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($hasGoodEnc) { $script:PASS } else { $script:FAIL }) `
-                        -Details "SMB channel encryption: $(if($smbEnc){$smbEnc}else{'Not configured'})" `
-                        -Remediation $(if (-not $hasGoodEnc) { "Storage account > $acctName > File shares > SMB settings > Channel encryption: AES-256-GCM" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-                } else {
-                    $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "No SMB protocolSettings found for this account; SMB protocol may not be applicable." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "No SMB protocolSettings found for this account; SMB encryption may not be applicable." $sid $sname $acctName))
-                }
+                $hasGoodEnc = @($smbEnc -split '[;, ]' | Where-Object { $goodEnc -contains $_.Trim() }).Count -gt 0
+                $results.Add((New-CISResult `
+                    -ControlId "9.1.3" -Title "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" `
+                    -Level 1 -Section $sec `
+                    -Status $(if ($hasGoodEnc) { $script:PASS } else { $script:FAIL }) `
+                    -Details "SMB channel encryption: $(if($smbEnc){$smbEnc}else{'Not configured'})" `
+                    -Remediation $(if (-not $hasGoodEnc) { "Storage account > $acctName > File shares > SMB settings > Channel encryption: AES-256-GCM" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+            } else {
+                $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "No SMB protocolSettings found for this account; SMB protocol may not be applicable." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "No SMB protocolSettings found for this account; SMB encryption may not be applicable." $sid $sname $acctName))
             }
         } catch {
-            $results.Add((New-ErrorResult "9.1.1" "File Service Soft Delete" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $errMsg = $_.Exception.Message
+            if (Test-NotApplicableError $errMsg) {
+                $results.Add((New-InfoResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "File service not supported." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
+            } elseif (Test-FirewallError $errMsg) {
+                $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+            } else {
+                $results.Add((New-ErrorResult "9.1.1" "File Service Soft Delete" 1 $sec $errMsg $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $errMsg $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $errMsg $sid $sname $acctName))
+            }
         }
 
         # ── Group 4: Key rotation ─────────────────────────────────────────────
 
         # 9.3.1.1 — Key rotation reminder + 9.3.1.2 — Key rotation < 90 days
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "storage", "account", "show", "--name", $acctName, "--resource-group", $acctRg,
-                "--query", "{keyCreationTime:keyCreationTime,keyExpirationPeriodInDays:keyPolicy.keyExpirationPeriodInDays}"
-            ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.default
+            $rAcct = Invoke-AzCli @("storage", "account", "show", "--name", $acctName, "--resource-group", $acctRg) -SubscriptionId $sid
 
-            if ($r.Success -and $r.Data) {
-                $acctData = $r.Data
-
+            if ($rAcct.Success) {
+                $acctData = $rAcct.Data
                 # 9.3.1.1 — Key expiration / rotation reminder
                 $reminderDays = $acctData.keyExpirationPeriodInDays
                 $results.Add((New-CISResult `
@@ -442,8 +426,8 @@ function Invoke-Section9Checks {
                     $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
                 }
             } else {
-                $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec ($r.Error ?? "Could not retrieve storage account details.") $sid $sname $acctName))
-                $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec ($r.Error ?? "Could not retrieve key creation times.") $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec "Could not retrieve storage account details." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
             }
         } catch {
             $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec $_.Exception.Message $sid $sname $acctName))
@@ -455,12 +439,8 @@ function Invoke-Section9Checks {
     # 9.3.9: account is covered by a CanNotDelete OR ReadOnly lock (Level 1)
     # 9.3.11: account is covered by a ReadOnly lock specifically (Level 2)
     try {
-        $r = Invoke-AzCli -Arguments @(
-            "lock", "list", "--subscription", $sid
-        ) -TimeoutSec $script:TIMEOUTS.default
-
-        $locks = @()
-        if ($r.Success -and $r.Data) { $locks = @($r.Data) }
+        $rLocks = Invoke-AzCli @("lock", "list") -SubscriptionId $sid
+        $locks = if ($rLocks.Success) { @($rLocks.Data) } else { @() }
 
         foreach ($acct in $accounts) {
             $acctName = [string]($acct.PSObject.Properties['name']?.Value)

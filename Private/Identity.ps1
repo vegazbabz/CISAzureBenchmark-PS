@@ -3,17 +3,13 @@
 function Get-SignedInUserId {
     <#
     .SYNOPSIS
-    Return the Azure AD object ID of the currently signed-in user.
+    Return the identity of the currently signed-in user from the Az context.
+    Returns a UPN for users, or app/service-principal ID for service principals.
     #>
-    $result = Invoke-AzCli -Arguments @("ad", "signed-in-user", "show", "--query", "id") -TimeoutSec 30
-    if ($result.Success -and $result.Data) {
-        return [string]$result.Data -replace '"', ''
-    }
-    # Fallback: use UPN from account show and resolve
-    $acct = Invoke-AzCli -Arguments @("account", "show") -TimeoutSec 30
-    if ($acct.Success -and $acct.Data.user.name) {
-        return [string]$acct.Data.user.name
-    }
+    try {
+        $ctx = Get-AzContext
+        if ($ctx -and $ctx.Account -and $ctx.Account.Id) { return $ctx.Account.Id }
+    } catch {}
     return $null
 }
 
@@ -24,14 +20,13 @@ function Get-SubscriptionList {
     Returns array of {id, name, state} objects.
     Callers are responsible for state-filtering so they can emit useful diagnostics.
     #>
-    $result = Invoke-AzCli -Arguments @(
-        "account", "list", "--all",
-        "--query", "[].{id:id,name:name,state:state}"
-    ) -TimeoutSec 60
-    if (-not $result.Success) {
-        throw "Failed to list subscriptions: $($result.Error)"
+    try {
+        return @(Get-AzSubscription -WarningAction SilentlyContinue | ForEach-Object {
+            [PSCustomObject]@{ id = $_.Id; name = $_.Name; state = $_.State }
+        })
+    } catch {
+        throw "Failed to list subscriptions: $_"
     }
-    return @($result.Data)
 }
 
 function Test-AuditPermissions {

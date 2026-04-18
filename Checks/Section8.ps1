@@ -37,16 +37,8 @@ function Invoke-Section8Checks {
 
     foreach ($plan in $defenderPlans) {
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "security", "pricing", "show", "--name", $plan.Plan
-            ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.default
-
-            if (-not $r.Success) {
-                $results.Add((New-ErrorResult $plan.Id $plan.Title 2 $sec $r.Error $sid $sname))
-                continue
-            }
-
-            $tier    = [string]$r.Data.pricingTier
+            $r       = Invoke-AzCli @("security", "pricing", "show", "--name", $plan.Plan) -SubscriptionId $sid
+            $tier    = if ($r.Success -and $r.Data) { [string]$r.Data.pricingTier } else { "Unknown" }
             $enabled = $tier -eq "Standard"
             $results.Add((New-CISResult `
                 -ControlId $plan.Id `
@@ -64,7 +56,7 @@ function Invoke-Section8Checks {
     # ── 8.1.3.3 — WDATP / MDE integration ────────────────────────────────────
     try {
         $url = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/settings/WDATP?api-version=2021-06-01"
-        $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.default
+        $r   = Invoke-AzRest -Uri $url
 
         if (-not $r.Success) {
             $results.Add((New-ErrorResult "8.1.3.3" "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled" 1 $sec $r.Error $sid $sname))
@@ -86,7 +78,7 @@ function Invoke-Section8Checks {
     # ── 8.1.10 — MDE TVM VM OS update check ──────────────────────────────────
     try {
         $url = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/serverVulnerabilityAssessmentsSettings?api-version=2023-05-01"
-        $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.default
+        $r   = Invoke-AzRest -Uri $url
 
         if (-not $r.Success) {
             $results.Add((New-ErrorResult "8.1.10" "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" 1 $sec $r.Error $sid $sname))
@@ -114,7 +106,7 @@ function Invoke-Section8Checks {
     # Uses 2023-12-01-preview directly — it returns all data needed for all 4 checks.
     try {
         $previewUrl  = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
-        $r2          = Invoke-AzRest -Uri $previewUrl -TimeoutSec $script:TIMEOUTS.default
+        $r2          = Invoke-AzRest -Uri $previewUrl
         $contactItems = @()
         if ($r2.Success -and $r2.Data) {
             $valProp = $r2.Data.PSObject.Properties['value']
@@ -220,112 +212,102 @@ function Invoke-Section8Checks {
             $pub   = [string]$kv.publicAccess
             $eps   = [int]($kv.privateEps)
 
-            # 8.3.1/8.3.2 — Key expiration set (RBAC vs access-policy vault)
             $ctrlKeyExp = if ($rbac) { "8.3.1" } else { "8.3.2" }
-            $cachedKeys = $null   # cache for reuse in 8.3.9
-            $cachedKeyResult = $null
+            $cachedKeys = $null
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "keyvault", "key", "list", "--vault-name", $kvName
-                ) -TimeoutSec $script:TIMEOUTS.default
-                $cachedKeyResult = $r
+                $rKeys = Invoke-AzCli @("keyvault", "key", "list", "--vault-name", $kvName) -SubscriptionId $sid
+                if (-not $rKeys.Success) { throw $rKeys.Error }
+                $allKeys    = @($rKeys.Data)
+                $cachedKeys = $allKeys
 
-                if (-not $r.Success) {
-                    if (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
-                    } elseif (Test-FirewallError $r.Error) {
-                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
-                    } else {
-                        $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec $r.Error $sid $sname $kvName))
-                    }
-                } elseif (-not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
+                if ($allKeys.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "No keys found in vault." $sid $sname $kvName))
                 } else {
-                    $keys = @($r.Data)
-                    $cachedKeys = $keys
-                    $noExpiry = @($keys | Where-Object { -not $_.attributes.expires })
+                    $noExpiry = @($allKeys | Where-Object { -not $_.attributes.expires })
                     $pass = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlKeyExp -Title "Ensure That the Expiration Date Is Set on All Keys" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All $($keys.Count) key(s) have expiration set." } else { "$($noExpiry.Count) key(s) without expiration: $($noExpiry.name -join ', ')" }) `
+                        -Details $(if ($pass) { "All $($allKeys.Count) key(s) have expiration set." } else { "$($noExpiry.Count) key(s) without expiration: $(($noExpiry | ForEach-Object { $_.name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Keys > Set expiration date on each key" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
             } catch {
-                $results.Add((New-ErrorResult $ctrlKeyExp "Key Expiration Check" 1 $sec $_.Exception.Message $sid $sname $kvName))
+                $errMsg = $_.Exception.Message
+                if (Test-AuthzError $errMsg) {
+                    $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                } elseif (Test-FirewallError $errMsg) {
+                    $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                } else {
+                    $results.Add((New-ErrorResult $ctrlKeyExp "Key Expiration Check" 1 $sec $errMsg $sid $sname $kvName))
+                }
             }
 
             # 8.3.3/8.3.4 — Secret expiration set (RBAC vs access-policy vault)
             $ctrlSecExp = if ($rbac) { "8.3.3" } else { "8.3.4" }
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "keyvault", "secret", "list", "--vault-name", $kvName
-                ) -TimeoutSec $script:TIMEOUTS.default
+                $rSecrets = Invoke-AzCli @("keyvault", "secret", "list", "--vault-name", $kvName) -SubscriptionId $sid
+                if (-not $rSecrets.Success) { throw $rSecrets.Error }
+                $allSecrets = @($rSecrets.Data)
 
-                if (-not $r.Success) {
-                    if (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Insufficient permissions to list secrets. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Secret List permission." $sid $sname $kvName))
-                    } elseif (Test-FirewallError $r.Error) {
-                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
-                    } else {
-                        $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec $r.Error $sid $sname $kvName))
-                    }
-                } elseif (-not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
+                if ($allSecrets.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "No secrets found in vault." $sid $sname $kvName))
                 } else {
-                    $secrets  = @($r.Data)
-                    $noExpiry = @($secrets | Where-Object { -not $_.attributes.expires })
+                    $noExpiry = @($allSecrets | Where-Object { -not $_.attributes.expires })
                     $pass     = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlSecExp -Title "Ensure That the Expiration Date Is Set on All Secrets" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All $($secrets.Count) secret(s) have expiration set." } else { "$($noExpiry.Count) secret(s) without expiration: $(($noExpiry | ForEach-Object { [string]$_.name } | Where-Object { $_ }) -join ', ')" }) `
+                        -Details $(if ($pass) { "All $($allSecrets.Count) secret(s) have expiration set." } else { "$($noExpiry.Count) secret(s) without expiration: $(($noExpiry | ForEach-Object { $_.name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Secrets > Set expiration date" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
             } catch {
-                $results.Add((New-ErrorResult $ctrlSecExp "Secret Expiration Check" 1 $sec $_.Exception.Message $sid $sname $kvName))
+                $errMsg = $_.Exception.Message
+                if (Test-AuthzError $errMsg) {
+                    $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Insufficient permissions to list secrets. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Secret List permission." $sid $sname $kvName))
+                } elseif (Test-FirewallError $errMsg) {
+                    $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                } else {
+                    $results.Add((New-ErrorResult $ctrlSecExp "Secret Expiration Check" 1 $sec $errMsg $sid $sname $kvName))
+                }
             }
 
             # 8.3.11 — Certificate validity <= 12 months
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "keyvault", "certificate", "list", "--vault-name", $kvName
-                ) -TimeoutSec $script:TIMEOUTS.default
+                $rCerts = Invoke-AzCli @("keyvault", "certificate", "list", "--vault-name", $kvName) -SubscriptionId $sid
+                if (-not $rCerts.Success) { throw $rCerts.Error }
+                $allCerts = @($rCerts.Data)
 
-                if (-not $r.Success) {
-                    if (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
-                    } elseif (Test-FirewallError $r.Error) {
-                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
-                    } else {
-                        $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec $r.Error $sid $sname $kvName))
-                    }
-                } elseif (-not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
+                if ($allCerts.Count -eq 0) {
                     $results.Add((New-InfoResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {
-                    $certs     = @($r.Data)
-                    $longCerts = @($certs | Where-Object {
+                    $longCerts = @($allCerts | Where-Object {
                         $exp = $_.attributes.expires
                         $crt = $_.attributes.created
                         if (-not $exp -or -not $crt) { return $true }
-                        $days = ([datetime]$exp - [datetime]$crt).TotalDays
-                        $days -gt 366
+                        ([datetime]$exp - [datetime]$crt).TotalDays -gt 366
                     })
                     $pass = $longCerts.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId "8.3.11" -Title "Ensure That Certificate Validity Period Is Not More Than 12 Months" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { [string]$_.name }) -join ', ')" }) `
+                        -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { $_.name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Certificates > Issuance policy > Validity <= 12 months" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
             } catch {
-                $results.Add((New-ErrorResult "8.3.11" "Certificate Validity" 1 $sec $_.Exception.Message $sid $sname $kvName))
+                $errMsg = $_.Exception.Message
+                if (Test-AuthzError $errMsg) {
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
+                } elseif (Test-FirewallError $errMsg) {
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                } else {
+                    $results.Add((New-ErrorResult "8.3.11" "Certificate Validity" 1 $sec $errMsg $sid $sname $kvName))
+                }
             }
 
             # 8.3.6 — RBAC authorization enabled
@@ -367,30 +349,22 @@ function Invoke-Section8Checks {
 
             # 8.3.9 — Automatic key rotation policy set (reuse cached key list from 8.3.1/8.3.2)
             try {
-                $r = if ($cachedKeyResult) { $cachedKeyResult } else {
-                    Invoke-AzCli -Arguments @(
-                        "keyvault", "key", "list", "--vault-name", $kvName
-                    ) -TimeoutSec $script:TIMEOUTS.default
+                $keys = if ($cachedKeys) { $cachedKeys } else {
+                    $rKeysF = Invoke-AzCli @("keyvault", "key", "list", "--vault-name", $kvName) -SubscriptionId $sid
+                    if ($rKeysF.Success) { @($rKeysF.Data) } else { throw $rKeysF.Error }
                 }
 
-                if ($r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0) {
-                    $keys = if ($cachedKeys) { $cachedKeys } else { @($r.Data) }
+                if ($keys.Count -gt 0) {
                     $noRotation = [System.Collections.Generic.List[string]]::new()
 
                     foreach ($key in $keys) {
                         $keyName = [string]$key.name
-                        $rr = Invoke-AzCli -Arguments @(
-                            "keyvault", "key", "rotation-policy", "show",
-                            "--vault-name", $kvName, "--name", $keyName
-                        ) -TimeoutSec $script:TIMEOUTS.default
+                        $policy  = Get-AzKeyVaultKeyRotationPolicy -VaultName $kvName -Name $keyName -ErrorAction SilentlyContinue
 
-                        if ($rr.Success -and $rr.Data) {
-                            # Compliant if at least one lifetimeAction has type "Rotate" (automatic rotation)
+                        if ($policy) {
                             $hasRotate = $false
-                            foreach ($la in @($rr.Data.lifetimeActions)) {
-                                if ([string]($la.PSObject.Properties['action']?.Value.PSObject.Properties['type']?.Value) -eq 'Rotate') {
-                                    $hasRotate = $true; break
-                                }
+                            foreach ($la in @($policy.LifetimeActions)) {
+                                if ($la.Action -eq 'Rotate') { $hasRotate = $true; break }
                             }
                             if (-not $hasRotate) { $noRotation.Add($keyName) }
                         } else {
@@ -406,19 +380,18 @@ function Invoke-Section8Checks {
                         -Details $(if ($pass) { "All keys have automatic rotation configured." } else { "Keys without automatic rotation configured: $($noRotation -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Keys > Rotation policy > Set rotation action" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
-                } elseif (-not $r.Success) {
-                    if (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
-                    } elseif (Test-FirewallError $r.Error) {
-                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
-                    } else {
-                        $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec $r.Error $sid $sname $kvName))
-                    }
                 } else {
                     $results.Add((New-InfoResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "No keys found in vault." $sid $sname $kvName))
                 }
             } catch {
-                $results.Add((New-ErrorResult "8.3.9" "Key Rotation Auto-Rotation" 2 $sec $_.Exception.Message $sid $sname $kvName))
+                $errMsg = $_.Exception.Message
+                if (Test-AuthzError $errMsg) {
+                    $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                } elseif (Test-FirewallError $errMsg) {
+                    $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                } else {
+                    $results.Add((New-ErrorResult "8.3.9" "Key Rotation Auto-Rotation" 2 $sec $errMsg $sid $sname $kvName))
+                }
             }
         }
     }
