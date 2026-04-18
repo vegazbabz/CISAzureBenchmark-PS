@@ -135,7 +135,7 @@ function Invoke-Section9Checks {
             -ControlId "9.3.2.2" -Title "Ensure That Storage Account Public Network Access Is Disabled" `
             -Level 1 -Section $sec `
             -Status $(if ($pubDisabled) { $script:PASS } else { $script:FAIL }) `
-            -Details "publicNetworkAccess = $pubAccess" `
+            -Details "publicNetworkAccess = $(if ($pubAccess) { $pubAccess } else { 'null (not explicitly disabled — effective: Enabled)' })" `
             -Remediation $(if (-not $pubDisabled) { "Storage account > $acctName > Networking > Public network access > Disabled" } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
 
@@ -411,7 +411,7 @@ function Invoke-Section9Checks {
                     -ControlId "9.3.1.1" -Title "Ensure Storage Account Key Rotation Reminders Are Enabled" `
                     -Level 1 -Section $sec `
                     -Status $(if ($reminderDays) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Account '$acctName': keyExpirationPeriodInDays = $reminderDays" `
+                    -Details "Account '$acctName': keyExpirationPeriodInDays = $(if ($null -ne $reminderDays -and $reminderDays -ne '') { $reminderDays } else { '(not configured)' })" `
                     -Remediation $(if (-not $reminderDays) { "Storage Account > Access keys > Set rotation reminder" } else { "" }) `
                     -SubscriptionId $sid -SubscriptionName $sname -Resource $(if (-not $reminderDays) { $acctName } else { "" })))
 

@@ -1289,6 +1289,56 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
         ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
     }
+
+    It "returns PASS when no log profile but subscription diagnostic settings route Administrative logs" {
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "log-profiles") {
+                return [PSCustomObject]@{ Success = $true; Data = @() }
+            }
+            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
+                $diagData = [PSCustomObject]@{
+                    value = @([PSCustomObject]@{
+                        name        = "subscriptionToLa"
+                        workspaceId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/law"
+                        logs        = @(
+                            [PSCustomObject]@{ category = "Administrative"; enabled = "True" }
+                            [PSCustomObject]@{ category = "Security";       enabled = "True" }
+                        )
+                    })
+                }
+                return [PSCustomObject]@{ Success = $true; Data = $diagData }
+            }
+            if ($Arguments -contains "activity-log") {
+                return [PSCustomObject]@{ Success = $true; Data = @() }
+            }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when no log profile and no subscription diagnostic settings" {
+        Mock Invoke-AzCli {
+            param($Arguments)
+            if ($Arguments -contains "log-profiles") {
+                return [PSCustomObject]@{ Success = $true; Data = @() }
+            }
+            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
+                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
+            }
+            if ($Arguments -contains "activity-log") {
+                return [PSCustomObject]@{ Success = $true; Data = @() }
+            }
+            return [PSCustomObject]@{ Success = $true; Data = @() }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
+    }
 }
 
 Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {

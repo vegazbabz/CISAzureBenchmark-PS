@@ -97,22 +97,16 @@ function Invoke-Section6Checks {
     }
 
     # ── 6.1.1.3 — Subscription activity log retention >= 365 days ──────────────
-    # Log profiles are the classic mechanism; modern approach uses diagnostic settings.
+    # Classic: Log Profile API. Modern (preferred since ~2022): Subscription Diagnostic Settings.
+    # Both paths must be checked — modern Azure subscriptions use diagnostic settings exclusively.
     try {
         $r = Invoke-AzCli -Arguments @(
             "monitor", "log-profiles", "list",
             "--subscription", $sid
         ) -TimeoutSec $script:TIMEOUTS.default
 
-        if (-not $r.Success -or -not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
-            $results.Add((New-CISResult `
-                -ControlId "6.1.1.3" `
-                -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                -Level 1 -Section $sec -Status $script:FAIL `
-                -Details "No activity log profile found. Retention not configured." `
-                -Remediation "Monitor > Activity Log > Export Activity Log > Add diagnostic setting with retention >= 365 days" `
-                -SubscriptionId $sid -SubscriptionName $sname))
-        } else {
+        if ($r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0) {
+            # Legacy log profile found — evaluate retention
             $logProfile = $r.Data | Select-Object -First 1
             $retPol  = $logProfile.PSObject.Properties['retentionPolicy']?.Value
             $days    = if ($retPol -and $retPol.days) { [int]$retPol.days } else { 0 }
@@ -124,9 +118,52 @@ function Invoke-Section6Checks {
                 -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
                 -Level 1 -Section $sec `
                 -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                -Details "Retention: $days days (enabled: $enabled)." `
+                -Details "Log Profile retention: $days days (policy enabled: $enabled)." `
                 -Remediation $(if (-not $pass) { "Monitor > Activity Log > Export > Retention >= 365 days" } else { "" }) `
                 -SubscriptionId $sid -SubscriptionName $sname))
+        } else {
+            # No log profile — check modern subscription-level diagnostic settings.
+            # Modern Azure subscriptions route activity logs via diagnostic settings, not log profiles.
+            $rDiag = Invoke-AzCli -Arguments @(
+                "monitor", "diagnostic-settings", "subscription", "list",
+                "--subscription", $sid
+            ) -TimeoutSec $script:TIMEOUTS.default
+
+            $diagItems = if ($rDiag.Success -and $rDiag.Data) {
+                # API returns { "value": [...] }
+                if ($rDiag.Data.PSObject.Properties['value']) { @($rDiag.Data.value) }
+                else { @($rDiag.Data) }
+            } else { @() }
+
+            $activeSetting = $diagItems | Where-Object {
+                $_.logs | Where-Object { $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True' }
+            } | Select-Object -First 1
+
+            if ($activeSetting) {
+                $destDesc = if ($activeSetting.workspaceId) {
+                    "Log Analytics ($($activeSetting.workspaceId -replace '.*/workspaces/', ''))"
+                } elseif ($activeSetting.storageAccountId) {
+                    "Storage ($($activeSetting.storageAccountId -replace '.*/storageAccounts/', ''))"
+                } elseif ($activeSetting.eventHubAuthorizationRuleId) {
+                    "Event Hub"
+                } else { "unknown destination" }
+
+                $results.Add((New-CISResult `
+                    -ControlId "6.1.1.3" `
+                    -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                    -Level 1 -Section $sec -Status $script:PASS `
+                    -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to $destDesc. Verify destination retention >= 365 days." `
+                    -Remediation "" `
+                    -SubscriptionId $sid -SubscriptionName $sname))
+            } else {
+                $results.Add((New-CISResult `
+                    -ControlId "6.1.1.3" `
+                    -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                    -Level 1 -Section $sec -Status $script:FAIL `
+                    -Details "No activity log profile or subscription diagnostic setting with Administrative logs enabled found." `
+                    -Remediation "Monitor > Activity Log > Diagnostic settings > Add setting > Enable Administrative logs > Send to Log Analytics (retention >= 365 days)" `
+                    -SubscriptionId $sid -SubscriptionName $sname))
+            }
         }
     } catch {
         $results.Add((New-ErrorResult "6.1.1.3" "Ensure the Activity Retention Log Is Set to at Least One Year" 1 $sec $_.Exception.Message $sid $sname))
