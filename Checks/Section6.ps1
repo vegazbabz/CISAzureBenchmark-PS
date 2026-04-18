@@ -17,7 +17,7 @@ function Invoke-Section6Checks {
     # ── 6.1.1.1 — Subscription diagnostic settings exist ─────────────────────
     try {
         $subDiagUri = "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
-        $r = Invoke-AzRest -Uri $subDiagUri
+        $r = Invoke-ArmRest -Uri $subDiagUri
 
         $settings = @()
         if ($r.Success -and $r.Data) {
@@ -118,7 +118,7 @@ function Invoke-Section6Checks {
         } else {
             # No log profile — check modern subscription-level diagnostic settings.
             # Modern Azure subscriptions route activity logs via diagnostic settings, not log profiles.
-            $rDiag = Invoke-AzRest -Uri "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
+            $rDiag = Invoke-ArmRest -Uri "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
 
             $diagItems = if ($rDiag.Success -and $rDiag.Data) {
                 if ($rDiag.Data.PSObject.Properties['value']) { @($rDiag.Data.value) }

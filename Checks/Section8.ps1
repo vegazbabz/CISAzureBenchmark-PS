@@ -56,7 +56,7 @@ function Invoke-Section8Checks {
     # ── 8.1.3.3 — WDATP / MDE integration ────────────────────────────────────
     try {
         $url = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/settings/WDATP?api-version=2021-06-01"
-        $r   = Invoke-AzRest -Uri $url
+        $r   = Invoke-ArmRest -Uri $url
 
         if (-not $r.Success) {
             $results.Add((New-ErrorResult "8.1.3.3" "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled" 1 $sec $r.Error $sid $sname))
@@ -78,7 +78,7 @@ function Invoke-Section8Checks {
     # ── 8.1.10 — MDE TVM VM OS update check ──────────────────────────────────
     try {
         $url = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/serverVulnerabilityAssessmentsSettings?api-version=2023-05-01"
-        $r   = Invoke-AzRest -Uri $url
+        $r   = Invoke-ArmRest -Uri $url
 
         if (-not $r.Success) {
             $results.Add((New-ErrorResult "8.1.10" "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" 1 $sec $r.Error $sid $sname))
@@ -106,7 +106,7 @@ function Invoke-Section8Checks {
     # Uses 2023-12-01-preview directly — it returns all data needed for all 4 checks.
     try {
         $previewUrl  = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
-        $r2          = Invoke-AzRest -Uri $previewUrl
+        $r2          = Invoke-ArmRest -Uri $previewUrl
         $contactItems = @()
         if ($r2.Success -and $r2.Data) {
             $valProp = $r2.Data.PSObject.Properties['value']

@@ -209,7 +209,7 @@ function Invoke-AzGraphQuery {
     }
 }
 
-function Invoke-AzRest {
+function Invoke-ArmRest {
     <#
     .SYNOPSIS
     Call an ARM or Microsoft Graph REST endpoint via Invoke-AzRestMethod.
@@ -262,7 +262,7 @@ function Invoke-AzRestPaged {
     $nextUri = $Uri
 
     while ($nextUri) {
-        $result = Invoke-AzRest -Uri $nextUri
+        $result = Invoke-ArmRest -Uri $nextUri
         if (-not $result.Success) {
             return [PSCustomObject]@{ Success = $false; Data = @(); Error = $result.Error }
         }

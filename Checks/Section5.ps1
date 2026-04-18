@@ -8,7 +8,7 @@ function Invoke-Check5_1_1 {
     $cid = "5.1.1"; $title = "Ensure Security Defaults Are Enabled on Microsoft Entra ID"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
-    $r   = Invoke-AzRest -Uri $url
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Properties > Manage Security Defaults.')
@@ -18,7 +18,7 @@ function Invoke-Check5_1_1 {
 
     # If security defaults off, check for Conditional Access policies (acceptable alternative)
     if (-not $enabled) {
-        $caResult = Invoke-AzRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
+        $caResult = Invoke-ArmRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
         $caEnabled = $caResult.Success -and $caResult.Data -and $caResult.Data.value -and ($caResult.Data.value | Measure-Object).Count -gt 0
         if ($caEnabled) {
             return New-CISResult $cid $title $level $sec $script:PASS `
@@ -80,7 +80,7 @@ function Invoke-Check5_4 {
     $cid = "5.4"; $title = "Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -100,7 +100,7 @@ function Invoke-Check5_14 {
     $cid = "5.14"; $title = "Ensure That 'Users Can Register Applications' Is Set to 'No'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -120,7 +120,7 @@ function Invoke-Check5_15 {
     $cid = "5.15"; $title = "Ensure That 'Guest Users Access Restrictions' Is Set to 'Guest user access is restricted'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -145,7 +145,7 @@ function Invoke-Check5_16 {
     $cid = "5.16"; $title = "Ensure That 'Guest Invite Restrictions' Is Set to 'Only Admins and Users in the Guest Inviter Role'"; $level = 2; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
