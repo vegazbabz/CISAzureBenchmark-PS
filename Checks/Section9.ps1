@@ -390,7 +390,7 @@ function Invoke-Section9Checks {
             if ($rAcct.Success) {
                 $acctData = $rAcct.Data
                 # 9.3.1.1 — Key expiration / rotation reminder
-                $reminderDays = $acctData.keyExpirationPeriodInDays
+                $reminderDays = $acctData.PSObject.Properties['keyExpirationPeriodInDays']?.Value
                 $results.Add((New-CISResult `
                     -ControlId "9.3.1.1" -Title "Ensure Storage Account Key Rotation Reminders Are Enabled" `
                     -Level 1 -Section $sec `
@@ -400,13 +400,13 @@ function Invoke-Section9Checks {
                     -SubscriptionId $sid -SubscriptionName $sname -Resource $(if (-not $reminderDays) { $acctName } else { "" })))
 
                 # 9.3.1.2 — Key rotation within 90 days
-                $keyTimes = $acctData.keyCreationTime
+                $keyTimes = $acctData.PSObject.Properties['keyCreationTime']?.Value
                 if ($keyTimes) {
                     $now      = [datetime]::UtcNow
                     $oldKeys  = [System.Collections.Generic.List[string]]::new()
 
                     foreach ($prop in @("key1","key2")) {
-                        $keyTime = $keyTimes.$prop
+                        $keyTime = $keyTimes.PSObject.Properties[$prop]?.Value
                         if ($keyTime) {
                             $created = [datetime]$keyTime
                             $days    = ($now - $created).TotalDays
