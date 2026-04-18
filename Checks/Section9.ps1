@@ -49,7 +49,7 @@ function Invoke-Section9Checks {
             ,@("9.3.2.3","Ensure That Storage Account Default Network Rule Is Set to 'Deny'",1)
             ,@("9.3.5","Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",2)
             ,@("9.3.1.1","Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",1)
-            ,@("9.3.1.2","Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days",1)
+            ,@("9.3.1.2","Ensure that Storage Account access keys are periodically regenerated",1)
             ,@("9.3.6","Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",1)
             ,@("9.3.2.1","Ensure That 'Private Endpoints' Are Used for Storage Accounts",2)
             ,@("9.3.9","Ensure That Storage Accounts Have a CanNotDelete Resource Lock",1)
@@ -416,22 +416,22 @@ function Invoke-Section9Checks {
 
                     $pass = $oldKeys.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId "9.3.1.2" -Title "Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days" `
+                        -ControlId "9.3.1.2" -Title "Ensure that Storage Account access keys are periodically regenerated" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "Both access keys rotated within 90 days." } else { "Key(s) not rotated in 90 days: $($oldKeys -join '; ')" }) `
                         -Remediation $(if (-not $pass) { "Storage account > $acctName > Security > Access keys > Rotate key" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
                 } else {
-                    $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.3.1.2" "Ensure that Storage Account access keys are periodically regenerated" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
                 }
             } else {
                 $results.Add((New-ErrorResult "9.3.1.1" "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" 1 $sec "Could not retrieve storage account details." $sid $sname $acctName))
-                $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.3.1.2" "Ensure that Storage Account access keys are periodically regenerated" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
             }
         } catch {
             $results.Add((New-ErrorResult "9.3.1.1" "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $results.Add((New-ErrorResult "9.3.1.2" "Ensure that Storage Account access keys are periodically regenerated" 1 $sec $_.Exception.Message $sid $sname $acctName))
         }
     }
 
