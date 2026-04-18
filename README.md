@@ -155,7 +155,7 @@ Checks/
   Section8.ps1                Security services checks (30 controls)
   Section9.ps1                Storage checks (24 controls — 101 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (187 tests)
+  Checks.Tests.ps1            Pester unit tests (191 tests)
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data

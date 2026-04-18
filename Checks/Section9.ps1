@@ -20,7 +20,7 @@ function Invoke-Section9Checks {
     if ($accounts.Count -eq 0) {
         $r = Invoke-AzCli -Arguments @(
             "storage", "account", "list", "--subscription", $sid,
-            "--query", "[].{id:id,name:name,resourceGroup:resourceGroup,kind:kind,sku:sku}"
+            "--query", "[].{id:id,name:name,resourceGroup:resourceGroup,isHns:isHnsEnabled,sku:sku}"
         ) -TimeoutSec $script:TIMEOUTS.storage_list
         if ($r.Success -and $r.Data) { $accounts = @($r.Data) }
     }

@@ -143,7 +143,6 @@ resources | where type =~ 'microsoft.storage/storageaccounts'
     minTls       = properties.minimumTlsVersion,
     keyAccess    = properties.allowSharedKeyAccess,
     oauthDefault = properties.defaultToOAuthAuthentication,
-    kind         = kind,
     isHns        = properties.isHnsEnabled,
     sku          = sku.name,
     privateEps   = array_length(properties.privateEndpointConnections)

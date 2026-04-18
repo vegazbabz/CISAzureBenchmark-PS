@@ -28,6 +28,7 @@ BeforeAll {
         "Private\History.ps1",
         "Private\Report.ps1",
         "Checks\Section2.ps1",
+        "Checks\Section3.ps1",
         "Checks\Section5.ps1",
         "Checks\Section6.ps1",
         "Checks\Section7.ps1",
@@ -374,6 +375,34 @@ Describe "Invoke-Section2Checks — 2.1.10 Public Network Access" {
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.10" }).Status | Should -Be "FAIL"
+    }
+}
+
+# =============================================================================
+# SECTION 3 — COMPUTE SERVICES
+# =============================================================================
+
+Describe "Invoke-Check3_1_1 — MFA for Privileged VM Access (Manual)" {
+    It "returns MANUAL status" {
+        $r = Invoke-Check3_1_1
+        $r.Status | Should -Be "MANUAL"
+    }
+
+    It "returns control id 3.1.1" {
+        $r = Invoke-Check3_1_1
+        $r.ControlId | Should -Be "3.1.1"
+    }
+}
+
+Describe "Invoke-Section3TenantChecks" {
+    It "returns exactly one result" {
+        $results = @(Invoke-Section3TenantChecks)
+        $results | Should -HaveCount 1
+    }
+
+    It "result has MANUAL status" {
+        $results = @(Invoke-Section3TenantChecks)
+        $results[0].Status | Should -Be "MANUAL"
     }
 }
 
