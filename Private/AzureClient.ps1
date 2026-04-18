@@ -255,15 +255,14 @@ function Invoke-AzRestPaged {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][string]$Uri,
-        [int]$TimeoutSec = 60
+        [Parameter(Mandatory)][string]$Uri
     )
 
     $all     = [System.Collections.Generic.List[object]]::new()
     $nextUri = $Uri
 
     while ($nextUri) {
-        $result = Invoke-AzRest -Uri $nextUri -TimeoutSec $TimeoutSec
+        $result = Invoke-AzRest -Uri $nextUri
         if (-not $result.Success) {
             return [PSCustomObject]@{ Success = $false; Data = @(); Error = $result.Error }
         }
