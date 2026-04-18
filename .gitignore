@@ -25,4 +25,11 @@ REVIEW_TODO.md
 .idea/
 .DS_Store
 Thumbs.db
+
+# Test artifacts
+coverage.xml
+Tests/get-failures.ps1
+
+# Large binary files
+*.pdf
 Desktop.ini
