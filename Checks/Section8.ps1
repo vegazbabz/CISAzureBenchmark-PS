@@ -37,8 +37,8 @@ function Invoke-Section8Checks {
 
     foreach ($plan in $defenderPlans) {
         try {
-            $r       = Invoke-AzCli @("security", "pricing", "show", "--name", $plan.Plan) -SubscriptionId $sid
-            $tier    = if ($r.Success -and $r.Data) { [string]$r.Data.pricingTier } else { "Unknown" }
+            $pricing = Get-AzSecurityPricing -Name $plan.Plan -ErrorAction Stop
+            $tier    = [string]$pricing.PricingTier
             $enabled = $tier -eq "Standard"
             $results.Add((New-CISResult `
                 -ControlId $plan.Id `
@@ -215,21 +215,19 @@ function Invoke-Section8Checks {
             $ctrlKeyExp = if ($rbac) { "8.3.1" } else { "8.3.2" }
             $cachedKeys = $null
             try {
-                $rKeys = Invoke-AzCli @("keyvault", "key", "list", "--vault-name", $kvName) -SubscriptionId $sid
-                if (-not $rKeys.Success) { throw $rKeys.Error }
-                $allKeys    = @($rKeys.Data)
+                $allKeys    = @(Get-AzKeyVaultKey -VaultName $kvName -ErrorAction Stop)
                 $cachedKeys = $allKeys
 
                 if ($allKeys.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "No keys found in vault." $sid $sname $kvName))
                 } else {
-                    $noExpiry = @($allKeys | Where-Object { -not $_.attributes.expires })
+                    $noExpiry = @($allKeys | Where-Object { -not $_.Attributes.Expires })
                     $pass = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlKeyExp -Title "Ensure That the Expiration Date Is Set on All Keys" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All $($allKeys.Count) key(s) have expiration set." } else { "$($noExpiry.Count) key(s) without expiration: $(($noExpiry | ForEach-Object { $_.name }) -join ', ')" }) `
+                        -Details $(if ($pass) { "All $($allKeys.Count) key(s) have expiration set." } else { "$($noExpiry.Count) key(s) without expiration: $(($noExpiry | ForEach-Object { $_.Name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Keys > Set expiration date on each key" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
@@ -247,20 +245,18 @@ function Invoke-Section8Checks {
             # 8.3.3/8.3.4 — Secret expiration set (RBAC vs access-policy vault)
             $ctrlSecExp = if ($rbac) { "8.3.3" } else { "8.3.4" }
             try {
-                $rSecrets = Invoke-AzCli @("keyvault", "secret", "list", "--vault-name", $kvName) -SubscriptionId $sid
-                if (-not $rSecrets.Success) { throw $rSecrets.Error }
-                $allSecrets = @($rSecrets.Data)
+                $allSecrets = @(Get-AzKeyVaultSecret -VaultName $kvName -ErrorAction Stop)
 
                 if ($allSecrets.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "No secrets found in vault." $sid $sname $kvName))
                 } else {
-                    $noExpiry = @($allSecrets | Where-Object { -not $_.attributes.expires })
+                    $noExpiry = @($allSecrets | Where-Object { -not $_.Attributes.Expires })
                     $pass     = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlSecExp -Title "Ensure That the Expiration Date Is Set on All Secrets" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All $($allSecrets.Count) secret(s) have expiration set." } else { "$($noExpiry.Count) secret(s) without expiration: $(($noExpiry | ForEach-Object { $_.name }) -join ', ')" }) `
+                        -Details $(if ($pass) { "All $($allSecrets.Count) secret(s) have expiration set." } else { "$($noExpiry.Count) secret(s) without expiration: $(($noExpiry | ForEach-Object { $_.Name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Secrets > Set expiration date" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
@@ -277,25 +273,23 @@ function Invoke-Section8Checks {
 
             # 8.3.11 — Certificate validity <= 12 months
             try {
-                $rCerts = Invoke-AzCli @("keyvault", "certificate", "list", "--vault-name", $kvName) -SubscriptionId $sid
-                if (-not $rCerts.Success) { throw $rCerts.Error }
-                $allCerts = @($rCerts.Data)
+                $allCerts = @(Get-AzKeyVaultCertificate -VaultName $kvName -ErrorAction Stop)
 
                 if ($allCerts.Count -eq 0) {
                     $results.Add((New-InfoResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {
                     $longCerts = @($allCerts | Where-Object {
-                        $exp = $_.attributes.expires
-                        $crt = $_.attributes.created
+                        $exp = $_.Attributes.Expires
+                        $crt = $_.Attributes.Created
                         if (-not $exp -or -not $crt) { return $true }
-                        ([datetime]$exp - [datetime]$crt).TotalDays -gt 366
+                        ($exp - $crt).TotalDays -gt 366
                     })
                     $pass = $longCerts.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId "8.3.11" -Title "Ensure That Certificate Validity Period Is Not More Than 12 Months" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { $_.name }) -join ', ')" }) `
+                        -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { $_.Name }) -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Certificates > Issuance policy > Validity <= 12 months" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 }
@@ -350,15 +344,14 @@ function Invoke-Section8Checks {
             # 8.3.9 — Automatic key rotation policy set (reuse cached key list from 8.3.1/8.3.2)
             try {
                 $keys = if ($cachedKeys) { $cachedKeys } else {
-                    $rKeysF = Invoke-AzCli @("keyvault", "key", "list", "--vault-name", $kvName) -SubscriptionId $sid
-                    if ($rKeysF.Success) { @($rKeysF.Data) } else { throw $rKeysF.Error }
+                    @(Get-AzKeyVaultKey -VaultName $kvName -ErrorAction Stop)
                 }
 
                 if ($keys.Count -gt 0) {
                     $noRotation = [System.Collections.Generic.List[string]]::new()
 
                     foreach ($key in $keys) {
-                        $keyName = [string]$key.name
+                        $keyName = [string]$key.Name
                         $policy  = Get-AzKeyVaultKeyRotationPolicy -VaultName $kvName -Name $keyName -ErrorAction SilentlyContinue
 
                         if ($policy) {
