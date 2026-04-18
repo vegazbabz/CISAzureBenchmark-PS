@@ -59,12 +59,12 @@ function Invoke-Section8Checks {
         $r   = Invoke-ArmRest -Uri $url
 
         if (-not $r.Success) {
-            $results.Add((New-ErrorResult "8.1.3.3" "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled" 1 $sec $r.Error $sid $sname))
+            $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' component status is set to 'On'" 1 $sec $r.Error $sid $sname))
         } else {
             $enabled = [string]$r.Data.properties.enabled -eq "True" -or [string]$r.Data.properties.enabled -eq "true"
             $results.Add((New-CISResult `
                 -ControlId "8.1.3.3" `
-                -Title "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled" `
+                -Title "Ensure that 'Endpoint protection' component status is set to 'On'" `
                 -Level 1 -Section $sec `
                 -Status $(if ($enabled) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($enabled) { "Microsoft Defender for Endpoint integration: Enabled." } else { "Microsoft Defender for Endpoint integration: Disabled." }) `
@@ -72,7 +72,7 @@ function Invoke-Section8Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         }
     } catch {
-        $results.Add((New-ErrorResult "8.1.3.3" "MDE Integration" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' component status is set to 'On'" 1 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 8.1.10 — MDE TVM VM OS update check ──────────────────────────────────
