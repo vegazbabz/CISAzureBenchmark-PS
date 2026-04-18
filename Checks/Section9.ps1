@@ -63,7 +63,6 @@ function Invoke-Section9Checks {
         $acctName = [string]($acct.PSObject.Properties['name']?.Value)
         $acctId   = [string]($acct.PSObject.Properties['id']?.Value)
         $acctRg   = [string]($acct.PSObject.Properties['resourceGroup']?.Value)
-        $kind     = [string]($acct.PSObject.Properties['kind']?.Value)
 
         # ── Group 1: Static checks from Resource Graph ────────────────────────
 
