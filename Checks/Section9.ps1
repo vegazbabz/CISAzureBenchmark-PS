@@ -48,7 +48,7 @@ function Invoke-Section9Checks {
             ,@("9.3.2.2","Ensure That Storage Account Public Network Access Is Disabled",1)
             ,@("9.3.2.3","Ensure That Storage Account Default Network Rule Is Set to 'Deny'",1)
             ,@("9.3.5","Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",2)
-            ,@("9.3.1.1","Ensure Storage Account Key Rotation Reminders Are Enabled",1)
+            ,@("9.3.1.1","Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",1)
             ,@("9.3.1.2","Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days",1)
             ,@("9.3.6","Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",1)
             ,@("9.3.2.1","Ensure That 'Private Endpoints' Are Used for Storage Accounts",2)
@@ -392,7 +392,7 @@ function Invoke-Section9Checks {
                 # 9.3.1.1 — Key expiration / rotation reminder
                 $reminderDays = $acctData.PSObject.Properties['keyExpirationPeriodInDays']?.Value
                 $results.Add((New-CISResult `
-                    -ControlId "9.3.1.1" -Title "Ensure Storage Account Key Rotation Reminders Are Enabled" `
+                    -ControlId "9.3.1.1" -Title "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" `
                     -Level 1 -Section $sec `
                     -Status $(if ($reminderDays) { $script:PASS } else { $script:FAIL }) `
                     -Details "Account '$acctName': keyExpirationPeriodInDays = $(if ($null -ne $reminderDays -and $reminderDays -ne '') { $reminderDays } else { '(not configured)' })" `
@@ -426,11 +426,11 @@ function Invoke-Section9Checks {
                     $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
                 }
             } else {
-                $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec "Could not retrieve storage account details." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.3.1.1" "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" 1 $sec "Could not retrieve storage account details." $sid $sname $acctName))
                 $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
             }
         } catch {
-            $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $results.Add((New-ErrorResult "9.3.1.1" "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" 1 $sec $_.Exception.Message $sid $sname $acctName))
             $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec $_.Exception.Message $sid $sname $acctName))
         }
     }
