@@ -220,7 +220,8 @@ function Invoke-Section8Checks {
             $pub   = [string]$kv.publicAccess
             $eps   = [int]($kv.privateEps)
 
-            $ctrlKeyExp = if ($rbac) { "8.3.1" } else { "8.3.2" }
+            $ctrlKeyExp  = if ($rbac) { "8.3.1" } else { "8.3.2" }
+            $titleKeyExp = if ($rbac) { "Ensure that the Expiration Date is set for all Keys in RBAC Key Vaults" } else { "Ensure That the Expiration Date Is Set on All Keys" }
             $cachedKeys = $null
             try {
                 # Filter out certificate-backed keys (Managed = $true) — those are managed by the
@@ -230,12 +231,12 @@ function Invoke-Section8Checks {
                 $cachedKeys = $allKeys
 
                 if ($allKeys.Count -eq 0) {
-                    $results.Add((New-InfoResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "No keys found in vault." $sid $sname $kvName))
+                    $results.Add((New-InfoResult $ctrlKeyExp $titleKeyExp 1 $sec "No keys found in vault." $sid $sname $kvName))
                 } else {
                     $noExpiry = @($allKeys | Where-Object { -not $_.Attributes.Expires })
                     $pass = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId $ctrlKeyExp -Title "Ensure That the Expiration Date Is Set on All Keys" `
+                        -ControlId $ctrlKeyExp -Title $titleKeyExp `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "All $($allKeys.Count) key(s) have expiration set." } else { "$($noExpiry.Count) key(s) without expiration: $(($noExpiry | ForEach-Object { $_.Name }) -join ', ')" }) `
@@ -245,16 +246,17 @@ function Invoke-Section8Checks {
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-AuthzError $errMsg) {
-                    $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult $ctrlKeyExp $titleKeyExp 1 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
                 } elseif (Test-FirewallError $errMsg) {
-                    $results.Add((New-ErrorResult $ctrlKeyExp "Ensure That the Expiration Date Is Set on All Keys" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult $ctrlKeyExp $titleKeyExp 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                 } else {
                     $results.Add((New-ErrorResult $ctrlKeyExp "Key Expiration Check" 1 $sec $errMsg $sid $sname $kvName))
                 }
             }
 
             # 8.3.3/8.3.4 — Secret expiration set (RBAC vs access-policy vault)
-            $ctrlSecExp = if ($rbac) { "8.3.3" } else { "8.3.4" }
+            $ctrlSecExp  = if ($rbac) { "8.3.3" } else { "8.3.4" }
+            $titleSecExp = if ($rbac) { "Ensure that the Expiration Date is set for all Secrets in RBAC Key Vaults" } else { "Ensure That the Expiration Date Is Set on All Secrets" }
             try {
                 # Filter out certificate-backed secrets (Managed = $true) — those are managed by
                 # the certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
@@ -262,12 +264,12 @@ function Invoke-Section8Checks {
                                     Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
 
                 if ($allSecrets.Count -eq 0) {
-                    $results.Add((New-InfoResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "No secrets found in vault." $sid $sname $kvName))
+                    $results.Add((New-InfoResult $ctrlSecExp $titleSecExp 1 $sec "No secrets found in vault." $sid $sname $kvName))
                 } else {
                     $noExpiry = @($allSecrets | Where-Object { -not $_.Attributes.Expires })
                     $pass     = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId $ctrlSecExp -Title "Ensure That the Expiration Date Is Set on All Secrets" `
+                        -ControlId $ctrlSecExp -Title $titleSecExp `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "All $($allSecrets.Count) secret(s) have expiration set." } else { "$($noExpiry.Count) secret(s) without expiration: $(($noExpiry | ForEach-Object { $_.Name }) -join ', ')" }) `
@@ -277,9 +279,9 @@ function Invoke-Section8Checks {
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-AuthzError $errMsg) {
-                    $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Insufficient permissions to list secrets. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Secret List permission." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult $ctrlSecExp $titleSecExp 1 $sec "Insufficient permissions to list secrets. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Secret List permission." $sid $sname $kvName))
                 } elseif (Test-FirewallError $errMsg) {
-                    $results.Add((New-ErrorResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult $ctrlSecExp $titleSecExp 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                 } else {
                     $results.Add((New-ErrorResult $ctrlSecExp "Secret Expiration Check" 1 $sec $errMsg $sid $sname $kvName))
                 }
