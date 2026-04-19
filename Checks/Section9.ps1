@@ -366,7 +366,7 @@ function Invoke-Section9Checks {
                 $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
                 $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
             } else {
-                $results.Add((New-ErrorResult "9.1.1" "File Service Soft Delete" 1 $sec $errMsg $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec $errMsg $sid $sname $acctName))
                 $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $errMsg $sid $sname $acctName))
                 $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $errMsg $sid $sname $acctName))
             }
@@ -469,8 +469,8 @@ function Invoke-Section9Checks {
                 -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
         }
     } catch {
-        $results.Add((New-ErrorResult "9.3.9" "Resource Locks (CanNotDelete)" 1 $sec $_.Exception.Message $sid $sname))
-        $results.Add((New-ErrorResult "9.3.10" "Resource Locks (ReadOnly)" 2 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "9.3.9" "Ensure That Storage Accounts Have a CanNotDelete Resource Lock" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "9.3.10" "Ensure That Storage Accounts Have a ReadOnly Resource Lock" 2 $sec $_.Exception.Message $sid $sname))
     }
 
     return $results.ToArray()
