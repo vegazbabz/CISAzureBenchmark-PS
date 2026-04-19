@@ -1,8 +1,31 @@
 #Requires -Version 7.0
+[CmdletBinding()]
+param(
+    # Path to the HTML report file.  Defaults to the most recently modified
+    # cis_audit_report_*.html in the .\reports\ folder when omitted.
+    [string]$Path
+)
+
 Add-Type -AssemblyName System.Web
 
-$reportPath = ".\reports\cis_audit_report_20260418_175152.html"
-$content = Get-Content $reportPath -Raw -Encoding UTF8
+if (-not $Path) {
+    $latest = Get-ChildItem ".\reports\cis_audit_report_*.html" -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending |
+                Select-Object -First 1
+    if (-not $latest) {
+        Write-Host "No report files found in .\reports\. Use -Path to specify the report file." -ForegroundColor Red
+        exit 1
+    }
+    $Path = $latest.FullName
+    Write-Host "Using: $Path" -ForegroundColor DarkGray
+}
+
+if (-not (Test-Path $Path)) {
+    Write-Host "Report file not found: $Path" -ForegroundColor Red
+    exit 1
+}
+
+$content = Get-Content $Path -Raw -Encoding UTF8
 
 $rows = [regex]::Matches($content, '<tr[^>]+data-status="FAIL"[^>]*>(.*?)</tr>', 'Singleline')
 Write-Host "=== FAIL Results ($($rows.Count)) ===" -ForegroundColor Red
