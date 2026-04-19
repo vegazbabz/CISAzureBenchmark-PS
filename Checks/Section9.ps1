@@ -296,6 +296,11 @@ function Invoke-Section9Checks {
                     $results.Add((New-ErrorResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
                 } else {
                     $results.Add((New-ErrorResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec $errMsg $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec $errMsg $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec $errMsg $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec $errMsg $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec $errMsg $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec $errMsg $sid $sname $acctName))
                 }
             }
         } else {
