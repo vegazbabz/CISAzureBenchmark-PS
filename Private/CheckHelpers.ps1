@@ -10,7 +10,7 @@ function New-GraphPermissionMessage {
         [Parameter(Mandatory)][string]$Permission,
         [string]$ManualCheck
     )
-    $msg = "Requires '$Permission' permission. The az CLI app cannot acquire this scope (Microsoft limitation). Fix: create an app registration with $Permission (application permission) > Grant admin consent > az login --service-principal."
+    $msg = "Requires '$Permission' permission. The audit identity's token cannot acquire this scope. Fix: create an app registration with $Permission (application permission) > Grant admin consent > authenticate with Connect-AzAccount -ServicePrincipal or az login --service-principal."
     if ($ManualCheck) { $msg += " Manual check: $ManualCheck" }
     return $msg
 }
@@ -52,7 +52,7 @@ function Format-AzErrorMessage {
     # prefix messages with "Graph API error:" get Entra-specific guidance instead of
     # the ARM "Grant Reader role on subscription" advice.
     if ($Message -imatch 'graph' -and $Message -imatch 'AuthorizationFailed|does not have authorization|is not authorized|forbidden|Access denied|does not have.*permission|Insufficient privileges|scopes are missing') {
-        return "Microsoft Graph API permission denied. Required scopes are missing from the token. Ensure the audit identity has the correct Graph API delegated or application permissions. Try: az login --scope https://graph.microsoft.com/.default"
+        return "Microsoft Graph API permission denied. Required scopes are missing from the token. Ensure the audit identity has the correct Graph API delegated or application permissions. Try: Connect-AzAccount to re-authenticate, or use a service principal with the required Graph API permissions."
     }
     if ($Message -imatch 'graph.*error|reports.*permission|beta.*reports') {
         return "Microsoft Graph API error — the audit identity may lack the required Graph API permission for this endpoint."

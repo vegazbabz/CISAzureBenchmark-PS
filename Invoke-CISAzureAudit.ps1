@@ -8,7 +8,7 @@
 
     Requires:
       - PowerShell 7.0+
-      - Azure CLI (az) authenticated via 'az login'
+      - Az PowerShell modules (Az.Accounts, Az.ResourceGraph, etc.) authenticated via 'Connect-AzAccount'
       - Reader role (or higher) on target subscriptions
 
 .PARAMETER Subscriptions
@@ -370,7 +370,7 @@ if ($Subscriptions.Count -eq 0) {
                         Write-Host "   Then re-run the audit." -ForegroundColor Yellow
                         Write-Host ""
                     } else {
-                        Write-Host "   Check 'az account list --all' to verify the subscription exists." -ForegroundColor DarkYellow
+                        Write-Host "   Check 'Get-AzSubscription -WarningAction SilentlyContinue' to verify the subscription exists and that you are authenticated to the correct tenant." -ForegroundColor DarkYellow
                     }
                 } catch { $null = $_ }
             }
@@ -382,7 +382,7 @@ if ($Subscriptions.Count -eq 0) {
 }
 
 if ($subObjects.Count -eq 0) {
-    Write-Host "No accessible subscriptions found. Check 'az account list' and ensure you are logged in." -ForegroundColor Red
+    Write-Host "No accessible subscriptions found. Run 'Connect-AzAccount' and verify access with 'Get-AzSubscription'." -ForegroundColor Red
     exit 1
 }
 

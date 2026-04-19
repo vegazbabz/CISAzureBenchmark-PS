@@ -1,5 +1,9 @@
 # Azure CLI subprocess layer
 # Uses System.Diagnostics.Process for timeout enforcement and stdout/stderr capture
+#
+# NOTE: Invoke-AzCli is no longer called by the default audit flow — all check sections
+# and the permission preflight (Identity.ps1) now use Az PowerShell cmdlets directly.
+# The function is kept here as an available utility in case ad-hoc CLI calls are needed.
 
 # On Windows, az is installed as az.cmd — must be launched via cmd.exe /c
 # for the batch file's environment setup to work with System.Diagnostics.Process.
