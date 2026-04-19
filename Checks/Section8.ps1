@@ -223,7 +223,10 @@ function Invoke-Section8Checks {
             $ctrlKeyExp = if ($rbac) { "8.3.1" } else { "8.3.2" }
             $cachedKeys = $null
             try {
-                $allKeys    = @(Get-AzKeyVaultKey -VaultName $kvName -ErrorAction Stop)
+                # Filter out certificate-backed keys (Managed = $true) — those are managed by the
+                # certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
+                $allKeys    = @(Get-AzKeyVaultKey -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop |
+                                    Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
                 $cachedKeys = $allKeys
 
                 if ($allKeys.Count -eq 0) {
@@ -253,7 +256,10 @@ function Invoke-Section8Checks {
             # 8.3.3/8.3.4 — Secret expiration set (RBAC vs access-policy vault)
             $ctrlSecExp = if ($rbac) { "8.3.3" } else { "8.3.4" }
             try {
-                $allSecrets = @(Get-AzKeyVaultSecret -VaultName $kvName -ErrorAction Stop)
+                # Filter out certificate-backed secrets (Managed = $true) — those are managed by
+                # the certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
+                $allSecrets = @(Get-AzKeyVaultSecret -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop |
+                                    Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
 
                 if ($allSecrets.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp "Ensure That the Expiration Date Is Set on All Secrets" 1 $sec "No secrets found in vault." $sid $sname $kvName))
@@ -352,7 +358,8 @@ function Invoke-Section8Checks {
             # 8.3.9 — Automatic key rotation policy set (reuse cached key list from 8.3.1/8.3.2)
             try {
                 $keys = if ($cachedKeys) { $cachedKeys } else {
-                    @(Get-AzKeyVaultKey -VaultName $kvName -ErrorAction Stop)
+                    @(Get-AzKeyVaultKey -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop |
+                        Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
                 }
 
                 if ($keys.Count -gt 0) {
