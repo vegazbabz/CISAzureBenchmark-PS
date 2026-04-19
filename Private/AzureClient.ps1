@@ -184,8 +184,7 @@ function Invoke-AzGraphQuery {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Query,
-        [string[]]$SubscriptionIds = @(),
-        [int]$TimeoutSec = 180
+        [string[]]$SubscriptionIds = @()
     )
 
     try {
@@ -218,8 +217,7 @@ function Invoke-ArmRest {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Uri,
-        [string]$Method     = "GET",
-        [int]$TimeoutSec    = 60
+        [string]$Method = "GET"
     )
     try {
         $response = Invoke-AzRestMethod -Uri $Uri -Method $Method -ErrorAction Stop
