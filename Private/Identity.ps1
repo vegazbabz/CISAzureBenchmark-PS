@@ -53,9 +53,8 @@ function Test-AuditPermissions {
 
     Write-AuditLog "Identity: $userId" -Level DEBUG
 
-    # Capture the authenticated context once before spawning parallel runspaces.
-    # ForEach-Object -Parallel runs in isolated runspaces that do not inherit the parent
-    # Az context automatically, so we pass it via $using: and restore it in each thread.
+    # Capture account type before spawning parallel runspaces so we know whether
+    # to use -SignInName (User) or -ObjectId (ServicePrincipal) in Get-AzRoleAssignment.
     $azCtxForParallel = Get-AzContext
     $accountTypeLocal = [string]$azCtxForParallel.Account.Type   # 'User' or 'ServicePrincipal'
     $total            = $SubscriptionIds.Count
@@ -64,12 +63,13 @@ function Test-AuditPermissions {
     $subResults = $SubscriptionIds | ForEach-Object -Parallel {
         $subId       = $_
         $uid         = $using:userId
-        $ctx         = $using:azCtxForParallel
         $accountType = $using:accountTypeLocal
 
         try {
-            # Restore Az context in this runspace so Get-AzRoleAssignment targets the right sub
-            $null = Set-AzContext -Context $ctx -SubscriptionId $subId `
+            # Switch context to this subscription in the current runspace.
+            # Note: -SubscriptionId alone is correct here — combining -Context and
+            # -SubscriptionId uses conflicting parameter sets and throws.
+            $null = Set-AzContext -SubscriptionId $subId `
                         -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
 
             $roles = @()
