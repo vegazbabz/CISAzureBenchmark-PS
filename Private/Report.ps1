@@ -60,7 +60,7 @@ function New-CISHtmlReport {
         $sp  = @($grp | Where-Object { $_.Status -eq 'PASS'  }).Count
         $sf  = @($grp | Where-Object { $_.Status -eq 'FAIL'  }).Count
         $se  = @($grp | Where-Object { $_.Status -eq 'ERROR' }).Count
-        $ss  = if (($sp+$sf+$se) -gt 0) { [math]::Round(100.0*$sp/($sp+$sf+$se),1) } else { 0 }
+        $ss  = if (($sp+$sf) -gt 0) { [math]::Round(100.0*$sp/($sp+$sf),1) } else { 0 }
         $secData[$sec] = [ordered]@{ pass=$sp; fail=$sf; error=$se; score=$ss }
     }
     $secDataJson = $secData | ConvertTo-Json -Compress -Depth 3
