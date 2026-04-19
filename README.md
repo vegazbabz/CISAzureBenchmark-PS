@@ -9,7 +9,7 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 1.4.0
+**Version:** 1.0.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
 
@@ -19,11 +19,11 @@
 
 A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
 
-All audit checks use the Az PowerShell module — no Azure CLI required for check execution.
-The optional permission preflight (run before each audit) uses `az role assignment list` inside
-parallel runspaces where PS runspace isolation prevents using the Az module directly.
-Skip it with `-NoPermissionCheck` if you know your permissions are correct or prefer not to
-install the CLI. Install the required modules once, then run `Connect-AzAccount` to authenticate.
+All audit checks use the Az PowerShell module — no Azure CLI required.
+The optional permission preflight uses `Get-AzRoleAssignment` in parallel runspaces to verify
+the runner account holds the required roles before the audit begins.
+Skip it with `-NoPermissionCheck` if you already know your permissions are correct.
+Install the required Az modules once, then run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
 can be resumed without re-running completed work. Output is a self-contained HTML report with
@@ -45,16 +45,12 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 | Az.Storage | `Install-Module Az.Storage` — storage account enumeration |
 | Az.KeyVault | `Install-Module Az.KeyVault` — key rotation policies |
 | Az.Resources | `Install-Module Az.Resources` — role definitions |
-| Azure CLI | Any recent version — <https://aka.ms/install-azure-cli> — **optional**, only for the permission preflight. Skip with `-NoPermissionCheck` if not available. |
 | Azure login | `Connect-AzAccount` completed before running |
 
 > **Install Az modules all at once:**
 > ```powershell
 > Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
 > ```
->
-> Azure CLI is only needed for the pre-run permission preflight. Install it from <https://aka.ms/install-azure-cli>
-> or use `-NoPermissionCheck` to skip the preflight entirely.
 
 ### Azure permissions
 
@@ -114,10 +110,6 @@ Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage
 
 If prompted to install from an untrusted repository, type `Y` and press Enter.
 
-> **Azure CLI (optional):** The tool uses `az role assignment list` in the permission preflight
-> that runs before each audit. Install it from <https://aka.ms/install-azure-cli> or pass
-> `-NoPermissionCheck` to skip the preflight if you already know your permissions are correct.
-
 ### Step 3 — Get the tool
 
 **Option A — Clone with Git** (recommended — makes updating easy):
@@ -164,8 +156,8 @@ in your browser automatically when done.
 ```text
 Invoke-CISAzureAudit.ps1     Main entry point / orchestrator
 Private/
-  AzureClient.ps1             PS-based API client: Resource Graph (Search-AzGraph),
-                              ARM REST (Invoke-AzRestMethod), and az CLI (preflight only)
+  AzureClient.ps1             PS-based API client: Resource Graph (Search-AzGraph)
+                              and ARM REST (Invoke-AzRestMethod)
   CheckHelpers.ps1            Prefetch data lookups, error formatting
   Checkpoint.ps1              Save/resume audit state
   Config.ps1                  Timeouts, constants, PASS/FAIL labels
@@ -183,7 +175,7 @@ Checks/
   Section8.ps1                Security services checks (30 controls)
   Section9.ps1                Storage checks (24 controls — 101 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (195 tests)
+  Checks.Tests.ps1            Pester unit tests (226 tests)
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
@@ -319,11 +311,11 @@ For tenant-level identity checks and APIs not exposed by Az module cmdlets:
 - `management.azure.com/.../diagnosticSettings` — subscription-level activity log routing (6.1.1.x)
 - ARM REST for security contacts (8.1.12–8.1.15), WDATP integration (8.1.3.3), and attack path notifications (8.1.15)
 
-#### 4. Azure CLI — permission preflight only
+#### 4. Permission preflight
 
-Before the audit begins, `az role assignment list` is called in parallel runspaces to verify
-the runner account holds the required roles on every subscription. This is the only remaining
-`az` CLI usage; all CIS check execution is CLI-free. Use `-NoPermissionCheck` to bypass it.
+Before the audit begins, `Get-AzRoleAssignment` is called in parallel runspaces (up to 8 at once)
+to verify the runner account holds the required roles on every subscription. No Azure CLI is
+required. Use `-NoPermissionCheck` to bypass the preflight entirely.
 
 ### Permission preflight
 
@@ -352,7 +344,7 @@ throttling, workers are increased back towards the original value.
 
 The generated report is a self-contained HTML file with no external dependencies.
 
-- **Summary cards** — compliance score (PASS / total, excluding INFO and MANUAL), plus counts for each status.
+- **Summary cards** — compliance score (PASS / (PASS + FAIL), excluding ERROR, INFO and MANUAL), plus counts for each status.
 - **Compliance donuts** — three ring charts showing PASS/FAIL/ERROR proportions overall, for Level 1, and for Level 2.
 - **Section breakdown** — horizontal stacked bars per CIS section, sorted worst to best.
 - **Per-subscription summary** — stacked-bar table showing pass/fail/error counts per subscription; click a row to filter the results table to that subscription.
@@ -515,7 +507,7 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 7.3 | UDP access from internet restricted | L1 |
 | 7.4 | HTTP/HTTPS (80/443) from internet evaluated and restricted | L1 |
 | 7.5 | NSG flow log retention >= 90 days | L2 |
-| 7.6 | Network Watcher enabled for all regions in use | L2 |
+| 7.6 | Network Watcher enabled for all regions in use | L1 |
 | 7.8 | VNet flow log retention >= 90 days | L2 |
 | 7.10 | WAF enabled on Azure Application Gateway | L2 |
 | 7.11 | Subnets associated with NSGs | L1 |
@@ -531,7 +523,7 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 8.1.1.1 | Microsoft Defender CSPM | L2 |
 | 8.1.2.1 | Microsoft Defender for APIs | L2 |
 | 8.1.3.1 | Microsoft Defender for Servers | L2 |
-| 8.1.3.3 | Endpoint protection (WDATP) component | L2 |
+| 8.1.3.3 | Endpoint protection (WDATP) component | L1 |
 | 8.1.4.1 | Microsoft Defender for Containers | L2 |
 | 8.1.5.1 | Microsoft Defender for Storage | L2 |
 | 8.1.6.1 | Microsoft Defender for App Services | L2 |
@@ -706,12 +698,6 @@ tool. They require review in the Entra ID portal.
 
 ## Troubleshooting
 
-**`az` not found (permission preflight)**
-The permission preflight uses `az role assignment list` inside parallel runspaces. If `az` is not
-installed, the preflight will fail with a command-not-found error. Either:
-- Install the Azure CLI from <https://aka.ms/install-azure-cli>, or
-- Pass `-NoPermissionCheck` to skip the preflight entirely.
-
 **Identity checks return ERROR (AccessDenied)**
 Your account needs Global Reader in Entra ID. To verify Graph API access:
 
@@ -755,6 +741,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 1.4.0
+**Version:** 1.0.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
