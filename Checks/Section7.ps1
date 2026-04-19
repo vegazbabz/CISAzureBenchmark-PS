@@ -165,7 +165,7 @@ function Invoke-Section7Checks {
             }
         }
     } catch {
-        $results.Add((New-ErrorResult "7.5" "NSG Flow Log Retention" 2 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "7.5" "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'" 2 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 7.6 — Network Watcher enabled for all regions ────────────────────────
@@ -221,7 +221,7 @@ function Invoke-Section7Checks {
             }
         }
     } catch {
-        $results.Add((New-ErrorResult "7.8" "VNet Flow Log Retention" 2 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "7.8" "Ensure That VNet Flow Log Retention Period Is 'Greater than 90 Days'" 2 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 7.11 — Subnets associated with NSGs ──────────────────────────────────
@@ -361,7 +361,17 @@ function Invoke-Section7Checks {
         }
     }
     } catch {
-        $results.Add((New-ErrorResult "7.10" "Application Gateway WAF checks (7.10–7.15)" 2 $sec $_.Exception.Message $sid $sname))
+        $agwErrMsg = $_.Exception.Message
+        $agwTitleMap = @{
+            "7.10" = @{ Title = "Ensure That Azure Web Application Firewall Is Enabled for Azure Application Gateway"; Level = 2 }
+            "7.12" = @{ Title = "Ensure Application Gateway Is Configured with a Minimum TLS Version of 1.2"; Level = 1 }
+            "7.13" = @{ Title = "Ensure Application Gateway Is Configured with HTTP2 Enabled"; Level = 2 }
+            "7.14" = @{ Title = "Ensure That Web Application Firewall Request Body Inspection Is Enabled"; Level = 2 }
+            "7.15" = @{ Title = "Ensure That Web Application Firewall Bot Protection Is Enabled"; Level = 2 }
+        }
+        foreach ($cid in @("7.10","7.12","7.13","7.14","7.15")) {
+            $results.Add((New-ErrorResult $cid $agwTitleMap[$cid].Title $agwTitleMap[$cid].Level $sec $agwErrMsg $sid $sname))
+        }
     }
 
     return $results.ToArray()

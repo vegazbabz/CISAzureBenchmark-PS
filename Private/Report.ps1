@@ -26,7 +26,7 @@ function New-CISHtmlReport {
     # ── Counts & score ────────────────────────────────────────────────────────
     $counts = @{ PASS=0; FAIL=0; ERROR=0; INFO=0; MANUAL=0; SUPPRESSED=0 }
     foreach ($r in $Results) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
-    $overallTotal = $counts.PASS + $counts.FAIL + $counts.ERROR
+    $overallTotal = $counts.PASS + $counts.FAIL
     $score     = if ($overallTotal -gt 0) { [math]::Round(100.0 * $counts.PASS / $overallTotal, 1) } else { 0 }
     $scoreCol  = if ($score -ge 80) { '#16a34a' } elseif ($score -ge 60) { '#d97706' } else { '#dc2626' }
 
@@ -38,8 +38,8 @@ function New-CISHtmlReport {
         if ($r.Level -eq 1 -and $l1.ContainsKey($s)) { $l1[$s]++ }
         if ($r.Level -eq 2 -and $l2.ContainsKey($s)) { $l2[$s]++ }
     }
-    $l1Total  = $l1.PASS + $l1.FAIL + $l1.ERROR
-    $l2Total  = $l2.PASS + $l2.FAIL + $l2.ERROR
+    $l1Total  = $l1.PASS + $l1.FAIL
+    $l2Total  = $l2.PASS + $l2.FAIL
     $l1Score  = if ($l1Total -gt 0) { [math]::Round(100.0 * $l1.PASS / $l1Total, 1) } else { 0 }
     $l2Score  = if ($l2Total -gt 0) { [math]::Round(100.0 * $l2.PASS / $l2Total, 1) } else { 0 }
     $l1Col    = if ($l1Score -ge 80) { '#16a34a' } elseif ($l1Score -ge 60) { '#d97706' } else { '#dc2626' }
@@ -530,7 +530,7 @@ $subTable
 <footer>
   CIS Microsoft Azure Foundations Benchmark v$($script:BENCHMARK_VER) &nbsp;&middot;&nbsp;
   Tool v$($script:CIS_VERSION) &nbsp;&middot;&nbsp;
-  Compliance score excludes INFO, MANUAL and SUPPRESSED checks.
+  Compliance score excludes ERROR, INFO, MANUAL and SUPPRESSED checks.
   Manual controls require separate review per the CIS benchmark document.
 </footer>
 
