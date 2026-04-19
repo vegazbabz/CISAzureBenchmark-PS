@@ -197,9 +197,7 @@ function Invoke-Section9Checks {
 
         # Skip blob/file checks for Azure Data Lake Storage Gen2 (HNS-enabled accounts
         # do not expose a separate blob service properties API).
-        # Use the isHns property from Resource Graph (preferred); fall back to kind
-        # for the direct az CLI path which projects kind from the account object.
-        $acctSku = [string]($acct.PSObject.Properties['sku']?.Value)
+        # Use the isHns property from Resource Graph to detect ADLS Gen2 accounts.
         $isHnsProp = [string]($acct.PSObject.Properties['isHns']?.Value)
         $isAdls = $isHnsProp -eq 'true' -or $isHnsProp -eq 'True'
 
@@ -425,9 +423,9 @@ function Invoke-Section9Checks {
         }
     }
 
-    # ── 9.3.9 / 9.3.11 — Resource locks on storage accounts (subscription-wide)
+    # ── 9.3.9 / 9.3.10 — Resource locks on storage accounts (subscription-wide)
     # 9.3.9: account is covered by a CanNotDelete OR ReadOnly lock (Level 1)
-    # 9.3.11: account is covered by a ReadOnly lock specifically (Level 2)
+    # 9.3.10: account is covered by a ReadOnly lock specifically (Level 2)
     try {
         $locks = @(Get-AzResourceLock -ErrorAction SilentlyContinue)
         if (-not $locks) { $locks = @() }

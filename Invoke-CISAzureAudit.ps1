@@ -274,13 +274,13 @@ if ($ReportOnly) {
     # Summary
     $counts = @{ PASS=0; FAIL=0; ERROR=0; INFO=0; MANUAL=0; SUPPRESSED=0 }
     foreach ($r in $finalResults) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
-    $assessed = $counts.PASS + $counts.FAIL + $counts.ERROR
+    $assessed = $counts.PASS + $counts.FAIL
     $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
     Write-Host ""
     Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
     Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
-    Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls, excludes INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+    Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls, excludes ERROR/INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
     Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
     Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
     Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
@@ -776,13 +776,13 @@ if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level 
 $counts = @{ PASS=0; FAIL=0; ERROR=0; INFO=0; MANUAL=0; SUPPRESSED=0 }
 foreach ($r in $finalResults) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
 
-$assessed  = $counts.PASS + $counts.FAIL + $counts.ERROR
+$assessed  = $counts.PASS + $counts.FAIL
 $score     = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
 Write-Host ""
 Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
 Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  `u{23F1} {2}" -f $finalResults.Count, $subIds.Count, $elapsedStr) -ForegroundColor White
-Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls, excludes INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls, excludes ERROR/INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
 Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
 Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
 Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
