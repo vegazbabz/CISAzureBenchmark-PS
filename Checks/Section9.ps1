@@ -16,13 +16,17 @@ function Invoke-Section9Checks {
 
     $accounts = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "storage" -SubscriptionId $sid)
 
-    # Fallback: if prefetch returned nothing, fetch directly
-    if ($accounts.Count -eq 0) {
-        $r = Invoke-AzCli -Arguments @(
-            "storage", "account", "list", "--subscription", $sid,
-            "--query", "[].{id:id,name:name,resourceGroup:resourceGroup,kind:kind,sku:sku}"
-        ) -TimeoutSec $script:TIMEOUTS.storage_list
-        if ($r.Success -and $r.Data) { $accounts = @($r.Data) }
+    # Fallback: only if the "storage" key was never prefetched at all (not just empty)
+    if ($accounts.Count -eq 0 -and (-not $PrefetchData.ContainsKey("storage"))) {
+        $rawAccts = @(Get-AzStorageAccount -ErrorAction SilentlyContinue)
+        if ($rawAccts.Count -gt 0) {
+            $accounts = @($rawAccts | Select-Object `
+                @{N='id';E={$_.Id}},
+                @{N='name';E={$_.StorageAccountName}},
+                @{N='resourceGroup';E={$_.ResourceGroupName}},
+                @{N='isHns';E={[string]$_.EnableHierarchicalNamespace}},
+                @{N='sku';E={$_.Sku.Name}})
+        }
     }
 
     if ($accounts.Count -eq 0) {
@@ -44,8 +48,8 @@ function Invoke-Section9Checks {
             ,@("9.3.2.2","Ensure That Storage Account Public Network Access Is Disabled",1)
             ,@("9.3.2.3","Ensure That Storage Account Default Network Rule Is Set to 'Deny'",1)
             ,@("9.3.5","Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",2)
-            ,@("9.3.1.1","Ensure Storage Account Key Rotation Reminders Are Enabled",1)
-            ,@("9.3.1.2","Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days",1)
+            ,@("9.3.1.1","Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",1)
+            ,@("9.3.1.2","Ensure that Storage Account access keys are periodically regenerated",1)
             ,@("9.3.6","Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",1)
             ,@("9.3.2.1","Ensure That 'Private Endpoints' Are Used for Storage Accounts",2)
             ,@("9.3.9","Ensure That Storage Accounts Have a CanNotDelete Resource Lock",1)
@@ -63,7 +67,6 @@ function Invoke-Section9Checks {
         $acctName = [string]($acct.PSObject.Properties['name']?.Value)
         $acctId   = [string]($acct.PSObject.Properties['id']?.Value)
         $acctRg   = [string]($acct.PSObject.Properties['resourceGroup']?.Value)
-        $kind     = [string]($acct.PSObject.Properties['kind']?.Value)
 
         # ── Group 1: Static checks from Resource Graph ────────────────────────
 
@@ -136,7 +139,7 @@ function Invoke-Section9Checks {
             -ControlId "9.3.2.2" -Title "Ensure That Storage Account Public Network Access Is Disabled" `
             -Level 1 -Section $sec `
             -Status $(if ($pubDisabled) { $script:PASS } else { $script:FAIL }) `
-            -Details "publicNetworkAccess = $pubAccess" `
+            -Details "publicNetworkAccess = $(if ($pubAccess) { $pubAccess } else { 'null (not explicitly disabled — effective: Enabled)' })" `
             -Remediation $(if (-not $pubDisabled) { "Storage account > $acctName > Networking > Public network access > Disabled" } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
 
@@ -192,116 +195,104 @@ function Invoke-Section9Checks {
 
         # ── Group 2: Blob service properties (dynamic call per account) ───────
 
-        # Skip blob/file checks for Azure Data Lake Gen2 (no blob service API)
+        # Skip blob/file checks for Azure Data Lake Storage Gen2 (HNS-enabled accounts
+        # do not expose a separate blob service properties API).
+        # Use the isHns property from Resource Graph (preferred); fall back to kind
+        # for the direct az CLI path which projects kind from the account object.
         $acctSku = [string]($acct.PSObject.Properties['sku']?.Value)
-        $isAdls = $kind -eq "StorageV2" -and ($acctSku -match "HNS" -or $acctSku -match "Premium")
+        $isHnsProp = [string]($acct.PSObject.Properties['isHns']?.Value)
+        $isAdls = $isHnsProp -eq 'true' -or $isHnsProp -eq 'True'
 
         if (-not $isAdls) {
             try {
-                $r = Invoke-AzCli -Arguments @(
-                    "storage", "account", "blob-service-properties", "show",
-                    "--account-name", $acctName, "--resource-group", $acctRg
-                ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.storage_svc
+                $bp = Get-AzStorageBlobServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
 
-                if (-not $r.Success) {
-                    if (Test-NotApplicableError $r.Error) {
-                        $results.Add((New-InfoResult "9.2.1" "Blob Soft Delete" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
-                        $results.Add((New-InfoResult "9.2.2" "Container Soft Delete" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
-                        $results.Add((New-InfoResult "9.2.3" "Blob Versioning" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                        $results.Add((New-InfoResult "9.2.4" "Blob Logging Read" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                        $results.Add((New-InfoResult "9.2.5" "Blob Logging Write" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                        $results.Add((New-InfoResult "9.2.6" "Blob Logging Delete" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                    } elseif (Test-AuthzError $r.Error) {
-                        $results.Add((New-ErrorResult "9.2.1" "Blob Soft Delete" 1 $sec "Insufficient permissions to read blob service properties." $sid $sname $acctName))
-                        $results.Add((New-ErrorResult "9.2.2" "Container Soft Delete" 1 $sec "Insufficient permissions." $sid $sname $acctName))
-                        $results.Add((New-ErrorResult "9.2.3" "Blob Versioning" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                        $results.Add((New-ErrorResult "9.2.4" "Blob Logging Read" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                        $results.Add((New-ErrorResult "9.2.5" "Blob Logging Write" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                        $results.Add((New-ErrorResult "9.2.6" "Blob Logging Delete" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                    } elseif (Test-FirewallError $r.Error) {
-                        foreach ($cid in @("9.2.1","9.2.2","9.2.3","9.2.4","9.2.5","9.2.6")) {
-                            $results.Add((New-ErrorResult $cid "Blob service check" 1 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
-                        }
-                    } else {
-                        $results.Add((New-ErrorResult "9.2.1" "Blob Soft Delete" 1 $sec $r.Error $sid $sname $acctName))
+                # 9.2.1 — Blob soft delete enabled
+                $softDelOn  = [bool]($bp.DeleteRetentionPolicy?.Enabled)
+                $retDays    = [int]($bp.DeleteRetentionPolicy?.Days ?? 0)
+                $blobSdOk   = $softDelOn -and $retDays -ge 7
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.1" -Title "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'" `
+                    -Level 1 -Section $sec `
+                    -Status $(if ($blobSdOk) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Blob soft delete: enabled=$softDelOn, days=$retDays" `
+                    -Remediation $(if (-not $blobSdOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for blobs (>= 7 days)" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+                # 9.2.2 — Container soft delete enabled
+                $conDelOn  = [bool]($bp.ContainerDeleteRetentionPolicy?.Enabled)
+                $conDays   = [int]($bp.ContainerDeleteRetentionPolicy?.Days ?? 0)
+                $conOk     = $conDelOn -and $conDays -ge 7
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.2" -Title "Ensure That Container Soft Delete Is Set to 'Enabled'" `
+                    -Level 1 -Section $sec `
+                    -Status $(if ($conOk) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Container soft delete: enabled=$conDelOn, days=$conDays" `
+                    -Remediation $(if (-not $conOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for containers (>= 7 days)" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+                # 9.2.3 — Blob versioning enabled
+                $versionOn = [bool]$bp.IsVersioningEnabled
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.3" -Title "Ensure That Blob Versioning Is Enabled for Storage Accounts" `
+                    -Level 2 -Section $sec `
+                    -Status $(if ($versionOn) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Blob versioning: $(if($versionOn){'Enabled'}else{'Disabled'})" `
+                    -Remediation $(if (-not $versionOn) { "Storage account > $acctName > Data management > Data protection > Enable blob versioning" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+                # 9.2.4/5/6 — Blob logging (Read/Write/Delete)
+                $logRead   = [bool]($bp.Logging?.Read)
+                $logWrite  = [bool]($bp.Logging?.Write)
+                $logDelete = [bool]($bp.Logging?.Delete)
+
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.4" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" `
+                    -Level 2 -Section $sec `
+                    -Status $(if ($logRead) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Blob logging read: $logRead" `
+                    -Remediation $(if (-not $logRead) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Read logging" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.5" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" `
+                    -Level 2 -Section $sec `
+                    -Status $(if ($logWrite) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Blob logging write: $logWrite" `
+                    -Remediation $(if (-not $logWrite) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Write logging" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+                $results.Add((New-CISResult `
+                    -ControlId "9.2.6" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" `
+                    -Level 2 -Section $sec `
+                    -Status $(if ($logDelete) { $script:PASS } else { $script:FAIL }) `
+                    -Details "Blob logging delete: $logDelete" `
+                    -Remediation $(if (-not $logDelete) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Delete logging" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+            } catch {
+                $errMsg = $_.Exception.Message
+                if (Test-NotApplicableError $errMsg) {
+                    $results.Add((New-InfoResult "9.2.1" "Blob Soft Delete" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
+                    $results.Add((New-InfoResult "9.2.2" "Container Soft Delete" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
+                    $results.Add((New-InfoResult "9.2.3" "Blob Versioning" 2 $sec "Blob service not supported." $sid $sname $acctName))
+                    $results.Add((New-InfoResult "9.2.4" "Blob Logging Read" 2 $sec "Blob service not supported." $sid $sname $acctName))
+                    $results.Add((New-InfoResult "9.2.5" "Blob Logging Write" 2 $sec "Blob service not supported." $sid $sname $acctName))
+                    $results.Add((New-InfoResult "9.2.6" "Blob Logging Delete" 2 $sec "Blob service not supported." $sid $sname $acctName))
+                } elseif (Test-AuthzError $errMsg) {
+                    $results.Add((New-ErrorResult "9.2.1" "Blob Soft Delete" 1 $sec "Insufficient permissions to read blob service properties." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.2" "Container Soft Delete" 1 $sec "Insufficient permissions." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.3" "Blob Versioning" 2 $sec "Insufficient permissions." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.4" "Blob Logging Read" 2 $sec "Insufficient permissions." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.5" "Blob Logging Write" 2 $sec "Insufficient permissions." $sid $sname $acctName))
+                    $results.Add((New-ErrorResult "9.2.6" "Blob Logging Delete" 2 $sec "Insufficient permissions." $sid $sname $acctName))
+                } elseif (Test-FirewallError $errMsg) {
+                    foreach ($cid in @("9.2.1","9.2.2","9.2.3","9.2.4","9.2.5","9.2.6")) {
+                        $results.Add((New-ErrorResult $cid "Blob service check" 1 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
                     }
                 } else {
-                    $bp = $r.Data
-
-                    # 9.2.1 — Blob soft delete enabled
-                    $drpObj     = $bp.PSObject.Properties['deleteRetentionPolicy']?.Value
-                    $softDel    = if ($drpObj) { [string]($drpObj.PSObject.Properties['enabled']?.Value) } else { 'False' }
-                    $softDelOn  = $softDel -eq "true" -or $softDel -eq "True"
-                    $retDays    = if ($drpObj) { [int]($drpObj.PSObject.Properties['days']?.Value) } else { 0 }
-                    $blobSdOk   = $softDelOn -and $retDays -ge 7
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.1" -Title "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($blobSdOk) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Blob soft delete: enabled=$softDel, days=$retDays" `
-                        -Remediation $(if (-not $blobSdOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for blobs (>= 7 days)" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    # 9.2.2 — Container soft delete enabled
-                    $conDelObj     = $bp.PSObject.Properties['containerDeleteRetentionPolicy']?.Value
-                    $conDelEnabled = if ($conDelObj) { [string]($conDelObj.PSObject.Properties['enabled']?.Value) } else { 'False' }
-                    $conDelOn      = $conDelEnabled -eq "true" -or $conDelEnabled -eq "True"
-                    $conDays       = if ($conDelObj) { [int]($conDelObj.PSObject.Properties['days']?.Value) } else { 0 }
-                    $conOk         = $conDelOn -and $conDays -ge 7
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.2" -Title "Ensure That Container Soft Delete Is Set to 'Enabled'" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($conOk) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Container soft delete: enabled=$conDelEnabled, days=$conDays" `
-                        -Remediation $(if (-not $conOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for containers (>= 7 days)" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    # 9.2.3 — Blob versioning enabled
-                    $versionVal = [string]($bp.PSObject.Properties['isVersioningEnabled']?.Value)
-                    $versionOn = $versionVal -eq "true" -or $versionVal -eq "True"
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.3" -Title "Ensure That Blob Versioning Is Enabled for Storage Accounts" `
-                        -Level 2 -Section $sec `
-                        -Status $(if ($versionOn) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Blob versioning: $(if($versionOn){'Enabled'}else{'Disabled'})" `
-                        -Remediation $(if (-not $versionOn) { "Storage account > $acctName > Data management > Data protection > Enable blob versioning" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    # 9.2.4/5/6 — Blob logging (Read/Write/Delete)
-                    $bpLog     = $bp.PSObject.Properties['logging']?.Value
-                    $logReadVal   = if ($bpLog) { [string]($bpLog.PSObject.Properties['read']?.Value)   } else { '' }
-                    $logWriteVal  = if ($bpLog) { [string]($bpLog.PSObject.Properties['write']?.Value)  } else { '' }
-                    $logDeleteVal = if ($bpLog) { [string]($bpLog.PSObject.Properties['delete']?.Value) } else { '' }
-                    $logRead   = $logReadVal   -eq "true" -or $logReadVal   -eq "True"
-                    $logWrite  = $logWriteVal  -eq "true" -or $logWriteVal  -eq "True"
-                    $logDelete = $logDeleteVal -eq "true" -or $logDeleteVal -eq "True"
-
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.4" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" `
-                        -Level 2 -Section $sec `
-                        -Status $(if ($logRead) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Blob logging read: $logRead" `
-                        -Remediation $(if (-not $logRead) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Read logging" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.5" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" `
-                        -Level 2 -Section $sec `
-                        -Status $(if ($logWrite) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Blob logging write: $logWrite" `
-                        -Remediation $(if (-not $logWrite) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Write logging" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    $results.Add((New-CISResult `
-                        -ControlId "9.2.6" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" `
-                        -Level 2 -Section $sec `
-                        -Status $(if ($logDelete) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Blob logging delete: $logDelete" `
-                        -Remediation $(if (-not $logDelete) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Delete logging" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+                    $results.Add((New-ErrorResult "9.2.1" "Blob Service Properties" 1 $sec $errMsg $sid $sname $acctName))
                 }
-            } catch {
-                $results.Add((New-ErrorResult "9.2.1" "Blob Service Properties" 1 $sec $_.Exception.Message $sid $sname $acctName))
             }
         } else {
             foreach ($cid in @("9.2.1","9.2.2","9.2.3","9.2.4","9.2.5","9.2.6")) {
@@ -313,138 +304,112 @@ function Invoke-Section9Checks {
 
         # 9.1.1 — File share soft delete
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "storage", "account", "file-service-properties", "show",
-                "--account-name", $acctName, "--resource-group", $acctRg
-            ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.storage_svc
+            $fp = Get-AzStorageFileServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
 
-            if (-not $r.Success) {
-                if (Test-NotApplicableError $r.Error) {
-                    $results.Add((New-InfoResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "File service not supported." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
-                } elseif (Test-FirewallError $r.Error) {
-                    $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
-                } else {
-                    $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec $r.Error $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $r.Error $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $r.Error $sid $sname $acctName))
-                }
-            } else {
-                $fp   = $r.Data
-                $sdrp = $fp.PSObject.Properties['shareDeleteRetentionPolicy']
-                if ($sdrp -and $sdrp.Value) {
-                    $fsDelOn = [string]$sdrp.Value.enabled -eq "true" -or [string]$sdrp.Value.enabled -eq "True"
-                    $fsDays  = [int]($sdrp.Value.PSObject.Properties['days']?.Value)
-                } else {
-                    $fsDelOn = $false
-                    $fsDays  = 0
-                }
-                $fsOk    = $fsDelOn -and $fsDays -ge 7
+            $fsDelOn = $fp.ShareDeleteRetentionPolicy?.Enabled
+            $fsDays  = [int]($fp.ShareDeleteRetentionPolicy?.Days)
+            $fsOk    = $fsDelOn -and $fsDays -ge 7
 
+            $results.Add((New-CISResult `
+                -ControlId "9.1.1" -Title "Ensure Soft Delete Is Enabled for Azure File Shares" `
+                -Level 1 -Section $sec `
+                -Status $(if ($fsOk) { $script:PASS } else { $script:FAIL }) `
+                -Details "File share soft delete: enabled=$fsDelOn, days=$fsDays" `
+                -Remediation $(if (-not $fsOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for file shares (>= 7 days)" } else { "" }) `
+                -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+
+            # 9.1.2 — SMB protocol version >= 3.1.1
+            # 9.1.3 — SMB channel encryption AES-256-GCM or higher
+            $smb     = $fp.ProtocolSettings?.Smb
+            $smbVers = if ($smb) { [string]$smb.Versions } else { "" }
+            $smbEnc  = if ($smb) { [string]$smb.ChannelEncryption } else { "" }
+            $goodVers = @("SMB3.1.1","SMB3.11")
+            $goodEnc  = @("AES-256-GCM","AES256GCM")
+
+            if ($smb) {
+                $hasGoodVer = @($smbVers -split '[;, ]' | Where-Object { $goodVers -contains $_.Trim() }).Count -gt 0
                 $results.Add((New-CISResult `
-                    -ControlId "9.1.1" -Title "Ensure Soft Delete Is Enabled for Azure File Shares" `
+                    -ControlId "9.1.2" -Title "Ensure SMB Access Is Restricted to SMB 3.1.1+" `
                     -Level 1 -Section $sec `
-                    -Status $(if ($fsOk) { $script:PASS } else { $script:FAIL }) `
-                    -Details "File share soft delete: enabled=$fsDelOn, days=$fsDays" `
-                    -Remediation $(if (-not $fsOk) { "Storage account > $acctName > Data management > Data protection > Enable soft delete for file shares (>= 7 days)" } else { "" }) `
+                    -Status $(if ($hasGoodVer) { $script:PASS } else { $script:FAIL }) `
+                    -Details "SMB protocol versions: $(if($smbVers){$smbVers}else{'Not configured'})" `
+                    -Remediation $(if (-not $hasGoodVer) { "Storage account > $acctName > File shares > SMB settings > Protocol version: SMB 3.1.1" } else { "" }) `
                     -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
 
-                # 9.1.2 — SMB protocol version >= 3.1.1
-                # 9.1.3 — SMB channel encryption AES-256-GCM or higher
-                $smbProt  = $fp.PSObject.Properties['protocolSettings']?.Value
-                $smb      = if ($smbProt) { $smbProt.PSObject.Properties['smb']?.Value } else { $null }
-                $smbVers  = if ($smb) { [string]($smb.PSObject.Properties['versions']?.Value) } else { "" }
-                $smbEnc   = if ($smb) { [string]($smb.PSObject.Properties['channelEncryption']?.Value) } else { "" }
-                $goodVers = @("SMB3.1.1","SMB3.11")
-                $goodEnc  = @("AES-256-GCM","AES256GCM")
-
-                if ($smb) {
-                    $hasGoodVer = @($smbVers -split '[;, ]' | Where-Object { $goodVers -contains $_.Trim() }).Count -gt 0
-                    $results.Add((New-CISResult `
-                        -ControlId "9.1.2" -Title "Ensure SMB Access Is Restricted to SMB 3.1.1+" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($hasGoodVer) { $script:PASS } else { $script:FAIL }) `
-                        -Details "SMB protocol versions: $(if($smbVers){$smbVers}else{'Not configured'})" `
-                        -Remediation $(if (-not $hasGoodVer) { "Storage account > $acctName > File shares > SMB settings > Protocol version: SMB 3.1.1" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                    $hasGoodEnc = @($smbEnc -split '[;, ]' | Where-Object { $goodEnc -contains $_.Trim() }).Count -gt 0
-                    $results.Add((New-CISResult `
-                        -ControlId "9.1.3" -Title "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($hasGoodEnc) { $script:PASS } else { $script:FAIL }) `
-                        -Details "SMB channel encryption: $(if($smbEnc){$smbEnc}else{'Not configured'})" `
-                        -Remediation $(if (-not $hasGoodEnc) { "Storage account > $acctName > File shares > SMB settings > Channel encryption: AES-256-GCM" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-                } else {
-                    $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "No SMB protocolSettings found for this account; SMB protocol may not be applicable." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "No SMB protocolSettings found for this account; SMB encryption may not be applicable." $sid $sname $acctName))
-                }
+                $hasGoodEnc = @($smbEnc -split '[;, ]' | Where-Object { $goodEnc -contains $_.Trim() }).Count -gt 0
+                $results.Add((New-CISResult `
+                    -ControlId "9.1.3" -Title "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" `
+                    -Level 1 -Section $sec `
+                    -Status $(if ($hasGoodEnc) { $script:PASS } else { $script:FAIL }) `
+                    -Details "SMB channel encryption: $(if($smbEnc){$smbEnc}else{'Not configured'})" `
+                    -Remediation $(if (-not $hasGoodEnc) { "Storage account > $acctName > File shares > SMB settings > Channel encryption: AES-256-GCM" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
+            } else {
+                $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "No SMB protocolSettings found for this account; SMB protocol may not be applicable." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "No SMB protocolSettings found for this account; SMB encryption may not be applicable." $sid $sname $acctName))
             }
         } catch {
-            $results.Add((New-ErrorResult "9.1.1" "File Service Soft Delete" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $errMsg = $_.Exception.Message
+            if (Test-NotApplicableError $errMsg) {
+                $results.Add((New-InfoResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "File service not supported." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
+                $results.Add((New-InfoResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "File service not supported for this account type." $sid $sname $acctName))
+            } elseif (Test-FirewallError $errMsg) {
+                $results.Add((New-ErrorResult "9.1.1" "Ensure Soft Delete Is Enabled for Azure File Shares" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec "Storage account firewall or network configuration is blocking access." $sid $sname $acctName))
+            } else {
+                $results.Add((New-ErrorResult "9.1.1" "File Service Soft Delete" 1 $sec $errMsg $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.2" "Ensure SMB Access Is Restricted to SMB 3.1.1+" 1 $sec $errMsg $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.1.3" "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM" 1 $sec $errMsg $sid $sname $acctName))
+            }
         }
 
         # ── Group 4: Key rotation ─────────────────────────────────────────────
 
         # 9.3.1.1 — Key rotation reminder + 9.3.1.2 — Key rotation < 90 days
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "storage", "account", "show", "--name", $acctName, "--resource-group", $acctRg,
-                "--query", "{keyCreationTime:keyCreationTime,keyExpirationPeriodInDays:keyPolicy.keyExpirationPeriodInDays}"
-            ) -SubscriptionId $sid -TimeoutSec $script:TIMEOUTS.default
+            $saAcct = Get-AzStorageAccount -Name $acctName -ResourceGroupName $acctRg -ErrorAction Stop
 
-            if ($r.Success -and $r.Data) {
-                $acctData = $r.Data
+            # 9.3.1.1 — Key expiration / rotation reminder
+            $reminderDays = $saAcct.KeyPolicy?.KeyExpirationPeriodInDays
+            $results.Add((New-CISResult `
+                -ControlId "9.3.1.1" -Title "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" `
+                -Level 1 -Section $sec `
+                -Status $(if ($reminderDays) { $script:PASS } else { $script:FAIL }) `
+                -Details "Account '$acctName': keyExpirationPeriodInDays = $(if ($null -ne $reminderDays -and $reminderDays -ne '') { $reminderDays } else { '(not configured)' })" `
+                -Remediation $(if (-not $reminderDays) { "Storage Account > Access keys > Set rotation reminder" } else { "" }) `
+                -SubscriptionId $sid -SubscriptionName $sname -Resource $(if (-not $reminderDays) { $acctName } else { "" })))
 
-                # 9.3.1.1 — Key expiration / rotation reminder
-                $reminderDays = $acctData.keyExpirationPeriodInDays
-                $results.Add((New-CISResult `
-                    -ControlId "9.3.1.1" -Title "Ensure Storage Account Key Rotation Reminders Are Enabled" `
-                    -Level 1 -Section $sec `
-                    -Status $(if ($reminderDays) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Account '$acctName': keyExpirationPeriodInDays = $reminderDays" `
-                    -Remediation $(if (-not $reminderDays) { "Storage Account > Access keys > Set rotation reminder" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource $(if (-not $reminderDays) { $acctName } else { "" })))
+            # 9.3.1.2 — Key rotation within 90 days
+            $keyTimes = $saAcct.KeyCreationTime
+            if ($keyTimes) {
+                $now      = [datetime]::UtcNow
+                $oldKeys  = [System.Collections.Generic.List[string]]::new()
 
-                # 9.3.1.2 — Key rotation within 90 days
-                $keyTimes = $acctData.keyCreationTime
-                if ($keyTimes) {
-                    $now      = [datetime]::UtcNow
-                    $oldKeys  = [System.Collections.Generic.List[string]]::new()
-
-                    foreach ($prop in @("key1","key2")) {
-                        $keyTime = $keyTimes.$prop
-                        if ($keyTime) {
-                            $created = [datetime]$keyTime
-                            $days    = ($now - $created).TotalDays
-                            if ($days -gt 90) { $oldKeys.Add("$prop ($([int]$days) days old)") }
-                        }
+                foreach ($prop in @("Key1","Key2")) {
+                    $keyTime = $keyTimes.PSObject.Properties[$prop]?.Value
+                    if ($keyTime) {
+                        $created = [datetime]$keyTime
+                        $days    = ($now - $created).TotalDays
+                        if ($days -gt 90) { $oldKeys.Add("$prop ($([int]$days) days old)") }
                     }
-
-                    $pass = $oldKeys.Count -eq 0
-                    $results.Add((New-CISResult `
-                        -ControlId "9.3.1.2" -Title "Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                        -Details $(if ($pass) { "Both access keys rotated within 90 days." } else { "Key(s) not rotated in 90 days: $($oldKeys -join '; ')" }) `
-                        -Remediation $(if (-not $pass) { "Storage account > $acctName > Security > Access keys > Rotate key" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-                } else {
-                    $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
                 }
+
+                $pass = $oldKeys.Count -eq 0
+                $results.Add((New-CISResult `
+                    -ControlId "9.3.1.2" -Title "Ensure that Storage Account access keys are periodically regenerated" `
+                    -Level 1 -Section $sec `
+                    -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
+                    -Details $(if ($pass) { "Both access keys rotated within 90 days." } else { "Key(s) not rotated in 90 days: $($oldKeys -join '; ')" }) `
+                    -Remediation $(if (-not $pass) { "Storage account > $acctName > Security > Access keys > Rotate key" } else { "" }) `
+                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
             } else {
-                $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec ($r.Error ?? "Could not retrieve storage account details.") $sid $sname $acctName))
-                $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec ($r.Error ?? "Could not retrieve key creation times.") $sid $sname $acctName))
+                $results.Add((New-ErrorResult "9.3.1.2" "Ensure that Storage Account access keys are periodically regenerated" 1 $sec "Could not retrieve key creation times." $sid $sname $acctName))
             }
         } catch {
-            $results.Add((New-ErrorResult "9.3.1.1" "Key Rotation Reminder" 1 $sec $_.Exception.Message $sid $sname $acctName))
-            $results.Add((New-ErrorResult "9.3.1.2" "Key Rotation" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $results.Add((New-ErrorResult "9.3.1.1" "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account" 1 $sec $_.Exception.Message $sid $sname $acctName))
+            $results.Add((New-ErrorResult "9.3.1.2" "Ensure that Storage Account access keys are periodically regenerated" 1 $sec $_.Exception.Message $sid $sname $acctName))
         }
     }
 
@@ -452,12 +417,8 @@ function Invoke-Section9Checks {
     # 9.3.9: account is covered by a CanNotDelete OR ReadOnly lock (Level 1)
     # 9.3.11: account is covered by a ReadOnly lock specifically (Level 2)
     try {
-        $r = Invoke-AzCli -Arguments @(
-            "lock", "list", "--subscription", $sid
-        ) -TimeoutSec $script:TIMEOUTS.default
-
-        $locks = @()
-        if ($r.Success -and $r.Data) { $locks = @($r.Data) }
+        $locks = @(Get-AzResourceLock -ErrorAction SilentlyContinue)
+        if (-not $locks) { $locks = @() }
 
         foreach ($acct in $accounts) {
             $acctName = [string]($acct.PSObject.Properties['name']?.Value)
@@ -469,12 +430,12 @@ function Invoke-Section9Checks {
             $covering = @()
             $acctScope = $acctId.ToLower()
             foreach ($lk in $locks) {
-                $lkId = [string]$lk.id
+                $lkId = [string]$lk.LockId
                 $lkIdLower = $lkId.ToLower()
                 if ($lkIdLower.StartsWith($acctScope + "/providers/microsoft.authorization/locks/") -or
                     $lkIdLower.StartsWith($rgScope + "/providers/microsoft.authorization/locks/") -or
                     $lkIdLower.StartsWith($subScope + "/providers/microsoft.authorization/locks/")) {
-                    $covering += [string]$lk.level
+                    $covering += [string]$lk.Level
                 }
             }
             $coveringLower = @($covering | ForEach-Object { $_.ToLower() })

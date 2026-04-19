@@ -8,7 +8,7 @@ function Invoke-Check5_1_1 {
     $cid = "5.1.1"; $title = "Ensure Security Defaults Are Enabled on Microsoft Entra ID"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
-    $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Properties > Manage Security Defaults.')
@@ -18,7 +18,7 @@ function Invoke-Check5_1_1 {
 
     # If security defaults off, check for Conditional Access policies (acceptable alternative)
     if (-not $enabled) {
-        $caResult = Invoke-AzRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" -TimeoutSec $script:TIMEOUTS.graph
+        $caResult = Invoke-ArmRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
         $caEnabled = $caResult.Success -and $caResult.Data -and $caResult.Data.value -and ($caResult.Data.value | Measure-Object).Count -gt 0
         if ($caEnabled) {
             return New-CISResult $cid $title $level $sec $script:PASS `
@@ -38,24 +38,28 @@ function Invoke-Check5_1_2 {
     $cid = "5.1.2"; $title = "Ensure MFA Is Enabled for All Users in Administrative Roles"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails"
-    $r   = Invoke-AzRestPaged -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-AzRestPaged -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'UserAuthenticationMethod.Read.All (or Reports.Read.All)')
     }
 
     $users      = @($r.Data)
-    $noMfa      = @($users | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
-    $noMfaCount = $noMfa.Count
+    # Filter to users assigned to at least one admin role — the isAdmin field is
+    # populated by the userRegistrationDetails endpoint and reflects membership
+    # in any Azure AD directory role.
+    $adminUsers  = @($users | Where-Object { [string]$_.isAdmin -eq 'True' -or [string]$_.isAdmin -eq 'true' })
+    $noMfa       = @($adminUsers | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
+    $noMfaCount  = $noMfa.Count
 
     if ($noMfaCount -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($users.Count) users have MFA registered."
+        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($adminUsers.Count) admin user(s) (of $($users.Count) total) have MFA registered."
     }
 
     $sample = ($noMfa | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
     New-CISResult $cid $title $level $sec $script:FAIL `
-        -Details "$noMfaCount user(s) without MFA registered (of $($users.Count) total). Sample: $sample" `
-        -Remediation "Entra ID > Per-user MFA or Conditional Access > Require MFA for all users."
+        -Details "$noMfaCount admin user(s) without MFA registered (of $($adminUsers.Count) admin users, $($users.Count) total). Sample: $sample" `
+        -Remediation "Entra ID > Per-user MFA or Conditional Access > Require MFA for all administrative roles."
 }
 
 function Invoke-Check5_1_3 {
@@ -76,7 +80,7 @@ function Invoke-Check5_4 {
     $cid = "5.4"; $title = "Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -96,7 +100,7 @@ function Invoke-Check5_14 {
     $cid = "5.14"; $title = "Ensure That 'Users Can Register Applications' Is Set to 'No'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -116,7 +120,7 @@ function Invoke-Check5_15 {
     $cid = "5.15"; $title = "Ensure That 'Guest Users Access Restrictions' Is Set to 'Guest user access is restricted'"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -141,7 +145,7 @@ function Invoke-Check5_16 {
     $cid = "5.16"; $title = "Ensure That 'Guest Invite Restrictions' Is Set to 'Only Admins and Users in the Guest Inviter Role'"; $level = 2; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-AzRest -Uri $url -TimeoutSec $script:TIMEOUTS.graph
+    $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
@@ -195,16 +199,16 @@ function Invoke-Check5_23 {
     $cid = "5.23"; $title = "Ensure That No Custom Subscription Owner Roles Are Created"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
-    $r = Invoke-AzCli -Arguments @(
-        "role", "definition", "list", "--subscription", $sid,
-        "--query", "[?roleType=='CustomRole' && contains(permissions[0].actions,'*')].{name:roleName,id:id}"
-    ) -TimeoutSec $script:TIMEOUTS.default
-
-    if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec $r.Error $sid $sname
+    try {
+        $customOwners = @(
+            Get-AzRoleDefinition -Custom -Scope "/subscriptions/$sid" -ErrorAction Stop |
+            Where-Object { $_.Actions -contains '*' } |
+            ForEach-Object { [PSCustomObject]@{ name = $_.Name } }
+        )
+    } catch {
+        return New-ErrorResult $cid $title $level $sec $_.Exception.Message $sid $sname
     }
 
-    $customOwners = @($r.Data)
     if ($customOwners.Count -eq 0) {
         return New-CISResult $cid $title $level $sec $script:PASS `
             -Details "No custom roles with wildcard (*) permissions found." `

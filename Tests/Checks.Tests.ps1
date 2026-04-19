@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 <#
 .SYNOPSIS
     Pester unit tests for CIS Azure Benchmark PS check functions.
@@ -27,7 +27,9 @@ BeforeAll {
         "Private\Checkpoint.ps1",
         "Private\History.ps1",
         "Private\Report.ps1",
+        "Private\Suppressions.ps1",
         "Checks\Section2.ps1",
+        "Checks\Section3.ps1",
         "Checks\Section5.ps1",
         "Checks\Section6.ps1",
         "Checks\Section7.ps1",
@@ -145,6 +147,29 @@ Describe "Get-NsgBadRules" {
         $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
         $result | Should -HaveCount 0
     }
+
+    It "flags rule when internet source is in sourceAddressPrefixes array (regression)" {
+        # Internet source expressed as an array (sourceAddressPrefixes) must still be flagged
+        $rule = [PSCustomObject]@{
+            name = "array-ssh"; access = "Allow"; direction = "Inbound"
+            protocol = "TCP"; sourceAddressPrefix = ""; destinationPortRange = "22"
+            sourceAddressPrefixes = @("10.0.0.0/8", "*")
+            destinationPortRanges = @()
+        }
+        $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
+        $result | Should -Contain "array-ssh"
+    }
+
+    It "does not flag rule when all sourceAddressPrefixes entries are private" {
+        $rule = [PSCustomObject]@{
+            name = "priv-array-ssh"; access = "Allow"; direction = "Inbound"
+            protocol = "TCP"; sourceAddressPrefix = ""; destinationPortRange = "22"
+            sourceAddressPrefixes = @("10.0.0.0/8", "192.168.0.0/16")
+            destinationPortRanges = @()
+        }
+        $result = Get-NsgBadRules -Rules @($rule) -Ports @(22)
+        $result | Should -HaveCount 0
+    }
 }
 
 Describe "Get-NsgUdpBadRules" {
@@ -172,6 +197,17 @@ Describe "Get-NsgUdpBadRules" {
         }
         $result = Get-NsgUdpBadRules -Rules @($rule)
         $result | Should -Contain "any-proto"
+    }
+
+    It "flags UDP rule when internet source is in sourceAddressPrefixes array (regression)" {
+        $rule = [PSCustomObject]@{
+            name = "array-udp"; access = "Allow"; direction = "Inbound"
+            protocol = "UDP"; sourceAddressPrefix = ""
+            sourceAddressPrefixes = @("10.0.0.0/8", "Internet")
+            destinationPortRange = "*"; destinationPortRanges = @()
+        }
+        $result = Get-NsgUdpBadRules -Rules @($rule)
+        $result | Should -Contain "array-udp"
     }
 }
 
@@ -344,18 +380,46 @@ Describe "Invoke-Section2Checks — 2.1.10 Public Network Access" {
 }
 
 # =============================================================================
+# SECTION 3 — COMPUTE SERVICES
+# =============================================================================
+
+Describe "Invoke-Check3_1_1 — MFA for Privileged VM Access (Manual)" {
+    It "returns MANUAL status" {
+        $r = Invoke-Check3_1_1
+        $r.Status | Should -Be "MANUAL"
+    }
+
+    It "returns control id 3.1.1" {
+        $r = Invoke-Check3_1_1
+        $r.ControlId | Should -Be "3.1.1"
+    }
+}
+
+Describe "Invoke-Section3TenantChecks" {
+    It "returns exactly one result" {
+        $results = @(Invoke-Section3TenantChecks)
+        $results | Should -HaveCount 1
+    }
+
+    It "result has MANUAL status" {
+        $results = @(Invoke-Section3TenantChecks)
+        $results[0].Status | Should -Be "MANUAL"
+    }
+}
+
+# =============================================================================
 # SECTION 5 — IDENTITY SERVICES
 # =============================================================================
 
 Describe "Invoke-Check5_1_1 — Security Defaults" {
     It "returns PASS when security defaults enabled" {
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ isEnabled = $true } } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ isEnabled = $true } } }
         $r = Invoke-Check5_1_1
         $r.Status | Should -Be "PASS"
     }
 
     It "returns FAIL when security defaults off and no CA policies" {
-        Mock Invoke-AzRest {
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "identitySecurityDefaults") {
                 return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ isEnabled = $false } }
@@ -367,7 +431,7 @@ Describe "Invoke-Check5_1_1 — Security Defaults" {
     }
 
     It "returns PASS when security defaults off but CA policies exist" {
-        Mock Invoke-AzRest {
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "identitySecurityDefaults") {
                 return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ isEnabled = $false } }
@@ -380,7 +444,7 @@ Describe "Invoke-Check5_1_1 — Security Defaults" {
     }
 
     It "returns ERROR on API failure" {
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $false; Error = "403 Forbidden"; Data = $null } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Error = "403 Forbidden"; Data = $null } }
         $r = Invoke-Check5_1_1
         $r.Status | Should -Be "ERROR"
     }
@@ -389,23 +453,23 @@ Describe "Invoke-Check5_1_1 — Security Defaults" {
 Describe "Invoke-Check5_1_2 — MFA All Users" {
     It "returns PASS when all users have MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true; isAdmin = $true }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "PASS"
     }
 
-    It "returns FAIL when a user lacks MFA" {
+    It "returns FAIL when an admin user lacks MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true;  isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false; isAdmin = $true }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "FAIL"
-        $r.Details | Should -Match "1 user"
+        $r.Details | Should -Match "1 admin user"
     }
 
     It "returns ERROR on API failure" {
@@ -418,6 +482,29 @@ Describe "Invoke-Check5_1_2 — MFA All Users" {
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
         $r = Invoke-Check5_1_2
         $r.Status | Should -Be "PASS"
+    }
+
+    It "returns PASS when only non-admin user lacks MFA (admin-scope regression)" {
+        # A non-admin user without MFA must NOT cause a FAIL — the control only covers admins.
+        $users = @(
+            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $true;  isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
+        )
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
+        $r = Invoke-Check5_1_2
+        $r.Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when admin has no MFA even if non-admin also has no MFA" {
+        $users = @(
+            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $false; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
+        )
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
+        $r = Invoke-Check5_1_2
+        $r.Status   | Should -Be "FAIL"
+        $r.Details  | Should -Match "1 admin user"
+        $r.Details  | Should -Match "admin@test.com"
     }
 }
 
@@ -442,7 +529,7 @@ Describe "Invoke-Check5_4 — Restrict Non-Admin Tenant Creation" {
         $policy = [PSCustomObject]@{
             defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateTenants = $false }
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_4
         $r.Status | Should -Be "PASS"
     }
@@ -451,13 +538,13 @@ Describe "Invoke-Check5_4 — Restrict Non-Admin Tenant Creation" {
         $policy = [PSCustomObject]@{
             defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateTenants = $true }
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_4
         $r.Status | Should -Be "FAIL"
     }
 
     It "returns ERROR on API failure" {
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $false; Error = "Access denied"; Data = $null } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Error = "Access denied"; Data = $null } }
         $r = Invoke-Check5_4
         $r.Status | Should -Be "ERROR"
     }
@@ -468,7 +555,7 @@ Describe "Invoke-Check5_14 — Users Cannot Register Apps" {
         $policy = [PSCustomObject]@{
             defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateApps = $false }
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_14
         $r.Status | Should -Be "PASS"
     }
@@ -477,7 +564,7 @@ Describe "Invoke-Check5_14 — Users Cannot Register Apps" {
         $policy = [PSCustomObject]@{
             defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateApps = $true }
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_14
         $r.Status | Should -Be "FAIL"
     }
@@ -486,14 +573,14 @@ Describe "Invoke-Check5_14 — Users Cannot Register Apps" {
 Describe "Invoke-Check5_15 — Guest User Access Restrictions" {
     It "returns PASS when guestUserRoleId is the most restrictive GUID" {
         $policy = [PSCustomObject]@{ guestUserRoleId = "10dae51f-b6af-4016-8d66-8c2a99b929b3" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_15
         $r.Status | Should -Be "PASS"
     }
 
     It "returns FAIL for member-level guest access GUID" {
         $policy = [PSCustomObject]@{ guestUserRoleId = "a0b1b346-4d3e-4e8b-98f8-753987be4970" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         $r = Invoke-Check5_15
         $r.Status | Should -Be "FAIL"
     }
@@ -502,31 +589,31 @@ Describe "Invoke-Check5_15 — Guest User Access Restrictions" {
 Describe "Invoke-Check5_16 — Guest Invite Restrictions" {
     It "returns PASS for adminsAndGuestInviters" {
         $policy = [PSCustomObject]@{ allowInvitesFrom = "adminsAndGuestInviters" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         (Invoke-Check5_16).Status | Should -Be "PASS"
     }
 
     It "returns PASS for admins" {
         $policy = [PSCustomObject]@{ allowInvitesFrom = "admins" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         (Invoke-Check5_16).Status | Should -Be "PASS"
     }
 
     It "returns PASS for none" {
         $policy = [PSCustomObject]@{ allowInvitesFrom = "none" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         (Invoke-Check5_16).Status | Should -Be "PASS"
     }
 
     It "returns FAIL for everyone" {
         $policy = [PSCustomObject]@{ allowInvitesFrom = "everyone" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         (Invoke-Check5_16).Status | Should -Be "FAIL"
     }
 
     It "returns FAIL for adminsAndAllMembers" {
         $policy = [PSCustomObject]@{ allowInvitesFrom = "adminsAndAllMembers" }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
         (Invoke-Check5_16).Status | Should -Be "FAIL"
     }
 }
@@ -716,8 +803,8 @@ Describe "Invoke-Section8Checks — 8.4.1 Bastion" {
             (New-PD "vnets"   @())
             (New-PD "keyvaults" @())
         )
-        Mock Invoke-AzCli  { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.4.1" }).Status | Should -Be "PASS"
@@ -730,8 +817,8 @@ Describe "Invoke-Section8Checks — 8.4.1 Bastion" {
             (New-PD "vnets"     @())
             (New-PD "keyvaults" @())
         )
-        Mock Invoke-AzCli  { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.4.1" }).Status | Should -Be "INFO"
@@ -744,8 +831,8 @@ Describe "Invoke-Section8Checks — 8.4.1 Bastion" {
             (New-PD "vnets"     @())
             (New-PD "keyvaults" @())
         )
-        Mock Invoke-AzCli  { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.4.1" }).Status | Should -Be "FAIL"
@@ -765,8 +852,11 @@ Describe "Invoke-Section8Checks — 8.3 Key Vault purge protection" {
             (New-PD "vms"       @())
             (New-PD "vnets"     @())
         )
-        Mock Invoke-AzCli  { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing  { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey       { @() }
+        Mock Get-AzKeyVaultSecret    { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.5" }).Status | Should -Be "PASS"
@@ -784,8 +874,11 @@ Describe "Invoke-Section8Checks — 8.3 Key Vault purge protection" {
             (New-PD "vms"       @())
             (New-PD "vnets"     @())
         )
-        Mock Invoke-AzCli  { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing  { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey       { @() }
+        Mock Get-AzKeyVaultSecret    { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.5" }).Status | Should -Be "FAIL"
@@ -799,7 +892,6 @@ Describe "Invoke-Section8Checks — 8.3 Key Vault purge protection" {
 Describe "Invoke-Section9Checks — no storage accounts" {
     It "returns INFO for all storage controls" {
         $pd = New-PD "storage" @()
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $results.Count | Should -BeGreaterThan 5
         $results | ForEach-Object { $_.Status | Should -Be "INFO" }
@@ -818,9 +910,10 @@ Describe "Invoke-Section9Checks — 9.3.4 Secure Transfer" {
         $pd = New-PD "storage" @($acct)
 
         $blobSvc = [PSCustomObject]@{
-            deleteRetentionPolicy          = [PSCustomObject]@{ enabled = $true; days = 7 }
-            containerDeleteRetentionPolicy = [PSCustomObject]@{ enabled = $true; days = 7 }
-            isVersioningEnabled            = $true
+            DeleteRetentionPolicy          = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+            ContainerDeleteRetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+            IsVersioningEnabled            = $true
+            Logging                        = [PSCustomObject]@{ Read = $true; Write = $true; Delete = $true }
         }
         $fileSvc = [PSCustomObject]@{
             shareDeleteRetentionPolicy = [PSCustomObject]@{ enabled = $true; days = 7 }
@@ -832,12 +925,10 @@ Describe "Invoke-Section9Checks — 9.3.4 Secure Transfer" {
             }
         }
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { $blobSvc }
+        Mock Get-AzStorageFileServiceProperty  { $fileSvc }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
 
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.4" }).Status | Should -Be "PASS"
@@ -852,7 +943,10 @@ Describe "Invoke-Section9Checks — 9.3.4 Secure Transfer" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.4" }).Status | Should -Be "FAIL"
     }
@@ -868,7 +962,10 @@ Describe "Invoke-Section9Checks — 9.3.6 Minimum TLS 1.2" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.6" }).Status | Should -Be "PASS"
     }
@@ -882,7 +979,10 @@ Describe "Invoke-Section9Checks — 9.3.6 Minimum TLS 1.2" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.6" }).Status | Should -Be "FAIL"
     }
@@ -898,7 +998,10 @@ Describe "Invoke-Section9Checks — 9.3.8 Blob Public Access" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.8" }).Status | Should -Be "PASS"
     }
@@ -912,7 +1015,10 @@ Describe "Invoke-Section9Checks — 9.3.8 Blob Public Access" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.8" }).Status | Should -Be "FAIL"
     }
@@ -928,7 +1034,10 @@ Describe "Invoke-Section9Checks — 9.3.7 Cross-Tenant Replication" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.7" }).Status | Should -Be "PASS"
     }
@@ -942,7 +1051,10 @@ Describe "Invoke-Section9Checks — 9.3.7 Cross-Tenant Replication" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.7" }).Status | Should -Be "FAIL"
     }
@@ -962,14 +1074,14 @@ Describe "Invoke-Section2Checks — 2.1.7 Diagnostic Logging" {
 
     It "returns PASS when diagnostic settings exist" {
         $pd = Merge-PD @((New-PD "databricks" @($ws2)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "diag1" }) } }
+        Mock Get-AzDiagnosticSetting { [PSCustomObject]@{ name = "diag1" } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.7" }).Status | Should -Be "PASS"
     }
 
     It "returns FAIL when no diagnostic settings" {
         $pd = Merge-PD @((New-PD "databricks" @($ws2)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzDiagnosticSetting { @() }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.7" }).Status | Should -Be "FAIL"
     }
@@ -1005,20 +1117,22 @@ Describe "Invoke-Section2Checks — 2.1.11 Private Endpoints" {
 
 Describe "Invoke-Check5_23 — No Custom Owner Roles" {
     It "returns PASS when no custom wildcard roles" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzRoleDefinition { @() }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "PASS"
     }
 
     It "returns FAIL when custom wildcard role found" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "SuperOwner"; id = "xyz" }) } }
+        Mock Get-AzRoleDefinition {
+            [PSCustomObject]@{ Name = "SuperOwner"; Id = "xyz"; Actions = @("*") }
+        }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "FAIL"
         $r.Details | Should -Match "SuperOwner"
     }
 
-    It "returns ERROR on CLI failure" {
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $false; Data = $null; Error = "timeout" } }
+    It "returns ERROR on API failure" {
+        Mock Get-AzRoleDefinition { throw "Role definition API failed" }
         $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status | Should -Be "ERROR"
     }
@@ -1034,25 +1148,16 @@ Describe "Invoke-Section6Checks — 6.1.1.1 Diagnostic Setting Exists" {
     }
 
     It "returns PASS when subscription diagnostic settings exist" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @([PSCustomObject]@{ enabled = "True"; category = "Security" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Administrative" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Alert" },
-                             [PSCustomObject]@{ enabled = "True"; category = "Policy" })
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @([PSCustomObject]@{ enabled = "True"; category = "Security" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Administrative" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Alert" },
+                         [PSCustomObject]@{ enabled = "True"; category = "Policy" })
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1060,19 +1165,10 @@ Describe "Invoke-Section6Checks — 6.1.1.1 Diagnostic Setting Exists" {
     }
 
     It "returns FAIL when no diagnostic settings" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1086,27 +1182,18 @@ Describe "Invoke-Section6Checks — 6.1.1.2 Required Log Categories" {
     }
 
     It "returns PASS when all four categories enabled" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @(
-                        [PSCustomObject]@{ enabled = "True"; category = "Security" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Administrative" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Alert" }
-                        [PSCustomObject]@{ enabled = "True"; category = "Policy" }
-                    )
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @(
+                    [PSCustomObject]@{ enabled = "True"; category = "Security" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Administrative" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Alert" }
+                    [PSCustomObject]@{ enabled = "True"; category = "Policy" }
+                )
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1114,24 +1201,15 @@ Describe "Invoke-Section6Checks — 6.1.1.2 Required Log Categories" {
     }
 
     It "returns FAIL when missing required categories" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "ds1"
-                    logs = @(
-                        [PSCustomObject]@{ enabled = "True"; category = "Security" }
-                    )
-                }) }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name = "ds1"
+                logs = @(
+                    [PSCustomObject]@{ enabled = "True"; category = "Security" }
+                )
+            }) } }
         }
+        Mock Get-AzLogProfile { @() }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1145,18 +1223,8 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns PASS when retention >= 365" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 365 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile {
+            [PSCustomObject]@{ RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 365 } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1165,18 +1233,8 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns FAIL when retention < 365" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 30 } }) }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile {
+            [PSCustomObject]@{ RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 30 } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1185,18 +1243,82 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
     }
 
     It "returns FAIL when no log profiles" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
+    }
+
+    It "returns PASS when no log profile but subscription diagnostic settings route Administrative logs" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name        = "subscriptionToLa"
+                workspaceId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/law"
+                logs        = @(
+                    [PSCustomObject]@{ category = "Administrative"; enabled = "True" }
+                    [PSCustomObject]@{ category = "Security";       enabled = "True" }
+                )
+            }) } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when no log profile and no subscription diagnostic settings" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
+    }
+
+    It "returns PASS when no log profile but storage destination with indefinite retention" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name             = "subscriptionToStorage"
+                workspaceId      = $null
+                storageAccountId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/diagsa"
+                logs             = @(
+                    [PSCustomObject]@{
+                        category        = "Administrative"
+                        enabled         = "True"
+                        retentionPolicy = [PSCustomObject]@{ enabled = $false; days = 0 }
+                    }
+                )
+            }) } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when no log profile but storage destination has retention < 365 days" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name             = "subscriptionToStorage"
+                workspaceId      = $null
+                storageAccountId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/diagsa"
+                logs             = @(
+                    [PSCustomObject]@{
+                        category        = "Administrative"
+                        enabled         = "True"
+                        retentionPolicy = [PSCustomObject]@{ enabled = $true; days = 90 }
+                    }
+                )
+            }) } }
         }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
@@ -1210,24 +1332,13 @@ Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {
         $kv = [PSCustomObject]@{ id = "/sub/x/kv/kv1"; name = "kv1" }
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "app_services" @()))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'kv1') {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    logs = @([PSCustomObject]@{ enabled = "True"; categoryGroup = "audit" })
-                }) }
+        Mock Get-AzDiagnosticSetting {
+            [PSCustomObject]@{
+                Log = @([PSCustomObject]@{ Enabled = $true; CategoryGroup = "audit"; Category = $null })
             }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1284,20 +1395,14 @@ Describe "Invoke-Section6Checks — 6.1.1.6 App Service Resource Logs" {
         $app = [PSCustomObject]@{ id = "/sub/x/sites/app1"; name = "app1"; kind = "app" }
         $pd = Merge-PD @((New-PD "keyvaults" @()), (New-PD "app_services" @($app)))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'app1') {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    logs = @([PSCustomObject]@{ enabled = "True"; retentionPolicy = $null })
-                }) }
+        Mock Get-AzDiagnosticSetting {
+            [PSCustomObject]@{
+                Log = @([PSCustomObject]@{ Enabled = $true; RetentionPolicyEnabled = $false; RetentionPolicyDay = 0 })
+                StorageAccountId = $null
             }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1358,17 +1463,15 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns PASS for 6.1.2.1 when policy assignment alert exists" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-                ) }
+        Mock Get-AzActivityLogAlert {
+            [PSCustomObject]@{
+                Condition = [PSCustomObject]@{
+                    AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" })
+                }
             }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1376,13 +1479,9 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns FAIL for 6.1.2.1 when no matching alert" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzActivityLogAlert { @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1390,27 +1489,23 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns PASS for all 6.1.2.x when all alerts configured" {
-        $allAlerts = @(
-            (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-            (New-AlertRule "operationName" "microsoft.authorization/policyassignments/delete")
-            (New-AlertRule "operationName" "microsoft.network/networksecuritygroups/write")
-            (New-AlertRule "operationName" "microsoft.network/networksecuritygroups/delete")
-            (New-AlertRule "operationName" "microsoft.security/securitysolutions/write")
-            (New-AlertRule "operationName" "microsoft.security/securitysolutions/delete")
-            (New-AlertRule "operationName" "microsoft.sql/servers/firewallrules/write")
-            (New-AlertRule "operationName" "microsoft.sql/servers/firewallrules/delete")
-            (New-AlertRule "operationName" "microsoft.network/publicipaddresses/write")
-            (New-AlertRule "operationName" "microsoft.network/publicipaddresses/delete")
-            (New-AlertRule "category" "servicehealth")
-        )
-
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = $allAlerts } }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzActivityLogAlert {
+            @(
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/networksecuritygroups/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/networksecuritygroups/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.security/securitysolutions/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.security/securitysolutions/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.sql/servers/firewallrules/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.sql/servers/firewallrules/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/publicipaddresses/write" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.network/publicipaddresses/delete" }) } }
+                [PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "category"; Equal = "servicehealth" }) } }
+            )
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1420,17 +1515,11 @@ Describe "Invoke-Section6Checks — 6.1.2.x Activity Log Alerts" {
     }
 
     It "returns FAIL for 6.1.2.11 when no ServiceHealth alert" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    (New-AlertRule "operationName" "microsoft.authorization/policyassignments/write")
-                ) }
-            }
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzActivityLogAlert {
+            @([PSCustomObject]@{ Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) } })
         }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1544,19 +1633,15 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
     It "returns PASS when flow log retention >= 90 days" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "flow-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "fl1"; targetResourceId = "/sub/x/nsg/nsg1"
-                    retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 90 }
-                }) }
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "fl1"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/networkSecurityGroups/nsg1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 90 }
             }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "PASS"
@@ -1572,16 +1657,36 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
     }
+
+    It "returns FAIL when flow log retention is disabled even with 0 days (regression)" {
+        # Previously the logic was '-not $en -or $days -ge 90' which would PASS a disabled log.
+        # Correct behaviour: disabled retention must FAIL regardless of days.
+        $pd = Merge-PD @(
+            (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
+            (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
+            (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
+        )
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "fl-disabled"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/networkSecurityGroups/nsg1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $false; Days = 0 }
+            }
+        }
+        $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
+    }
 }
 
 Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
     It "returns PASS when watchers cover all regions" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
+        Mock Get-AzNetworkWatcherFlowLog { @() }
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "PASS"
@@ -1590,10 +1695,11 @@ Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
     It "returns FAIL when watcher missing in a region" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" }, [PSCustomObject]@{ location = "westus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
+        Mock Get-AzNetworkWatcherFlowLog { @() }
         Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "FAIL"
@@ -1604,19 +1710,15 @@ Describe "Invoke-Section7Checks — 7.8 VNet Flow Logs" {
     It "returns PASS when VNet flow log with >= 90 day retention" {
         $pd = Merge-PD @(
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()),
-            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded" })),
+            (New-PD "watchers" @([PSCustomObject]@{ location = "eastus"; state = "Succeeded"; id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus" })),
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "flow-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    name = "vfl1"; targetResourceId = "/sub/x/virtualnetworks/vnet1"
-                    retentionPolicy = [PSCustomObject]@{ enabled = "True"; days = 90 }
-                }) }
+        Mock Get-AzNetworkWatcherFlowLog {
+            [PSCustomObject]@{
+                Name = "vfl1"; TargetResourceId = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/virtualNetworks/vnet1"
+                RetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 90 }
             }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
         }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.8" }).Status | Should -Be "PASS"
@@ -1878,30 +1980,16 @@ Describe "Invoke-Section8Checks — 8.1.x Defender Plans" {
     }
 
     It "returns PASS for Defender plan when tier is Standard" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing" -and $Arguments -contains "show") {
-                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } }
-            }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" }; value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" }; value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD))
         ($results | Where-Object { $_.ControlId -eq "8.1.1.1" }).Status | Should -Be "PASS"
     }
 
     It "returns FAIL for Defender plan when tier is Free" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing" -and $Arguments -contains "show") {
-                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } }
-            }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "false" }; value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "false" }; value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD))
         ($results | Where-Object { $_.ControlId -eq "8.1.1.1" }).Status | Should -Be "FAIL"
@@ -1919,13 +2007,8 @@ Describe "Invoke-Section8Checks — 8.1.3.3 WDATP Integration" {
     }
 
     It "returns PASS when WDATP enabled" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") {
                 return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } }
@@ -1938,13 +2021,8 @@ Describe "Invoke-Section8Checks — 8.1.3.3 WDATP Integration" {
     }
 
     It "returns FAIL when WDATP disabled" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") {
                 return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "false" } } }
@@ -1968,13 +2046,8 @@ Describe "Invoke-Section8Checks — 8.1.10 MDE TVM" {
     }
 
     It "returns PASS when MdeTvm is selected provider" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
             if ($Uri -match "serverVulnerabilityAssessmentsSettings") {
@@ -1990,13 +2063,8 @@ Describe "Invoke-Section8Checks — 8.1.10 MDE TVM" {
     }
 
     It "returns FAIL when MdeTvm not configured" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
             if ($Uri -match "serverVulnerabilityAssessmentsSettings") {
@@ -2021,18 +2089,8 @@ Describe "Invoke-Section8Checks — 8.1.12 Owner Notification" {
     }
 
     It "returns PASS when Owner in notificationsByRole" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    notificationsByRole = [PSCustomObject]@{ roles = @("Owner") }
-                    emails = "admin@test.com"
-                }) }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
             if ($Uri -match "securityContacts") {
@@ -2053,18 +2111,8 @@ Describe "Invoke-Section8Checks — 8.1.12 Owner Notification" {
     }
 
     It "returns FAIL when contact has no Owner role" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    notificationsByRole = [PSCustomObject]@{ roles = @("Contributor") }
-                    emails = ""
-                }) }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
             param($Uri)
             if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
             if ($Uri -match "securityContacts") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
@@ -2089,48 +2137,66 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
 
     It "8.3.6 — PASS when RBAC enabled" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Rbac $true)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.6" }).Status | Should -Be "PASS"
     }
 
     It "8.3.6 — FAIL when RBAC not enabled" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Rbac $false)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.6" }).Status | Should -Be "FAIL"
     }
 
     It "8.3.7 — PASS when public access Disabled" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Pub "Disabled")), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.7" }).Status | Should -Be "PASS"
     }
 
     It "8.3.7 — FAIL when public access Enabled" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Pub "Enabled")), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.7" }).Status | Should -Be "FAIL"
     }
 
     It "8.3.8 — PASS when private endpoints configured" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Eps 2)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.8" }).Status | Should -Be "PASS"
     }
 
     It "8.3.8 — FAIL when no private endpoints" {
         $pd = Merge-PD @((New-PD "keyvaults" @(New-KV -Eps 0)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing    { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.8" }).Status | Should -Be "FAIL"
     }
@@ -2138,18 +2204,13 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
     It "8.3.1 — PASS when all keys have expiration (RBAC vault)" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "key" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "k1"; attributes = [PSCustomObject]@{ expires = "2025-12-31T00:00:00Z" } }
-                ) }
-            }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey {
+            @([PSCustomObject]@{ Name = "k1"; Attributes = [PSCustomObject]@{ Expires = [datetime]"2025-12-31" } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.1" }).Status | Should -Be "PASS"
     }
@@ -2157,18 +2218,13 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
     It "8.3.1 — FAIL when key has no expiration (RBAC vault)" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "key" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "k-no-exp"; attributes = [PSCustomObject]@{ expires = $null } }
-                ) }
-            }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey {
+            @([PSCustomObject]@{ Name = "k-no-exp"; Attributes = [PSCustomObject]@{ Expires = $null } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.1" }).Status | Should -Be "FAIL"
     }
@@ -2176,20 +2232,13 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
     It "8.3.3 — PASS when all secrets have expiration (RBAC vault)" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "secret" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "s1"; attributes = [PSCustomObject]@{ expires = "2025-12-31T00:00:00Z" } }
-                ) }
-            }
-            if ($Arguments -contains "key" -and $Arguments -contains "list") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "certificate") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret {
+            @([PSCustomObject]@{ Name = "s1"; Attributes = [PSCustomObject]@{ Expires = [datetime]"2025-12-31" } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.3" }).Status | Should -Be "PASS"
     }
@@ -2197,20 +2246,13 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
     It "8.3.3 — FAIL when secret has no expiration (RBAC vault)" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "secret" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "s-no-exp"; attributes = [PSCustomObject]@{ expires = $null } }
-                ) }
-            }
-            if ($Arguments -contains "key" -and $Arguments -contains "list") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "certificate") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret {
+            @([PSCustomObject]@{ Name = "s-no-exp"; Attributes = [PSCustomObject]@{ Expires = $null } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.3" }).Status | Should -Be "FAIL"
     }
@@ -2219,23 +2261,16 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
         $now = [datetime]::UtcNow
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "certificate" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "c1"; attributes = [PSCustomObject]@{
-                        created = $now.AddMonths(-6).ToString("o")
-                        expires = $now.AddMonths(6).ToString("o")
-                    } }
-                ) }
-            }
-            if ($Arguments -contains "key") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "secret") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate {
+            @([PSCustomObject]@{ Name = "c1"; Attributes = [PSCustomObject]@{
+                Created = $now.AddMonths(-6)
+                Expires = $now.AddMonths(6)
+            } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.11" }).Status | Should -Be "PASS"
     }
@@ -2243,23 +2278,16 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
     It "8.3.11 — FAIL when cert validity > 12 months" {
         $kv = New-KV -Rbac $true
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "certificate" -and $Arguments -contains "list") {
-                return [PSCustomObject]@{ Success = $true; Data = @(
-                    [PSCustomObject]@{ name = "c-long"; attributes = [PSCustomObject]@{
-                        created = "2024-01-01T00:00:00Z"
-                        expires = "2026-01-01T00:00:00Z"
-                    } }
-                ) }
-            }
-            if ($Arguments -contains "key") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "secret") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Free" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Get-AzKeyVaultKey        { @() }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate {
+            @([PSCustomObject]@{ Name = "c-long"; Attributes = [PSCustomObject]@{
+                Created = [datetime]"2024-01-01"
+                Expires = [datetime]"2026-01-01"
+            } })
         }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.11" }).Status | Should -Be "FAIL"
     }
@@ -2272,13 +2300,8 @@ Describe "Invoke-Section8Checks — 8.5 DDoS Protection" {
             (New-PD "keyvaults" @()), (New-PD "bastion" @()),
             (New-PD "vms" @()), (New-PD "vnets" @($vnet))
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.5" }).Status | Should -Be "PASS"
@@ -2290,13 +2313,8 @@ Describe "Invoke-Section8Checks — 8.5 DDoS Protection" {
             (New-PD "keyvaults" @()), (New-PD "bastion" @()),
             (New-PD "vms" @()), (New-PD "vnets" @($vnet))
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.5" }).Status | Should -Be "FAIL"
@@ -2307,13 +2325,8 @@ Describe "Invoke-Section8Checks — 8.5 DDoS Protection" {
             (New-PD "keyvaults" @()), (New-PD "bastion" @()),
             (New-PD "vms" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "pricing") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ pricingTier = "Standard" } } }
-            if ($Arguments -contains "contact") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
-        Mock Invoke-AzRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
 
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.5" }).Status | Should -Be "INFO"
@@ -2334,18 +2347,20 @@ Describe "Invoke-Section9Checks — 9.3.1.1 Key Rotation Reminder" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        $keyData = [PSCustomObject]@{
-            keyCreationTime = [PSCustomObject]@{
-                key1 = (Get-Date).AddDays(-30).ToString("o")
-                key2 = (Get-Date).AddDays(-30).ToString("o")
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount {
+            [PSCustomObject]@{
+                StorageAccountName = "sa-keyrem"
+                ResourceGroupName  = "rg"
+                KeyPolicy          = [PSCustomObject]@{ KeyExpirationPeriodInDays = 90 }
+                KeyCreationTime    = [PSCustomObject]@{
+                    Key1 = (Get-Date).AddDays(-30)
+                    Key2 = (Get-Date).AddDays(-30)
+                }
             }
-            keyExpirationPeriodInDays = 90
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzResourceLock { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.1" }).Status | Should -Be "PASS"
     }
@@ -2359,18 +2374,20 @@ Describe "Invoke-Section9Checks — 9.3.1.1 Key Rotation Reminder" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        $keyData = [PSCustomObject]@{
-            keyCreationTime = [PSCustomObject]@{
-                key1 = (Get-Date).AddDays(-30).ToString("o")
-                key2 = (Get-Date).AddDays(-30).ToString("o")
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount {
+            [PSCustomObject]@{
+                StorageAccountName = "sa-nokeyr"
+                ResourceGroupName  = "rg"
+                KeyPolicy          = $null
+                KeyCreationTime    = [PSCustomObject]@{
+                    Key1 = (Get-Date).AddDays(-30)
+                    Key2 = (Get-Date).AddDays(-30)
+                }
             }
-            keyExpirationPeriodInDays = $null
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzResourceLock { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.1" }).Status | Should -Be "FAIL"
     }
@@ -2386,18 +2403,20 @@ Describe "Invoke-Section9Checks — 9.3.1.2 Key Rotation Within 90 Days" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        $keyData = [PSCustomObject]@{
-            keyCreationTime = [PSCustomObject]@{
-                key1 = (Get-Date).AddDays(-30).ToString("o")
-                key2 = (Get-Date).AddDays(-10).ToString("o")
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount {
+            [PSCustomObject]@{
+                StorageAccountName = "sa-keyrot"
+                ResourceGroupName  = "rg"
+                KeyPolicy          = [PSCustomObject]@{ KeyExpirationPeriodInDays = 90 }
+                KeyCreationTime    = [PSCustomObject]@{
+                    Key1 = (Get-Date).AddDays(-30)
+                    Key2 = (Get-Date).AddDays(-10)
+                }
             }
-            keyExpirationPeriodInDays = 90
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzResourceLock { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.2" }).Status | Should -Be "PASS"
     }
@@ -2411,18 +2430,20 @@ Describe "Invoke-Section9Checks — 9.3.1.2 Key Rotation Within 90 Days" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        $keyData = [PSCustomObject]@{
-            keyCreationTime = [PSCustomObject]@{
-                key1 = (Get-Date).AddDays(-120).ToString("o")
-                key2 = (Get-Date).AddDays(-30).ToString("o")
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount {
+            [PSCustomObject]@{
+                StorageAccountName = "sa-keyold"
+                ResourceGroupName  = "rg"
+                KeyPolicy          = [PSCustomObject]@{ KeyExpirationPeriodInDays = 90 }
+                KeyCreationTime    = [PSCustomObject]@{
+                    Key1 = (Get-Date).AddDays(-120)
+                    Key2 = (Get-Date).AddDays(-30)
+                }
             }
-            keyExpirationPeriodInDays = 90
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "show" -and $Arguments -contains "account") { return [PSCustomObject]@{ Success = $true; Data = $keyData } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzResourceLock { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.2" }).Status | Should -Be "FAIL"
     }
@@ -2438,7 +2459,10 @@ Describe "Invoke-Section9Checks — 9.3.1.3 Shared Key Access" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.3" }).Status | Should -Be "PASS"
     }
@@ -2452,7 +2476,10 @@ Describe "Invoke-Section9Checks — 9.3.1.3 Shared Key Access" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.1.3" }).Status | Should -Be "FAIL"
     }
@@ -2468,7 +2495,10 @@ Describe "Invoke-Section9Checks — 9.3.3.1 OAuth Default" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.3.1" }).Status | Should -Be "PASS"
     }
@@ -2482,7 +2512,10 @@ Describe "Invoke-Section9Checks — 9.3.3.1 OAuth Default" {
             sku = "Standard_LRS"; privateEps = 0
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.3.1" }).Status | Should -Be "FAIL"
     }
@@ -2508,42 +2541,60 @@ Describe "Invoke-Section9Checks — 9.3.2.x Network Checks" {
 
     It "9.3.2.1 — PASS with private endpoints" {
         $pd = New-PD "storage" @($compliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.1" }).Status | Should -Be "PASS"
     }
 
     It "9.3.2.1 — FAIL without private endpoints" {
         $pd = New-PD "storage" @($nonCompliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.1" }).Status | Should -Be "FAIL"
     }
 
     It "9.3.2.2 — PASS when publicAccess Disabled" {
         $pd = New-PD "storage" @($compliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.2" }).Status | Should -Be "PASS"
     }
 
     It "9.3.2.2 — FAIL when publicAccess Enabled" {
         $pd = New-PD "storage" @($nonCompliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.2" }).Status | Should -Be "FAIL"
     }
 
     It "9.3.2.3 — PASS when defaultAction Deny" {
         $pd = New-PD "storage" @($compliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.3" }).Status | Should -Be "PASS"
     }
 
     It "9.3.2.3 — FAIL when defaultAction Allow" {
         $pd = New-PD "storage" @($nonCompliantAcct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.2.3" }).Status | Should -Be "FAIL"
     }
@@ -2559,7 +2610,10 @@ Describe "Invoke-Section9Checks — 9.3.5 Trusted Services Bypass" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.5" }).Status | Should -Be "PASS"
     }
@@ -2573,7 +2627,10 @@ Describe "Invoke-Section9Checks — 9.3.5 Trusted Services Bypass" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.5" }).Status | Should -Be "FAIL"
     }
@@ -2589,7 +2646,10 @@ Describe "Invoke-Section9Checks — 9.3.11 Geo-Redundant Storage" {
             sku = "Standard_GRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.11" }).Status | Should -Be "PASS"
     }
@@ -2603,7 +2663,10 @@ Describe "Invoke-Section9Checks — 9.3.11 Geo-Redundant Storage" {
             sku = "Standard_LRS"; privateEps = 1
         }
         $pd = New-PD "storage" @($acct)
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.11" }).Status | Should -Be "FAIL"
     }
@@ -2623,18 +2686,15 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
     It "returns PASS for all blob checks when compliant" {
         $pd = New-PD "storage" @($saBase)
         $blobSvc = [PSCustomObject]@{
-            deleteRetentionPolicy          = [PSCustomObject]@{ enabled = $true; days = 7 }
-            containerDeleteRetentionPolicy = [PSCustomObject]@{ enabled = $true; days = 7 }
-            isVersioningEnabled            = $true
-            logging = [PSCustomObject]@{ read = "true"; write = "true"; delete = "true" }
+            DeleteRetentionPolicy          = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+            ContainerDeleteRetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+            IsVersioningEnabled            = $true
+            Logging                        = [PSCustomObject]@{ Read = $true; Write = $true; Delete = $true }
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { $blobSvc }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.2.1" }).Status | Should -Be "PASS"
         ($results | Where-Object { $_.ControlId -eq "9.2.2" }).Status | Should -Be "PASS"
@@ -2647,18 +2707,15 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
     It "returns FAIL when blob soft delete disabled" {
         $pd = New-PD "storage" @($saBase)
         $blobSvc = [PSCustomObject]@{
-            deleteRetentionPolicy          = [PSCustomObject]@{ enabled = $false; days = 0 }
-            containerDeleteRetentionPolicy = [PSCustomObject]@{ enabled = $false; days = 0 }
-            isVersioningEnabled            = $false
-            logging = [PSCustomObject]@{ read = "false"; write = "false"; delete = "false" }
+            DeleteRetentionPolicy          = [PSCustomObject]@{ Enabled = $false; Days = 0 }
+            ContainerDeleteRetentionPolicy = [PSCustomObject]@{ Enabled = $false; Days = 0 }
+            IsVersioningEnabled            = $false
+            Logging                        = [PSCustomObject]@{ Read = $false; Write = $false; Delete = $false }
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $blobSvc } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { $blobSvc }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.2.1" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.2.2" }).Status | Should -Be "FAIL"
@@ -2689,13 +2746,10 @@ Describe "Invoke-Section9Checks — 9.1.x File Service" {
                 }
             }
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { $fileSvc }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.1.1" }).Status | Should -Be "PASS"
         ($results | Where-Object { $_.ControlId -eq "9.1.2" }).Status | Should -Be "PASS"
@@ -2713,13 +2767,10 @@ Describe "Invoke-Section9Checks — 9.1.x File Service" {
                 }
             }
         }
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = $fileSvc } }
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { $fileSvc }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.1.1" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.1.2" }).Status | Should -Be "FAIL"
@@ -2741,17 +2792,14 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
 
     It "returns PASS for both when ReadOnly lock exists" {
         $pd = New-PD "storage" @($saLock)
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "lock") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    id = "/subscriptions/$($script:T_SID)/providers/Microsoft.Authorization/locks/mylock"
-                    level = "ReadOnly"
-                }) }
-            }
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock {
+            @([PSCustomObject]@{
+                LockId = "/subscriptions/$($script:T_SID)/providers/Microsoft.Authorization/locks/mylock"
+                Level  = "ReadOnly"
+            })
         }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.9" }).Status | Should -Be "PASS"
@@ -2760,17 +2808,14 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
 
     It "returns 9.3.9 PASS / 9.3.10 FAIL for CanNotDelete lock" {
         $pd = New-PD "storage" @($saLock)
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "lock") {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    id = "/subscriptions/$($script:T_SID)/providers/Microsoft.Authorization/locks/dellock"
-                    level = "CanNotDelete"
-                }) }
-            }
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock {
+            @([PSCustomObject]@{
+                LockId = "/subscriptions/$($script:T_SID)/providers/Microsoft.Authorization/locks/dellock"
+                Level  = "CanNotDelete"
+            })
         }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.9" }).Status | Should -Be "PASS"
@@ -2779,15 +2824,354 @@ Describe "Invoke-Section9Checks — 9.3.9/9.3.10 Resource Locks" {
 
     It "returns FAIL for both when no locks" {
         $pd = New-PD "storage" @($saLock)
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "lock") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "blob-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "file-service-properties") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
+        Mock Get-AzStorageBlobServiceProperty { throw "not available" }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.9" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.3.10" }).Status | Should -Be "FAIL"
+    }
+}
+
+# =============================================================================
+# SECTION 9 — ADLS Gen2 HNS detection (regression)
+# =============================================================================
+
+Describe "Invoke-Section9Checks — ADLS Gen2 HNS detection (regression)" {
+    It "skips blob-service-properties call for HNS-enabled account (isHns=true)" {
+        # StorageV2 account with Standard_LRS SKU and isHnsEnabled=true.
+        # The old SKU heuristic would not detect it as ADLS and would wrongly call
+        # blob-service-properties, which is unsupported for HNS accounts.
+        $adlsAcct = [PSCustomObject]@{
+            id = "/x"; name = "sa-adls"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            isHns = "true"; sku = "Standard_LRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($adlsAcct)
+        $script:blobApiCalled = $false
+        Mock Get-AzStorageBlobServiceProperty { $script:blobApiCalled = $true }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
+        Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd | Out-Null
+        $script:blobApiCalled | Should -BeFalse
+    }
+
+    It "calls blob-service-properties for a regular StorageV2 account (isHns=null)" {
+        # A standard StorageV2 account (isHns null/false) must still call the blob API.
+        $regularAcct = [PSCustomObject]@{
+            id = "/x"; name = "sa-regular"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            isHns = $null; sku = "Standard_LRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($regularAcct)
+        $script:blobApiCalled = $false
+        Mock Get-AzStorageBlobServiceProperty {
+            $script:blobApiCalled = $true
+            [PSCustomObject]@{
+                DeleteRetentionPolicy          = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+                ContainerDeleteRetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+                IsVersioningEnabled            = $true
+                Logging                        = [PSCustomObject]@{ Read = $true; Write = $true; Delete = $true }
+            }
+        }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
+        Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd | Out-Null
+        $script:blobApiCalled | Should -BeTrue
+    }
+}
+
+# =============================================================================
+# SUPPRESSIONS — Get-Suppressions, Invoke-Suppressions, Find-SuppressionMatch
+# =============================================================================
+
+Describe "Get-Suppressions — file loading and validation" {
+    BeforeEach {
+        $script:tmpSup = [System.IO.Path]::GetTempFileName()
+    }
+    AfterEach {
+        if (Test-Path $script:tmpSup) { Remove-Item $script:tmpSup -Force }
+    }
+
+    It "returns empty array when file does not exist" {
+        $result = @(Get-Suppressions -Path "C:\this_path_does_not_exist_xyz123.json")
+        $result | Should -HaveCount 0
+    }
+
+    It "returns empty array for invalid JSON" {
+        Set-Content $script:tmpSup -Value "not: valid: json: {{{" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "loads a valid flat-array suppression" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "7.1"
+    }
+
+    It "loads a wrapped { suppressions: [...] } format" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "{`"suppressions`":[{`"control_id`":`"5.1`",`"justification`":`"test`",`"expires`":`"$future`"}]}" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "5.1"
+    }
+
+    It "skips entry missing required field control_id" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry missing required field justification" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry missing required field expires" {
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry with invalid expires date format" {
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"31/12/2027`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips an expired entry (expires yesterday)" {
+        $past = [datetime]::Today.AddDays(-1).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$past`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "accepts an entry expiring today (not expired)" {
+        $today = [datetime]::Today.ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$today`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+    }
+
+    It "caps expiry beyond 1 year to today + 365 days" {
+        $farFuture = [datetime]::Today.AddDays(400).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$farFuture`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].Expires | Should -Be ([datetime]::Today.AddDays(365))
+    }
+
+    It "Resource is null when field is absent" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Resource | Should -BeNullOrEmpty
+    }
+
+    It "Subscription is null when field is absent" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Subscription | Should -BeNullOrEmpty
+    }
+
+    It "maps resource and subscription when present" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"resource`":`"my-nsg`",`"subscription`":`"Prod`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Resource     | Should -Be "my-nsg"
+        $result[0].Subscription | Should -Be "Prod"
+    }
+
+    It "returns only valid entries from a mixed list" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        $past   = [datetime]::Today.AddDays(-1).ToString("yyyy-MM-dd")
+        $json   = "[" +
+                  "{`"control_id`":`"7.1`",`"justification`":`"valid`",`"expires`":`"$future`"}," +
+                  "{`"control_id`":`"7.2`",`"justification`":`"expired`",`"expires`":`"$past`"}," +
+                  "{`"justification`":`"missing-id`",`"expires`":`"$future`"}" +
+                  "]"
+        Set-Content $script:tmpSup -Value $json -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "7.1"
+    }
+}
+
+Describe "Invoke-Suppressions — matching and status updates" {
+    BeforeAll {
+        function New-TestResult {
+            param(
+                [string]$ControlId,
+                [string]$Status,
+                [string]$Resource    = "",
+                [string]$SubName     = "Test Sub"
+            )
+            [PSCustomObject]@{
+                ControlId        = $ControlId
+                Title            = "Test Title"
+                Level            = 1
+                Section          = "7"
+                Status           = $Status
+                Details          = "original detail"
+                Remediation      = "fix it"
+                SubscriptionId   = "aaaabbbb-0000-0000-0000-000000000000"
+                SubscriptionName = $SubName
+                Resource         = $Resource
+            }
+        }
+
+        function New-TestSup {
+            param(
+                [string]$ControlId,
+                [string]$Resource      = $null,
+                [string]$Subscription  = $null,
+                [string]$Justification = "accepted risk"
+            )
+            [PSCustomObject]@{
+                ControlId     = $ControlId
+                Resource      = $Resource
+                Subscription  = $Subscription
+                Justification = $Justification
+                Expires       = [datetime]::Today.AddDays(30)
+            }
+        }
+    }
+
+    It "returns results unchanged when suppressions list is empty" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $out = @(Invoke-Suppressions -Results $results -Suppressions @())
+        $out | Should -HaveCount 1
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "suppresses a FAIL result matching by control_id" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppresses an ERROR result matching by control_id" {
+        $results = @(New-TestResult "7.1" $script:ERR)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress a PASS result" {
+        $results = @(New-TestResult "7.1" $script:PASS)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:PASS
+    }
+
+    It "does not suppress an INFO result" {
+        $results = @(New-TestResult "7.1" $script:INFO)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:INFO
+    }
+
+    It "does not suppress FAIL when control_id does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "9.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "suppresses FAIL when resource filter matches" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "my-nsg")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress FAIL when resource filter does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "other-nsg")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "resource filter match is case-insensitive" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "MY-NSG")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppresses FAIL when subscription filter matches" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "Production")
+        $sups    = @(New-TestSup "7.1" -Subscription "Production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress FAIL when subscription filter does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "Development")
+        $sups    = @(New-TestSup "7.1" -Subscription "Production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "subscription filter match is case-insensitive" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "PRODUCTION")
+        $sups    = @(New-TestSup "7.1" -Subscription "production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppression without resource filter matches any resource" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "some-nsg")
+        $sups    = @(New-TestSup "7.1")   # no Resource filter
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "appends justification and expiry to Details" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "7.1" -Justification "WAF in front")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Details | Should -Match "WAF in front"
+        $out[0].Details | Should -Match "expires"
+    }
+
+    It "preserves all other result fields when suppressing" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "nsg-1" -SubName "Prod")
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].ControlId        | Should -Be "7.1"
+        $out[0].Title            | Should -Be "Test Title"
+        $out[0].Resource         | Should -Be "nsg-1"
+        $out[0].SubscriptionName | Should -Be "Prod"
+    }
+
+    It "only suppresses matched results in a mixed list" {
+        $results = @(
+            (New-TestResult "7.1" $script:FAIL),
+            (New-TestResult "8.1" $script:FAIL),
+            (New-TestResult "9.1" $script:PASS)
+        )
+        $sups = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out | Should -HaveCount 3
+        ($out | Where-Object { $_.ControlId -eq "7.1" }).Status | Should -Be $script:SUPPRESSED
+        ($out | Where-Object { $_.ControlId -eq "8.1" }).Status | Should -Be $script:FAIL
+        ($out | Where-Object { $_.ControlId -eq "9.1" }).Status | Should -Be $script:PASS
     }
 }

@@ -3,17 +3,13 @@
 function Get-SignedInUserId {
     <#
     .SYNOPSIS
-    Return the Azure AD object ID of the currently signed-in user.
+    Return the identity of the currently signed-in user from the Az context.
+    Returns a UPN for users, or app/service-principal ID for service principals.
     #>
-    $result = Invoke-AzCli -Arguments @("ad", "signed-in-user", "show", "--query", "id") -TimeoutSec 30
-    if ($result.Success -and $result.Data) {
-        return [string]$result.Data -replace '"', ''
-    }
-    # Fallback: use UPN from account show and resolve
-    $acct = Invoke-AzCli -Arguments @("account", "show") -TimeoutSec 30
-    if ($acct.Success -and $acct.Data.user.name) {
-        return [string]$acct.Data.user.name
-    }
+    try {
+        $ctx = Get-AzContext
+        if ($ctx -and $ctx.Account -and $ctx.Account.Id) { return $ctx.Account.Id }
+    } catch {}
     return $null
 }
 
@@ -24,14 +20,13 @@ function Get-SubscriptionList {
     Returns array of {id, name, state} objects.
     Callers are responsible for state-filtering so they can emit useful diagnostics.
     #>
-    $result = Invoke-AzCli -Arguments @(
-        "account", "list", "--all",
-        "--query", "[].{id:id,name:name,state:state}"
-    ) -TimeoutSec 60
-    if (-not $result.Success) {
-        throw "Failed to list subscriptions: $($result.Error)"
+    try {
+        return @(Get-AzSubscription -WarningAction SilentlyContinue | ForEach-Object {
+            [PSCustomObject]@{ id = $_.Id; name = $_.Name; state = $_.State }
+        })
+    } catch {
+        throw "Failed to list subscriptions: $_"
     }
-    return @($result.Data)
 }
 
 function Test-AuditPermissions {
@@ -52,56 +47,53 @@ function Test-AuditPermissions {
     $userId   = Get-SignedInUserId
 
     if (-not $userId) {
-        $warnings.Add("Could not determine signed-in user identity. Run 'az login' first.")
+        $warnings.Add("Could not determine signed-in user identity. Run 'Connect-AzAccount' first.")
         return @{ AllClear = $false; Warnings = $warnings.ToArray(); UserId = $null; Roles = @(); RoleSubCount = @{}; TotalSubs = 0 }
     }
 
     Write-AuditLog "Identity: $userId" -Level DEBUG
 
-    $azCmdLocal = $script:AZ_CMD
-    $total      = $SubscriptionIds.Count
+    # Capture the authenticated context once before spawning parallel runspaces.
+    # ForEach-Object -Parallel runs in isolated runspaces that do not inherit the parent
+    # Az context automatically, so we pass it via $using: and restore it in each thread.
+    $azCtxForParallel = Get-AzContext
+    $accountTypeLocal = [string]$azCtxForParallel.Account.Type   # 'User' or 'ServicePrincipal'
+    $total            = $SubscriptionIds.Count
 
-    # Run all role lookups in parallel — up to 8 at once (matches Python ThreadPoolExecutor)
-    # Invoke-AzCli is not available inside ForEach-Object -Parallel runspaces, so the
-    # az call is inlined here using $using: captured variables.
+    # Run all role lookups in parallel — up to 8 at once
     $subResults = $SubscriptionIds | ForEach-Object -Parallel {
-        $subId  = $_
-        $azCmd  = $using:azCmdLocal
-        $uid    = $using:userId
+        $subId       = $_
+        $uid         = $using:userId
+        $ctx         = $using:azCtxForParallel
+        $accountType = $using:accountTypeLocal
 
-        # Helper: run az and return (exitCode, stdoutText, stderrText)
-        function _AzRaw {
-            param([string]$Cmd, [string[]]$CmdArgs)
-            $out = & $Cmd @CmdArgs 2>&1
-            $ec  = $LASTEXITCODE
-            $so  = ($out | Where-Object { $_ -is [string] }) -join "`n"
-            $se  = ($out | Where-Object { $_ -isnot [string] } | ForEach-Object { "$_" }) -join ' '
-            return $ec, $so.Trim(), $se.Trim()
-        }
+        try {
+            # Restore Az context in this runspace so Get-AzRoleAssignment targets the right sub
+            $null = Set-AzContext -Context $ctx -SubscriptionId $subId `
+                        -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
 
-        # Primary query — scoped to assignee (fast, works when $uid is a GUID)
-        $subArgs = @("role","assignment","list","--assignee",$uid,"--include-inherited","--include-groups",
-                     "--query","[].roleDefinitionName","--output","json")
-        if ($subId) { $subArgs += "--subscription"; $subArgs += $subId }
-        $ec, $so, $se = _AzRaw -Cmd $azCmd -CmdArgs $subArgs
-
-        # Fallback — mirrors Python: if --assignee failed, try --all filtered to User principals
-        if ($ec -ne 0) {
-            $fbArgs = @("role","assignment","list","--all","--include-inherited",
-                        "--query","[?principalType=='User'].roleDefinitionName","--output","json")
-            if ($subId) { $fbArgs += "--subscription"; $fbArgs += $subId }
-            $ec, $so, $se = _AzRaw -Cmd $azCmd -CmdArgs $fbArgs
-        }
-
-        if ($ec -ne 0) {
-            $errMsg = if ($se) { $se } else { $so }
-            [PSCustomObject]@{ SubId = $subId; Success = $false; Roles = @(); Error = ($errMsg -replace '\r?\n', ' ').Trim() }
-        } else {
             $roles = @()
-            if ($so) {
-                try { $roles = @($so | ConvertFrom-Json -Depth 5 | Where-Object { $_ }) } catch { }
+            try {
+                # Targeted query — filter to the current identity on the server side
+                $assignments = if ($accountType -eq 'ServicePrincipal') {
+                    @(Get-AzRoleAssignment -ObjectId $uid -ErrorAction Stop)
+                } else {
+                    @(Get-AzRoleAssignment -SignInName $uid -ErrorAction Stop)
+                }
+                $roles = @($assignments | Select-Object -ExpandProperty RoleDefinitionName | Sort-Object -Unique)
+            } catch {
+                # Fallback: enumerate all assignments and return unique role names
+                # (handles edge cases such as group-based assignments or cross-tenant guest accounts)
+                $all = @(Get-AzRoleAssignment -ErrorAction SilentlyContinue)
+                if ($all.Count -gt 0) {
+                    $roles = @($all | Select-Object -ExpandProperty RoleDefinitionName | Sort-Object -Unique)
+                }
             }
+
             [PSCustomObject]@{ SubId = $subId; Success = $true; Roles = $roles; Error = $null }
+        } catch {
+            $errMsg = ($_.Exception.Message -replace '\r?\n', ' ').Trim()
+            [PSCustomObject]@{ SubId = $subId; Success = $false; Roles = @(); Error = $errMsg }
         }
     } -ThrottleLimit 8
 

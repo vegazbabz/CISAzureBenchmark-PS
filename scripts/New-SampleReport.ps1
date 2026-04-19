@@ -126,8 +126,8 @@ $checks = @(
     @{ Id="9.2.4";    Title="Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests"; Level=2; Section="9 - Storage Services"; Storage=$true }
     @{ Id="9.2.5";    Title="Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests"; Level=2; Section="9 - Storage Services"; Storage=$true }
     @{ Id="9.2.6";    Title="Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests"; Level=2; Section="9 - Storage Services"; Storage=$true }
-    @{ Id="9.3.1.1";  Title="Ensure Storage Account Key Rotation Reminders Are Enabled"; Level=1; Section="9 - Storage Services"; Storage=$true }
-    @{ Id="9.3.1.2";  Title="Ensure That Storage Accounts Are Configured to Use Access Keys Rotated Within 90 Days"; Level=1; Section="9 - Storage Services"; Storage=$true }
+    @{ Id="9.3.1.1";  Title="Ensure that 'Enable key rotation reminders' is enabled for each Storage Account"; Level=1; Section="9 - Storage Services"; Storage=$true }
+    @{ Id="9.3.1.2";  Title="Ensure that Storage Account access keys are periodically regenerated"; Level=1; Section="9 - Storage Services"; Storage=$true }
     @{ Id="9.3.1.3";  Title="Ensure That 'Shared Key Access' Is Disabled for Storage Accounts"; Level=2; Section="9 - Storage Services"; Storage=$true }
     @{ Id="9.3.2.1";  Title="Ensure That 'Private Endpoints' Are Used for Storage Accounts"; Level=2; Section="9 - Storage Services"; Storage=$true }
     @{ Id="9.3.2.2";  Title="Ensure That Storage Account Public Network Access Is Disabled"; Level=1; Section="9 - Storage Services"; Storage=$true }

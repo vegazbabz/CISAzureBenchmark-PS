@@ -9,7 +9,7 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 1.3.1
+**Version:** 1.4.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
 
@@ -19,7 +19,11 @@
 
 A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
 
-Zero external module dependencies — only PowerShell 7+ and the Azure CLI.
+All audit checks use the Az PowerShell module — no Azure CLI required for check execution.
+The optional permission preflight (run before each audit) uses `az role assignment list` inside
+parallel runspaces where PS runspace isolation prevents using the Az module directly.
+Skip it with `-NoPermissionCheck` if you know your permissions are correct or prefer not to
+install the CLI. Install the required modules once, then run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
 can be resumed without re-running completed work. Output is a self-contained HTML report with
@@ -34,8 +38,23 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 | Requirement | Details |
 | --- | --- |
 | PowerShell | [7.0 or higher](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) |
-| Azure CLI | Any recent version — <https://aka.ms/install-azure-cli> |
-| Azure login | `az login` completed before running |
+| Az.Accounts | `Install-Module Az.Accounts` — authentication, context, REST calls |
+| Az.ResourceGraph | `Install-Module Az.ResourceGraph` — resource prefetch queries |
+| Az.Monitor | `Install-Module Az.Monitor` — log profiles, diagnostic settings, activity log alerts |
+| Az.Network | `Install-Module Az.Network` — network watcher flow logs |
+| Az.Storage | `Install-Module Az.Storage` — storage account enumeration |
+| Az.KeyVault | `Install-Module Az.KeyVault` — key rotation policies |
+| Az.Resources | `Install-Module Az.Resources` — role definitions |
+| Azure CLI | Any recent version — <https://aka.ms/install-azure-cli> — **optional**, only for the permission preflight. Skip with `-NoPermissionCheck` if not available. |
+| Azure login | `Connect-AzAccount` completed before running |
+
+> **Install Az modules all at once:**
+> ```powershell
+> Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
+> ```
+>
+> Azure CLI is only needed for the pre-run permission preflight. Install it from <https://aka.ms/install-azure-cli>
+> or use `-NoPermissionCheck` to skip the preflight entirely.
 
 ### Azure permissions
 
@@ -57,10 +76,13 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 ## Quick Start
 
 ```powershell
-# 1. Login to Azure
-az login
+# 1. Install required Az PowerShell modules (one-time)
+Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
 
-# 2. Run the audit (audits all enabled subscriptions)
+# 2. Log in to Azure
+Connect-AzAccount
+
+# 3. Run the audit (audits all enabled subscriptions)
 .\Invoke-CISAzureAudit.ps1
 ```
 
@@ -71,7 +93,7 @@ automatically enumerate all enabled subscriptions, run all checks, and save the 
 
 ## Getting Started (step-by-step)
 
-New to PowerShell or the Azure CLI? Follow these steps to get the tool running on your machine.
+New to PowerShell or Azure? Follow these steps to get the tool running on your machine.
 
 ### Step 1 — Install PowerShell 7+
 
@@ -82,14 +104,19 @@ New to PowerShell or the Azure CLI? Follow these steps to get the tool running o
    pwsh --version
    ```
 
-### Step 2 — Install the Azure CLI
+### Step 2 — Install the required Az PowerShell modules
 
-1. Follow the official instructions at <https://aka.ms/install-azure-cli> for your OS.
-2. Verify:
+Run this once in a PowerShell 7 terminal:
 
-   ```powershell
-   az --version
-   ```
+```powershell
+Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
+```
+
+If prompted to install from an untrusted repository, type `Y` and press Enter.
+
+> **Azure CLI (optional):** The tool uses `az role assignment list` in the permission preflight
+> that runs before each audit. Install it from <https://aka.ms/install-azure-cli> or pass
+> `-NoPermissionCheck` to skip the preflight if you already know your permissions are correct.
 
 ### Step 3 — Get the tool
 
@@ -109,7 +136,7 @@ cd CISAzureBenchmark-PS
 ### Step 4 — Log in to Azure
 
 ```powershell
-az login
+Connect-AzAccount
 ```
 
 A browser window will open for you to sign in. The account you use needs at minimum **Reader**
@@ -137,7 +164,8 @@ in your browser automatically when done.
 ```text
 Invoke-CISAzureAudit.ps1     Main entry point / orchestrator
 Private/
-  AzureClient.ps1             az CLI subprocess wrapper
+  AzureClient.ps1             PS-based API client: Resource Graph (Search-AzGraph),
+                              ARM REST (Invoke-AzRestMethod), and az CLI (preflight only)
   CheckHelpers.ps1            Prefetch data lookups, error formatting
   Checkpoint.ps1              Save/resume audit state
   Config.ps1                  Timeouts, constants, PASS/FAIL labels
@@ -155,12 +183,13 @@ Checks/
   Section8.ps1                Security services checks (30 controls)
   Section9.ps1                Storage checks (24 controls — 101 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (178 tests)
+  Checks.Tests.ps1            Pester unit tests (195 tests)
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
 docs/
   sample_report.html          Pre-generated sample report
+suppressions.json.example   Suppression template with annotated examples
 ```
 
 ---
@@ -265,28 +294,36 @@ entire tenant in a single round trip:
 - Role assignments (Owner and User Access Administrator)
 - WAF policies
 
-#### 2. Azure CLI calls per subscription
+#### 2. Az PowerShell module calls per subscription
 
 For live service configurations and data Resource Graph cannot expose:
 
-- `az security pricing show` — Defender plan statuses (8.1.x)
-- `az security contact list` — notification settings (8.1.12–8.1.15)
-- `az monitor diagnostic-settings list` — Key Vault and subscription logging
-- `az monitor activity-log alert list` — all 11 alert checks (6.1.2.x)
-- `az keyvault key/secret list` — expiry dates per key and secret
-- `az keyvault key rotation-policy show` — auto rotation configuration
-- `az keyvault certificate show` — certificate validity periods
-- `az storage account blob-service-properties show` — soft delete, versioning
-- `az storage account file-service-properties show` — file soft delete, SMB settings
-- `az network watcher flow-log list` — flow log retention (7.5, 7.8)
-- `az role definition list` — custom admin roles (5.23)
+- `Get-AzSecurityPricing` — Defender plan statuses (8.1.x)
+- `Get-AzActivityLogAlert` — all 11 alert checks (6.1.2.x)
+- `Get-AzDiagnosticSetting` — Key Vault and App Service diagnostic logging (6.1.1.4, 6.1.1.6)
+- `Get-AzLogProfile` — activity log retention via log profile (6.1.1.3)
+- `Get-AzNetworkWatcherFlowLog` — flow log retention (7.5, 7.8)
+- `Get-AzKeyVaultKey` / `Get-AzKeyVaultSecret` / `Get-AzKeyVaultCertificate` — expiry dates (8.3.x)
+- `Get-AzKeyVaultKeyRotationPolicy` — auto rotation configuration (8.3.9)
+- `Get-AzStorageBlobServiceProperty` — soft delete, versioning, logging (9.2.x)
+- `Get-AzStorageFileServiceProperty` — file soft delete and SMB settings (9.1.x)
+- `Get-AzStorageAccount` — storage security properties (9.3.x)
+- `Get-AzResourceLock` — CanNotDelete / ReadOnly locks (9.3.9, 9.3.10)
+- `Get-AzRoleDefinition` — custom admin role detection (5.23)
 
-#### 3. Azure REST API via `az rest`
+#### 3. ARM / Microsoft Graph REST via `Invoke-AzRestMethod`
 
-For tenant-level identity checks not available via the az CLI:
+For tenant-level identity checks and APIs not exposed by Az module cmdlets:
 
 - `graph.microsoft.com/v1.0/policies/authorizationPolicy` — covers 5.4, 5.14, 5.15, 5.16
-- ARM REST for WDATP integration settings (8.1.3.3) and attack path notifications (8.1.15)
+- `management.azure.com/.../diagnosticSettings` — subscription-level activity log routing (6.1.1.x)
+- ARM REST for security contacts (8.1.12–8.1.15), WDATP integration (8.1.3.3), and attack path notifications (8.1.15)
+
+#### 4. Azure CLI — permission preflight only
+
+Before the audit begins, `az role assignment list` is called in parallel runspaces to verify
+the runner account holds the required roles on every subscription. This is the only remaining
+`az` CLI usage; all CIS check execution is CLI-free. Use `-NoPermissionCheck` to bypass it.
 
 ### Permission preflight
 
@@ -369,6 +406,10 @@ Use `-Output report.html` to change the base path — `.json` and `.csv` extensi
 Create a `suppressions.json` file in the project root to mark specific findings as accepted risks.
 Suppressed findings are reclassified as **SUPPRESSED** in the report and excluded from the FAIL/ERROR counts.
 
+A template with annotated examples is provided in [`suppressions.json.example`](suppressions.json.example)
+(includes examples for WAF-fronted architectures and B2B guest admin accounts).
+Copy it to `suppressions.json` and remove any entries that don't apply.
+
 ### suppressions.json format
 
 ```json
@@ -444,6 +485,12 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 6.1.1.1 | Diagnostic Setting exists for Subscription Activity Logs | L1 |
 | 6.1.1.2 | Diagnostic Setting captures required categories | L1 |
 | 6.1.1.3 | Activity log retention >= 365 days | L1 |
+
+> **6.1.1.3 storage destinations:** When subscription diagnostic settings route activity logs to a
+> Storage Account, the check now inspects the retention policy on the Administrative log category.
+> A setting with `retentionPolicy.enabled = false` (indefinite) passes; `enabled = true` with
+> `days < 365` fails. Log Analytics workspace and Event Hub destinations always pass this check
+> (retention is configured on the destination resource itself).
 | 6.1.1.4 | Key Vault diagnostic logging enabled | L1 |
 | 6.1.1.6 | Azure AppService HTTP logs enabled | L2 |
 | 6.1.2.1 | Activity Log Alert: Create Policy Assignment | L1 |
@@ -545,7 +592,7 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 
 ## Testing
 
-The test suite uses **Pester 5** — all tests mock Azure CLI calls so no real Azure connection is needed.
+The test suite uses **Pester 5** — all tests mock Az module calls so no real Azure connection is needed.
 
 ### Run everything
 
@@ -644,12 +691,12 @@ the runner account to the vault's access policy (non-RBAC vaults). Without this,
 return ERROR with an explanatory message. The report clearly distinguishes this from a clean
 result — compliance is unknown, not assumed clean.
 
-**Graph API for identity checks** — controls 5.4, 5.14, 5.15, and 5.16 call the Graph API via
-`az rest`. If the required Graph permissions have not been consented for the Azure CLI app, these
-will return ERROR. Test with:
+**Graph API for identity checks** — controls 5.4, 5.14, 5.15, and 5.16 call the Microsoft Graph
+API via `Invoke-AzRestMethod`. If the required Graph permissions have not been consented for the
+identity running the audit, these will return ERROR. Test with:
 
 ```powershell
-az rest --method get --url "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
+Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
 ```
 
 **Conditional Access policies (5.2.x)** — marked Manual in the benchmark and not checked by this
@@ -659,18 +706,21 @@ tool. They require review in the Entra ID portal.
 
 ## Troubleshooting
 
-**`az` not found**
-Ensure the Azure CLI is installed and on your PATH, then restart your terminal.
+**`az` not found (permission preflight)**
+The permission preflight uses `az role assignment list` inside parallel runspaces. If `az` is not
+installed, the preflight will fail with a command-not-found error. Either:
+- Install the Azure CLI from <https://aka.ms/install-azure-cli>, or
+- Pass `-NoPermissionCheck` to skip the preflight entirely.
 
 **Identity checks return ERROR (AccessDenied)**
-Your account needs Global Reader in Entra ID. Test the Graph call directly:
+Your account needs Global Reader in Entra ID. To verify Graph API access:
 
 ```powershell
-az rest --method get --url "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
+Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
 ```
 
-If this fails, ask your Entra ID admin to grant Global Reader or consent to the required Graph API
-permissions for the Azure CLI app (app ID: `04b07795-8ddb-461a-bbee-02f9e1bf7b46`).
+If this returns a 403, ask your Entra ID admin to grant Global Reader or consent to the required
+Graph API permissions for the service principal used for auditing.
 
 **Key Vault checks return ERROR (audit incomplete)**
 The runner account needs Key Vault data plane access. For RBAC-enabled vaults assign the
@@ -679,7 +729,7 @@ The ERROR message in the report states exactly what is missing.
 
 **Subscription not found**
 Values passed to `-Subscriptions` must match an existing subscription name or ID exactly.
-Run `az account list --output table` to see the available subscriptions.
+Run `Get-AzSubscription | Select-Object Name, Id` to see the available subscriptions.
 
 **Interrupted run**
 Re-run the same command to resume from where it stopped, or add `-Fresh` to start over.
@@ -705,6 +755,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 1.0.1
+**Version:** 1.4.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output

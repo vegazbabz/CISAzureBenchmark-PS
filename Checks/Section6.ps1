@@ -16,14 +16,12 @@ function Invoke-Section6Checks {
 
     # ── 6.1.1.1 — Subscription diagnostic settings exist ─────────────────────
     try {
-        $r = Invoke-AzCli -Arguments @(
-            "monitor", "diagnostic-settings", "subscription", "list",
-            "--subscription", $sid
-        ) -TimeoutSec $script:TIMEOUTS.default
+        $subDiagUri = "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
+        $r = Invoke-ArmRest -Uri $subDiagUri
 
         $settings = @()
         if ($r.Success -and $r.Data) {
-            # CLI returns {value: [...]} for subscription diagnostic settings
+            # REST endpoint returns {value: [...]}
             $raw = $r.Data
             if ($raw.PSObject.Properties['value']) {
                 $settings = @($raw.value)
@@ -97,26 +95,16 @@ function Invoke-Section6Checks {
     }
 
     # ── 6.1.1.3 — Subscription activity log retention >= 365 days ──────────────
-    # Log profiles are the classic mechanism; modern approach uses diagnostic settings.
+    # Classic: Log Profile API. Modern (preferred since ~2022): Subscription Diagnostic Settings.
+    # Both paths must be checked — modern Azure subscriptions use diagnostic settings exclusively.
     try {
-        $r = Invoke-AzCli -Arguments @(
-            "monitor", "log-profiles", "list",
-            "--subscription", $sid
-        ) -TimeoutSec $script:TIMEOUTS.default
+        $logProfiles = @(Get-AzLogProfile -ErrorAction SilentlyContinue)
 
-        if (-not $r.Success -or -not $r.Data -or ($r.Data | Measure-Object).Count -eq 0) {
-            $results.Add((New-CISResult `
-                -ControlId "6.1.1.3" `
-                -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                -Level 1 -Section $sec -Status $script:FAIL `
-                -Details "No activity log profile found. Retention not configured." `
-                -Remediation "Monitor > Activity Log > Export Activity Log > Add diagnostic setting with retention >= 365 days" `
-                -SubscriptionId $sid -SubscriptionName $sname))
-        } else {
-            $logProfile = $r.Data | Select-Object -First 1
-            $retPol  = $logProfile.PSObject.Properties['retentionPolicy']?.Value
-            $days    = if ($retPol -and $retPol.days) { [int]$retPol.days } else { 0 }
-            $enabled = $retPol -and ([string]$retPol.enabled -eq "True")
+        if ($logProfiles.Count -gt 0) {
+            # Legacy log profile found — evaluate retention
+            $logProfile = $logProfiles | Select-Object -First 1
+            $days    = if ($logProfile.RetentionPolicy) { [int]$logProfile.RetentionPolicy.Days } else { 0 }
+            $enabled = $logProfile.RetentionPolicy -and $logProfile.RetentionPolicy.Enabled
             $pass    = -not $enabled -or $days -ge 365
 
             $results.Add((New-CISResult `
@@ -124,9 +112,83 @@ function Invoke-Section6Checks {
                 -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
                 -Level 1 -Section $sec `
                 -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                -Details "Retention: $days days (enabled: $enabled)." `
+                -Details "Log Profile retention: $days days (policy enabled: $enabled)." `
                 -Remediation $(if (-not $pass) { "Monitor > Activity Log > Export > Retention >= 365 days" } else { "" }) `
                 -SubscriptionId $sid -SubscriptionName $sname))
+        } else {
+            # No log profile — check modern subscription-level diagnostic settings.
+            # Modern Azure subscriptions route activity logs via diagnostic settings, not log profiles.
+            $rDiag = Invoke-ArmRest -Uri "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
+
+            $diagItems = if ($rDiag.Success -and $rDiag.Data) {
+                if ($rDiag.Data.PSObject.Properties['value']) { @($rDiag.Data.value) }
+                else { @($rDiag.Data) }
+            } else { @() }
+
+            $activeSetting = $diagItems | Where-Object {
+                $_.logs | Where-Object { $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True' }
+            } | Select-Object -First 1
+
+            if ($activeSetting) {
+                $adminLog = @($activeSetting.logs) | Where-Object {
+                    $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True'
+                } | Select-Object -First 1
+
+                if ($activeSetting.workspaceId) {
+                    $destDesc = "Log Analytics ($($activeSetting.workspaceId -replace '.*/workspaces/', ''))"
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to $destDesc. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } elseif ($activeSetting.storageAccountId) {
+                    # For storage-account destinations the retentionPolicy on the diagnostic
+                    # setting's log entry defines how long data is kept in that account.
+                    # retentionPolicy.enabled = false means indefinite (unlimited) — acceptable.
+                    # retentionPolicy.enabled = true requires days >= 365 per CIS 6.1.1.3.
+                    $retPolicy  = $adminLog.retentionPolicy
+                    $retEnabled = $retPolicy -and [bool]$retPolicy.enabled
+                    $retDays    = if ($retPolicy) { [int]$retPolicy.days } else { 0 }
+                    $retOk      = -not $retEnabled -or $retDays -ge 365
+                    $saName     = $activeSetting.storageAccountId -replace '.*/storageAccounts/', ''
+                    $retDesc    = if (-not $retEnabled) { "indefinite retention" } else { "$retDays-day retention" }
+
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec `
+                        -Status $(if ($retOk) { $script:PASS } else { $script:FAIL }) `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Storage ($saName) with $retDesc." `
+                        -Remediation $(if (-not $retOk) { "Monitor > Diagnostic settings > $($activeSetting.name) > Enable retention >= 365 days on Administrative log category" } else { "" }) `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } elseif ($activeSetting.eventHubAuthorizationRuleId) {
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Event Hub. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } else {
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to an active destination. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                }
+            } else {
+                $results.Add((New-CISResult `
+                    -ControlId "6.1.1.3" `
+                    -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                    -Level 1 -Section $sec -Status $script:FAIL `
+                    -Details "No activity log profile or subscription diagnostic setting with Administrative logs enabled found." `
+                    -Remediation "Monitor > Activity Log > Diagnostic settings > Add setting > Enable Administrative logs > Send to Log Analytics (retention >= 365 days)" `
+                    -SubscriptionId $sid -SubscriptionName $sname))
+            }
         }
     } catch {
         $results.Add((New-ErrorResult "6.1.1.3" "Ensure the Activity Retention Log Is Set to at Least One Year" 1 $sec $_.Exception.Message $sid $sname))
@@ -140,29 +202,17 @@ function Invoke-Section6Checks {
             $results.Add((New-InfoResult "6.1.1.4" "Ensure Diagnostic Logging for Key Vaults Is Enabled" 1 $sec "No Key Vaults found." $sid $sname))
         } else {
             foreach ($kv in $kvs) {
-                $kvName = [string]$kv.name
-                $r = Invoke-AzCli -Arguments @(
-                    "monitor", "diagnostic-settings", "list",
-                    "--resource", [string]$kv.id
-                ) -TimeoutSec $script:TIMEOUTS.default
-
-                if (-not $r.Success) {
-                    $results.Add((New-ErrorResult "6.1.1.4" "Ensure Diagnostic Logging for Key Vaults Is Enabled" 1 $sec $r.Error $sid $sname $kvName))
-                    continue
-                }
-
-                $diagList = @()
-                if ($r.Data) { $diagList = @($r.Data) }
+                $kvName  = [string]$kv.name
+                $diagList = @(Get-AzDiagnosticSetting -ResourceId ([string]$kv.id) -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
 
                 # Accept 'audit' or 'allLogs' category group — both satisfy the requirement
                 $hasAudit = $false
                 foreach ($setting in $diagList) {
-                    foreach ($log in @($setting.logs)) {
-                        $enabled = [string]$log.enabled -eq "True" -or [string]$log.enabled -eq "true"
-                        if (-not $enabled) { continue }
-                        $catGrp = [string]$log.PSObject.Properties['categoryGroup']?.Value
-                        $cat    = [string]$log.PSObject.Properties['category']?.Value
-                        $val    = if ($catGrp) { $catGrp } else { $cat }
+                    # @() coercion handles both the current fixed-array and the upcoming List<T>
+                    # type change in Az.Monitor 7.0 (Get-AzDiagnosticSetting breaking change)
+                    foreach ($log in @($setting.Log)) {
+                        if (-not $log.Enabled) { continue }
+                        $val = if ($log.CategoryGroup) { $log.CategoryGroup } else { $log.Category }
                         if ($val -imatch "^(audit|allLogs)$") { $hasAudit = $true; break }
                     }
                     if ($hasAudit) { break }
@@ -199,35 +249,21 @@ function Invoke-Section6Checks {
             $results.Add((New-InfoResult "6.1.1.6" "Ensure App Service Resource Logs Are Enabled" 2 $sec "No standard App Services found ($($apps.Count) function app(s) excluded)." $sid $sname))
         } else {
             foreach ($app in $webApps) {
-                $appName = [string]$app.name
-                $appId   = [string]$app.id
-                $appKind = [string]$app.kind
-
-                $r = Invoke-AzCli -Arguments @(
-                    "monitor", "diagnostic-settings", "list",
-                    "--resource", $appId
-                ) -TimeoutSec $script:TIMEOUTS.default
-
-                if (-not $r.Success) {
-                    $results.Add((New-ErrorResult "6.1.1.6" "Ensure App Service Resource Logs Are Enabled" 2 $sec $r.Error $sid $sname $appName))
-                    continue
-                }
-
-                $diagList  = @()
-                if ($r.Data) { $diagList = @($r.Data) }
+                $appName  = [string]$app.name
+                $appId    = [string]$app.id
+                $appKind  = [string]$app.kind
+                $diagList = @(Get-AzDiagnosticSetting -ResourceId $appId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
                 $compliant = $false
 
                 foreach ($setting in $diagList) {
                     if ($compliant) { break }
-                    $hasStorage = [bool]([string]$setting.PSObject.Properties['storageAccountId']?.Value)
-
-                    foreach ($log in @($setting.logs)) {
-                        $logEnabled = [string]$log.enabled -eq "True" -or [string]$log.enabled -eq "true"
-                        if (-not $logEnabled) { continue }
-
-                        $retPol     = $log.PSObject.Properties['retentionPolicy']?.Value
-                        $retEnabled = $retPol -and ([string]$retPol.enabled -eq "True" -or [string]$retPol.enabled -eq "true")
-                        $retDays    = if ($retPol -and $retPol.days) { [int]$retPol.days } else { 0 }
+                    $hasStorage = [bool]$setting.StorageAccountId
+                    # @() coercion handles both the current fixed-array and the upcoming List<T>
+                    # type change in Az.Monitor 7.0 (Get-AzDiagnosticSetting breaking change)
+                    foreach ($log in @($setting.Log)) {
+                        if (-not $log.Enabled) { continue }
+                        $retEnabled = $log.RetentionPolicyEnabled
+                        $retDays    = [int]$log.RetentionPolicyDay
 
                         # Branch A: retention enforced, infinite (0) or >= 365 days
                         if ($retEnabled -and ($retDays -eq 0 -or $retDays -ge 365)) { $compliant = $true; break }
@@ -270,13 +306,7 @@ function Invoke-Section6Checks {
     # 6.1.2.1–10: operationName field matching.
     # 6.1.2.11: category field (ServiceHealth) — different check logic.
     try {
-        $r = Invoke-AzCli -Arguments @(
-            "monitor", "activity-log", "alert", "list",
-            "--subscription", $sid
-        ) -TimeoutSec $script:TIMEOUTS.activity_log
-
-        $alerts = @()
-        if ($r.Success -and $r.Data) { $alerts = @($r.Data) }
+        $alerts = @(Get-AzActivityLogAlert -ErrorAction SilentlyContinue)
 
         $alertChecks = @(
             @{ Id="6.1.2.1";  Op="microsoft.authorization/policyassignments/write";           Title="Ensure Activity Log Alert: Create Policy Assignment" }
@@ -293,13 +323,10 @@ function Invoke-Section6Checks {
 
         foreach ($ac in $alertChecks) {
             $hasAlert = @($alerts | Where-Object {
-                $cond  = $_.PSObject.Properties['condition']?.Value
-                if (-not $cond) { return $false }
-                $allOf = $cond.PSObject.Properties['allOf']?.Value
+                $allOf = $_.Condition?.AllOf
                 if (-not $allOf) { return $false }
                 @($allOf | Where-Object {
-                    [string]($_.PSObject.Properties['field']?.Value)  -eq "operationName" -and
-                    [string]($_.PSObject.Properties['equals']?.Value) -ieq $ac.Op
+                    $_.Field -eq "operationName" -and $_.Equal -ieq $ac.Op
                 }).Count -gt 0
             }).Count -gt 0
             $pass = $hasAlert
@@ -316,13 +343,10 @@ function Invoke-Section6Checks {
 
         # 6.1.2.11 — Service Health alert (category = ServiceHealth, not operationName)
         $shAlert = @($alerts | Where-Object {
-            $cond  = $_.PSObject.Properties['condition']?.Value
-            if (-not $cond) { return $false }
-            $allOf = $cond.PSObject.Properties['allOf']?.Value
+            $allOf = $_.Condition?.AllOf
             if (-not $allOf) { return $false }
             @($allOf | Where-Object {
-                [string]($_.PSObject.Properties['field']?.Value)  -eq "category" -and
-                [string]($_.PSObject.Properties['equals']?.Value) -ieq "servicehealth"
+                $_.Field -eq "category" -and $_.Equal -ieq "servicehealth"
             }).Count -gt 0
         }).Count -gt 0
         $shPass = $shAlert
@@ -345,7 +369,7 @@ function Invoke-Section6Checks {
     # ── 6.1.3.1 — Application Insights configured ────────────────────────────
     try {
         $aiUrl = "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/components?api-version=2020-02-02"
-        $r = Invoke-AzRestPaged -Uri $aiUrl -TimeoutSec $script:TIMEOUTS.default
+        $r = Invoke-AzRestPaged -Uri $aiUrl
 
         $hasAppInsights = $r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0
         $count = if ($r.Success -and $r.Data) { ($r.Data | Measure-Object).Count } else { 0 }

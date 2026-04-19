@@ -55,12 +55,8 @@ function Invoke-Section2Checks {
 
         # 2.1.7 — Diagnostic logging
         try {
-            $r = Invoke-AzCli -Arguments @(
-                "monitor", "diagnostic-settings", "list",
-                "--resource", $ws.id
-            ) -TimeoutSec $script:TIMEOUTS.default
-
-            $hasLogs = $r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0
+            $settings = @(Get-AzDiagnosticSetting -ResourceId $ws.id -ErrorAction SilentlyContinue)
+            $hasLogs  = $settings.Count -gt 0
             $results.Add((New-CISResult `
                 -ControlId "2.1.7" `
                 -Title "Ensure That Azure Databricks Workspace Has Logging Enabled" `
