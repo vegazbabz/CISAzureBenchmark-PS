@@ -292,17 +292,18 @@ function Invoke-Section8Checks {
                 $allCerts = @(Get-AzKeyVaultCertificate -VaultName $kvName -ErrorAction Stop)
 
                 if ($allCerts.Count -eq 0) {
-                    $results.Add((New-InfoResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "No certificates found." $sid $sname $kvName))
+                    $results.Add((New-InfoResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {
                     $longCerts = @($allCerts | Where-Object {
-                        $exp = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes.Expires } else { $null }
-                        $crt = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes.Created } else { $null }
+                        $attr = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes } else { $null }
+                        $exp  = if ($null -ne $attr -and $attr.PSObject.Properties['Expires'])  { $attr.Expires  } else { $null }
+                        $crt  = if ($null -ne $attr -and $attr.PSObject.Properties['Created'])  { $attr.Created  } else { $null }
                         if (-not $exp -or -not $crt) { return $true }
                         ($exp - $crt).TotalDays -gt 366
                     })
                     $pass = $longCerts.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId "8.3.11" -Title "Ensure That Certificate Validity Period Is Not More Than 12 Months" `
+                        -ControlId "8.3.11" -Title "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { $_.Name }) -join ', ')" }) `
@@ -312,9 +313,9 @@ function Invoke-Section8Checks {
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-AuthzError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
                 } elseif (Test-FirewallError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                 } else {
                     $results.Add((New-ErrorResult "8.3.11" "Certificate Validity" 1 $sec $errMsg $sid $sname $kvName))
                 }
