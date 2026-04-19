@@ -1,0 +1,6374 @@
+﻿[
+  {
+    "control": "2.1.2",
+    "level": 1,
+    "title": "Ensure That NSGs Are Configured for Azure Databricks Subnets",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "2.1.2",
+    "level": 1,
+    "title": "Ensure That NSGs Are Configured for Azure Databricks Subnets",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.2",
+    "level": 1,
+    "title": "Ensure That NSGs Are Configured for Azure Databricks Subnets",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.7",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Logging Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.7",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Logging Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.7",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Logging Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.9",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has 'No Public IP' Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "2.1.9",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has 'No Public IP' Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.9",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has 'No Public IP' Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.10",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Public Network Access Disabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "2.1.10",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Public Network Access Disabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.10",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Has Public Network Access Disabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.11",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Uses Private Endpoints",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.11",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Uses Private Endpoints",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "2.1.11",
+    "level": 2,
+    "title": "Ensure That Azure Databricks Workspace Uses Private Endpoints",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "3.1.1",
+    "level": 2,
+    "title": "Ensure Only MFA Enabled Identities Can Access Privileged Virtual Machine",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.1.1",
+    "level": 1,
+    "title": "Ensure Security Defaults Are Enabled on Microsoft Entra ID",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.1.2",
+    "level": 1,
+    "title": "Ensure MFA Is Enabled for All Users in Administrative Roles",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.1.3",
+    "level": 1,
+    "title": "Ensure That 'Remember Multi-Factor Authentication on Trusted Devices' Is Disabled",
+    "subscription": "",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Setting needs to be updated."
+  },
+  {
+    "control": "5.28",
+    "level": 1,
+    "title": "Ensure Privileged Users Are Protected by Phishing-Resistant MFA",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.4",
+    "level": 1,
+    "title": "Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.14",
+    "level": 1,
+    "title": "Ensure That 'Users Can Register Applications' Is Set to 'No'",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.15",
+    "level": 1,
+    "title": "Ensure That 'Guest Users Access Restrictions' Is Set to 'Guest user access is restricted'",
+    "subscription": "",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant. Setting is correctly configured."
+  },
+  {
+    "control": "5.16",
+    "level": 2,
+    "title": "Ensure That 'Guest Invite Restrictions' Is Set to 'Only Admins and Users in the Guest Inviter Role'",
+    "subscription": "",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Setting needs to be updated."
+  },
+  {
+    "control": "5.3.3",
+    "level": 1,
+    "title": "Ensure 'User Access Administrator' Role Is Not Assigned at Subscription Level",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "5.3.3",
+    "level": 1,
+    "title": "Ensure 'User Access Administrator' Role Is Not Assigned at Subscription Level",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "5.3.3",
+    "level": 1,
+    "title": "Ensure 'User Access Administrator' Role Is Not Assigned at Subscription Level",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "5.23",
+    "level": 1,
+    "title": "Ensure That No Custom Subscription Owner Roles Are Created",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "5.23",
+    "level": 1,
+    "title": "Ensure That No Custom Subscription Owner Roles Are Created",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "5.23",
+    "level": 1,
+    "title": "Ensure That No Custom Subscription Owner Roles Are Created",
+    "subscription": "Development",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "5.27",
+    "level": 1,
+    "title": "Ensure That the Subscription Has Between 2 and 3 Owners",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "5.27",
+    "level": 1,
+    "title": "Ensure That the Subscription Has Between 2 and 3 Owners",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "5.27",
+    "level": 1,
+    "title": "Ensure That the Subscription Has Between 2 and 3 Owners",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.1",
+    "level": 1,
+    "title": "Ensure That a Diagnostic Setting Exists for the Subscription",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.1",
+    "level": 1,
+    "title": "Ensure That a Diagnostic Setting Exists for the Subscription",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.1",
+    "level": 1,
+    "title": "Ensure That a Diagnostic Setting Exists for the Subscription",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.2",
+    "level": 1,
+    "title": "Ensure Diagnostic Setting Captures Required Log Categories",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.1.2",
+    "level": 1,
+    "title": "Ensure Diagnostic Setting Captures Required Log Categories",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.2",
+    "level": 1,
+    "title": "Ensure Diagnostic Setting Captures Required Log Categories",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.3",
+    "level": 1,
+    "title": "Ensure the Activity Retention Log Is Set to at Least One Year",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.1.3",
+    "level": 1,
+    "title": "Ensure the Activity Retention Log Is Set to at Least One Year",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.1.3",
+    "level": 1,
+    "title": "Ensure the Activity Retention Log Is Set to at Least One Year",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.4",
+    "level": 1,
+    "title": "Ensure Diagnostic Logging for Key Vaults Is Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.4",
+    "level": 1,
+    "title": "Ensure Diagnostic Logging for Key Vaults Is Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.4",
+    "level": 1,
+    "title": "Ensure Diagnostic Logging for Key Vaults Is Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.6",
+    "level": 2,
+    "title": "Ensure App Service Resource Logs Are Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.1.6",
+    "level": 2,
+    "title": "Ensure App Service Resource Logs Are Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.1.6",
+    "level": 2,
+    "title": "Ensure App Service Resource Logs Are Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.1",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create Policy Assignment",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.1",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create Policy Assignment",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.1",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create Policy Assignment",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.2",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Policy Assignment",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.2",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Policy Assignment",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.2",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Policy Assignment",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.3",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update NSG",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.3",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update NSG",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.3",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update NSG",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.4",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete NSG",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.4",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete NSG",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.4",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete NSG",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.5",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Security Solution",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.5",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Security Solution",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.5",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Security Solution",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.6",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Security Solution",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.6",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Security Solution",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.6",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Security Solution",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.7",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update SQL Server Firewall Rule",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.7",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update SQL Server Firewall Rule",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.7",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update SQL Server Firewall Rule",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.8",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete SQL Server Firewall Rule",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.8",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete SQL Server Firewall Rule",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.8",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete SQL Server Firewall Rule",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.9",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Public IP Address",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.9",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Public IP Address",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.9",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Create/Update Public IP Address",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.10",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Public IP Address",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.10",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Public IP Address",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.10",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Delete Public IP Address",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.11",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Service Health Notifications",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "6.1.2.11",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Service Health Notifications",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.2.11",
+    "level": 1,
+    "title": "Ensure Activity Log Alert: Service Health Notifications",
+    "subscription": "Development",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "6.1.3.1",
+    "level": 2,
+    "title": "Ensure Application Insights Are Configured",
+    "subscription": "Production",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "6.1.3.1",
+    "level": 2,
+    "title": "Ensure Application Insights Are Configured",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "6.1.3.1",
+    "level": 2,
+    "title": "Ensure Application Insights Are Configured",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-app-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-app-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-app-tier",
+    "status": "ERROR",
+    "details": "NSG 'nsg-app-tier': Query timed out after 20s."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.1",
+    "level": 1,
+    "title": "Ensure RDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-mgmt",
+    "status": "FAIL",
+    "details": "NSG 'nsg-mgmt': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-app-tier",
+    "status": "ERROR",
+    "details": "NSG 'nsg-app-tier': Query timed out after 20s."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-db-tier",
+    "status": "INFO",
+    "details": "NSG 'nsg-db-tier': Not applicable."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-web-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-web-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-app-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-app-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.2",
+    "level": 1,
+    "title": "Ensure SSH Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-mgmt",
+    "status": "MANUAL",
+    "details": "NSG 'nsg-mgmt': Not applicable."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-web-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-web-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-app-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-app-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-db-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-db-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-app-tier",
+    "status": "MANUAL",
+    "details": "NSG 'nsg-app-tier': Not applicable."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-db-tier",
+    "status": "FAIL",
+    "details": "NSG 'nsg-db-tier': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.3",
+    "level": 1,
+    "title": "Ensure That UDP Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-app-tier",
+    "status": "ERROR",
+    "details": "NSG 'nsg-app-tier': Query timed out after 20s."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Production",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Staging",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-db-tier",
+    "status": "MANUAL",
+    "details": "NSG 'nsg-db-tier': Not applicable."
+  },
+  {
+    "control": "7.4",
+    "level": 1,
+    "title": "Ensure That HTTP(S) Access From the Internet Is Evaluated and Restricted",
+    "subscription": "Development",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.5",
+    "level": 2,
+    "title": "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.5",
+    "level": 2,
+    "title": "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.5",
+    "level": 2,
+    "title": "Ensure That Network Watcher NSG Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.6",
+    "level": 1,
+    "title": "Ensure That Network Watcher Is 'Enabled'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "7.6",
+    "level": 1,
+    "title": "Ensure That Network Watcher Is 'Enabled'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "7.6",
+    "level": 1,
+    "title": "Ensure That Network Watcher Is 'Enabled'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.8",
+    "level": 2,
+    "title": "Ensure That VNet Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.8",
+    "level": 2,
+    "title": "Ensure That VNet Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "7.8",
+    "level": 2,
+    "title": "Ensure That VNet Flow Log Retention Period Is 'Greater than 90 Days'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "7.10",
+    "level": 2,
+    "title": "Ensure That Azure Web Application Firewall Is Enabled for Azure Application Gateway",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.10",
+    "level": 2,
+    "title": "Ensure That Azure Web Application Firewall Is Enabled for Azure Application Gateway",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "7.10",
+    "level": 2,
+    "title": "Ensure That Azure Web Application Firewall Is Enabled for Azure Application Gateway",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Production",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Production",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Production",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Production",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Staging",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Staging",
+    "resource": "nsg-app-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-app-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Staging",
+    "resource": "nsg-db-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-db-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Staging",
+    "resource": "nsg-mgmt",
+    "status": "PASS",
+    "details": "NSG 'nsg-mgmt': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Development",
+    "resource": "nsg-web-tier",
+    "status": "PASS",
+    "details": "NSG 'nsg-web-tier': No internet-exposed rules found."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Development",
+    "resource": "nsg-app-tier",
+    "status": "INFO",
+    "details": "NSG 'nsg-app-tier': Not applicable."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Development",
+    "resource": "nsg-db-tier",
+    "status": "MANUAL",
+    "details": "NSG 'nsg-db-tier': Not applicable."
+  },
+  {
+    "control": "7.11",
+    "level": 1,
+    "title": "Ensure That Virtual Network Security Groups Are Associated to Subnets",
+    "subscription": "Development",
+    "resource": "nsg-mgmt",
+    "status": "FAIL",
+    "details": "NSG 'nsg-mgmt': Inbound rule 'AllowAll' allows 0.0.0.0/0 access on restricted port."
+  },
+  {
+    "control": "7.12",
+    "level": 1,
+    "title": "Ensure Application Gateway Is Configured with a Minimum TLS Version of 1.2",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.12",
+    "level": 1,
+    "title": "Ensure Application Gateway Is Configured with a Minimum TLS Version of 1.2",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "7.12",
+    "level": 1,
+    "title": "Ensure Application Gateway Is Configured with a Minimum TLS Version of 1.2",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.13",
+    "level": 2,
+    "title": "Ensure Application Gateway Is Configured with HTTP2 Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.13",
+    "level": 2,
+    "title": "Ensure Application Gateway Is Configured with HTTP2 Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.13",
+    "level": 2,
+    "title": "Ensure Application Gateway Is Configured with HTTP2 Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.14",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Request Body Inspection Is Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "7.14",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Request Body Inspection Is Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.14",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Request Body Inspection Is Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.15",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Bot Protection Is Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "7.15",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Bot Protection Is Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "7.15",
+    "level": 2,
+    "title": "Ensure That Web Application Firewall Bot Protection Is Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.1.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender CSPM Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.1.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender CSPM Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.1.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender CSPM Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.2.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for APIs Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.2.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for APIs Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.2.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for APIs Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.3.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Servers Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.3.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Servers Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.3.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Servers Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.3.3",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.3.3",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.3.3",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Endpoint Integration With Microsoft Defender for Cloud Is Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.4.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Containers Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.4.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Containers Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.4.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Containers Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.5.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Storage Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.5.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Storage Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "8.1.5.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Storage Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.6.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for App Service Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "8.1.6.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for App Service Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.6.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for App Service Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure Cosmos DB Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure Cosmos DB Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure Cosmos DB Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.7.2",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Open-Source Relational Databases Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.7.2",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Open-Source Relational Databases Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.7.2",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Open-Source Relational Databases Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.3",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure SQL Databases Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.3",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure SQL Databases Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.3",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Azure SQL Databases Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.7.4",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for SQL Servers on Machines Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.7.4",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for SQL Servers on Machines Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "8.1.7.4",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for SQL Servers on Machines Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.8.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Key Vault Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.8.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Key Vault Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.8.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Key Vault Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.9.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Resource Manager Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.9.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Resource Manager Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.9.1",
+    "level": 2,
+    "title": "Ensure Microsoft Defender for Resource Manager Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.10",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.10",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.10",
+    "level": 1,
+    "title": "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates",
+    "subscription": "Development",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "8.1.12",
+    "level": 1,
+    "title": "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.1.12",
+    "level": 1,
+    "title": "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.12",
+    "level": 1,
+    "title": "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.13",
+    "level": 1,
+    "title": "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.13",
+    "level": 1,
+    "title": "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "ERROR",
+    "details": "Could not evaluate: permission denied or timeout."
+  },
+  {
+    "control": "8.1.13",
+    "level": 1,
+    "title": "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications",
+    "subscription": "Development",
+    "resource": "",
+    "status": "INFO",
+    "details": "Not applicable for this subscription."
+  },
+  {
+    "control": "8.1.14",
+    "level": 1,
+    "title": "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.14",
+    "level": 1,
+    "title": "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.14",
+    "level": 1,
+    "title": "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.15",
+    "level": 1,
+    "title": "Ensure That Attack Path Notifications Are Configured",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.15",
+    "level": 1,
+    "title": "Ensure That Attack Path Notifications Are Configured",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.1.15",
+    "level": 1,
+    "title": "Ensure That Attack Path Notifications Are Configured",
+    "subscription": "Development",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-secrets': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-keys': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "INFO",
+    "details": "Vault 'kv-stag-app': Not applicable."
+  },
+  {
+    "control": "8.3.1",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "ERROR",
+    "details": "Vault 'kv-stag-app': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "FAIL",
+    "details": "Vault 'kv-stag-app': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.2",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Keys (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "MANUAL",
+    "details": "Vault 'kv-prod-keys': Not applicable."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "ERROR",
+    "details": "Vault 'kv-stag-app': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "INFO",
+    "details": "Vault 'kv-prod-secrets': Not applicable."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "INFO",
+    "details": "Vault 'kv-prod-secrets': Not applicable."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.3",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (RBAC)",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "ERROR",
+    "details": "Vault 'kv-prod-keys': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "ERROR",
+    "details": "Vault 'kv-stag-app': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "ERROR",
+    "details": "Vault 'kv-dev-test': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "ERROR",
+    "details": "Vault 'kv-prod-keys': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "ERROR",
+    "details": "Vault 'kv-prod-secrets': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.4",
+    "level": 1,
+    "title": "Ensure That the Expiration Date Is Set on All Secrets (Non-RBAC)",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-keys': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "MANUAL",
+    "details": "Vault 'kv-prod-secrets': Not applicable."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "INFO",
+    "details": "Vault 'kv-dev-test': Not applicable."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-keys': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-secrets': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.5",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Has Purge Protection Enabled",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "FAIL",
+    "details": "Vault 'kv-stag-app': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-secrets': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.6",
+    "level": 2,
+    "title": "Ensure That Azure Key Vault Uses RBAC for Authorization",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "INFO",
+    "details": "Vault 'kv-dev-test': Not applicable."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "INFO",
+    "details": "Vault 'kv-prod-keys': Not applicable."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "FAIL",
+    "details": "Vault 'kv-stag-app': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.7",
+    "level": 1,
+    "title": "Ensure That Azure Key Vault Disables Public Network Access",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-secrets': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "ERROR",
+    "details": "Vault 'kv-stag-app': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-keys': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.8",
+    "level": 2,
+    "title": "Ensure That Private Endpoints Are Used for Azure Key Vaults",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-secrets': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "INFO",
+    "details": "Vault 'kv-stag-app': Not applicable."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "FAIL",
+    "details": "Vault 'kv-prod-keys': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.9",
+    "level": 2,
+    "title": "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "FAIL",
+    "details": "Vault 'kv-dev-test': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Production",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Production",
+    "resource": "kv-prod-secrets",
+    "status": "MANUAL",
+    "details": "Vault 'kv-prod-secrets': Not applicable."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Production",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Production",
+    "resource": "kv-dev-test",
+    "status": "ERROR",
+    "details": "Vault 'kv-dev-test': Cannot access data plane. Assign Key Vault Reader role."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Staging",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Staging",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Staging",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Staging",
+    "resource": "kv-dev-test",
+    "status": "PASS",
+    "details": "Vault 'kv-dev-test': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Development",
+    "resource": "kv-prod-keys",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-keys': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Development",
+    "resource": "kv-prod-secrets",
+    "status": "PASS",
+    "details": "Vault 'kv-prod-secrets': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Development",
+    "resource": "kv-stag-app",
+    "status": "PASS",
+    "details": "Vault 'kv-stag-app': Compliant."
+  },
+  {
+    "control": "8.3.11",
+    "level": 1,
+    "title": "Ensure That Certificate Validity Period Is Not More Than 12 Months",
+    "subscription": "Development",
+    "resource": "kv-dev-test",
+    "status": "INFO",
+    "details": "Vault 'kv-dev-test': Not applicable."
+  },
+  {
+    "control": "8.4.1",
+    "level": 2,
+    "title": "Ensure That Azure Bastion Host Exists",
+    "subscription": "Production",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.4.1",
+    "level": 2,
+    "title": "Ensure That Azure Bastion Host Exists",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.4.1",
+    "level": 2,
+    "title": "Ensure That Azure Bastion Host Exists",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.5",
+    "level": 2,
+    "title": "Ensure That Azure DDoS Network Protection Is Enabled",
+    "subscription": "Production",
+    "resource": "",
+    "status": "FAIL",
+    "details": "Non-compliant. Configuration update required."
+  },
+  {
+    "control": "8.5",
+    "level": 2,
+    "title": "Ensure That Azure DDoS Network Protection Is Enabled",
+    "subscription": "Staging",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "8.5",
+    "level": 2,
+    "title": "Ensure That Azure DDoS Network Protection Is Enabled",
+    "subscription": "Development",
+    "resource": "",
+    "status": "PASS",
+    "details": "Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "INFO",
+    "details": "Account 'stdevbackup01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "INFO",
+    "details": "Account 'ststagapp01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.1.1",
+    "level": 1,
+    "title": "Ensure Soft Delete Is Enabled for Azure File Shares",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.1.2",
+    "level": 1,
+    "title": "Ensure SMB Access Is Restricted to SMB 3.1.1+",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.1.3",
+    "level": 1,
+    "title": "Ensure 'SMB' Channel Encryption Is Set to AES-256-GCM",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "INFO",
+    "details": "Account 'stdevbackup01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.1",
+    "level": 1,
+    "title": "Ensure That 'Blob Service' Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "INFO",
+    "details": "Account 'stdevbackup01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "INFO",
+    "details": "Account 'stdevdata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.2",
+    "level": 1,
+    "title": "Ensure That Container Soft Delete Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "INFO",
+    "details": "Account 'stproddata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.3",
+    "level": 2,
+    "title": "Ensure That Blob Versioning Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "MANUAL",
+    "details": "Account 'stdevdata01': Not applicable."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "MANUAL",
+    "details": "Account 'stprodlogs02': Not applicable."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.4",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "INFO",
+    "details": "Account 'stproddata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "ERROR",
+    "details": "Account 'stproddata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.5",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.2.6",
+    "level": 2,
+    "title": "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.1",
+    "level": 1,
+    "title": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.2",
+    "level": 1,
+    "title": "Ensure that Storage Account access keys are periodically regenerated",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "MANUAL",
+    "details": "Account 'stdevdata01': Not applicable."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.1.3",
+    "level": 2,
+    "title": "Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.1",
+    "level": 2,
+    "title": "Ensure That 'Private Endpoints' Are Used for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "ERROR",
+    "details": "Account 'stproddata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "ERROR",
+    "details": "Account 'stproddata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "ERROR",
+    "details": "Account 'stproddata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "MANUAL",
+    "details": "Account 'stdevdata01': Not applicable."
+  },
+  {
+    "control": "9.3.2.2",
+    "level": 1,
+    "title": "Ensure That Storage Account Public Network Access Is Disabled",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.2.3",
+    "level": 1,
+    "title": "Ensure That Storage Account Default Network Rule Is Set to 'Deny'",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "INFO",
+    "details": "Account 'stdevdata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.3.1",
+    "level": 2,
+    "title": "Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "ERROR",
+    "details": "Account 'stdevdata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.4",
+    "level": 1,
+    "title": "Ensure 'Secure Transfer Required' Is Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.5",
+    "level": 2,
+    "title": "Ensure That 'Allow Azure Services on the Trusted Services List to Access This Storage Account' Is Enabled",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "ERROR",
+    "details": "Account 'stproddata01': Access denied or query error."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "INFO",
+    "details": "Account 'ststagapp01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "INFO",
+    "details": "Account 'stdevdata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.6",
+    "level": 1,
+    "title": "Ensure That Storage Account Has the Minimum TLS Version of 'Version 1.2'",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.7",
+    "level": 1,
+    "title": "Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "INFO",
+    "details": "Account 'stdevbackup01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "INFO",
+    "details": "Account 'stdevdata01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.8",
+    "level": 1,
+    "title": "Ensure That 'Public Access Level' Is Disabled for Storage Accounts With Blob Containers",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.9",
+    "level": 1,
+    "title": "Ensure That Storage Accounts Have a CanNotDelete Resource Lock",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "INFO",
+    "details": "Account 'stprodlogs02': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "PASS",
+    "details": "Account 'stproddata01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "ERROR",
+    "details": "Account 'stdevbackup01': Access denied or query error."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "ERROR",
+    "details": "Account 'stprodlogs02': Access denied or query error."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "INFO",
+    "details": "Account 'ststagapp01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "MANUAL",
+    "details": "Account 'stdevdata01': Not applicable."
+  },
+  {
+    "control": "9.3.10",
+    "level": 2,
+    "title": "Ensure That Storage Accounts Have a ReadOnly Resource Lock",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Production",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Production",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Production",
+    "resource": "ststagapp01",
+    "status": "PASS",
+    "details": "Account 'ststagapp01': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Production",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Production",
+    "resource": "stdevbackup01",
+    "status": "PASS",
+    "details": "Account 'stdevbackup01': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Staging",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Staging",
+    "resource": "stprodlogs02",
+    "status": "FAIL",
+    "details": "Account 'stprodlogs02': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Staging",
+    "resource": "ststagapp01",
+    "status": "ERROR",
+    "details": "Account 'ststagapp01': Access denied or query error."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Staging",
+    "resource": "stdevdata01",
+    "status": "FAIL",
+    "details": "Account 'stdevdata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Staging",
+    "resource": "stdevbackup01",
+    "status": "INFO",
+    "details": "Account 'stdevbackup01': ADLS Gen2 — control does not apply."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Development",
+    "resource": "stproddata01",
+    "status": "FAIL",
+    "details": "Account 'stproddata01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Development",
+    "resource": "stprodlogs02",
+    "status": "PASS",
+    "details": "Account 'stprodlogs02': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Development",
+    "resource": "ststagapp01",
+    "status": "FAIL",
+    "details": "Account 'ststagapp01': Non-compliant. Setting needs to be enabled."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Development",
+    "resource": "stdevdata01",
+    "status": "PASS",
+    "details": "Account 'stdevdata01': Compliant."
+  },
+  {
+    "control": "9.3.11",
+    "level": 2,
+    "title": "Ensure That Storage Account Replication Type Is Set to Geo-Redundant Storage",
+    "subscription": "Development",
+    "resource": "stdevbackup01",
+    "status": "FAIL",
+    "details": "Account 'stdevbackup01': Non-compliant. Setting needs to be enabled."
+  }
+]

@@ -47,6 +47,8 @@ $results = foreach ($row in $rows) {
 
 # Group by section - show non-Storage first
 $results | Group-Object Section | Sort-Object Name | ForEach-Object {
+    # Storage excluded from sectional output — per-account volume (24 checks × N accounts)
+    # would flood the console. The total FAIL count above already includes all Storage results.
     if ($_.Name -match 'Storage') { return }
     Write-Host "`n=== $($_.Name) ($($_.Count) FAILs) ===" -ForegroundColor Yellow
     $_.Group | Sort-Object Control | ForEach-Object {
