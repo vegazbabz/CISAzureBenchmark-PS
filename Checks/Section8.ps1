@@ -233,7 +233,7 @@ function Invoke-Section8Checks {
                 if ($allKeys.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlKeyExp $titleKeyExp 1 $sec "No keys found in vault." $sid $sname $kvName))
                 } else {
-                    $noExpiry = @($allKeys | Where-Object { -not $_.Attributes.Expires })
+                    $noExpiry = @($allKeys | Where-Object { -not ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes -and $_.Attributes.Expires) })
                     $pass = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlKeyExp -Title $titleKeyExp `
@@ -266,7 +266,7 @@ function Invoke-Section8Checks {
                 if ($allSecrets.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp $titleSecExp 1 $sec "No secrets found in vault." $sid $sname $kvName))
                 } else {
-                    $noExpiry = @($allSecrets | Where-Object { -not $_.Attributes.Expires })
+                    $noExpiry = @($allSecrets | Where-Object { -not ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes -and $_.Attributes.Expires) })
                     $pass     = $noExpiry.Count -eq 0
                     $results.Add((New-CISResult `
                         -ControlId $ctrlSecExp -Title $titleSecExp `
@@ -295,8 +295,8 @@ function Invoke-Section8Checks {
                     $results.Add((New-InfoResult "8.3.11" "Ensure That Certificate Validity Period Is Not More Than 12 Months" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {
                     $longCerts = @($allCerts | Where-Object {
-                        $exp = $_.Attributes.Expires
-                        $crt = $_.Attributes.Created
+                        $exp = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes.Expires } else { $null }
+                        $crt = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes.Created } else { $null }
                         if (-not $exp -or -not $crt) { return $true }
                         ($exp - $crt).TotalDays -gt 366
                     })
