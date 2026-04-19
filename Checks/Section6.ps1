@@ -130,21 +130,56 @@ function Invoke-Section6Checks {
             } | Select-Object -First 1
 
             if ($activeSetting) {
-                $destDesc = if ($activeSetting.workspaceId) {
-                    "Log Analytics ($($activeSetting.workspaceId -replace '.*/workspaces/', ''))"
-                } elseif ($activeSetting.storageAccountId) {
-                    "Storage ($($activeSetting.storageAccountId -replace '.*/storageAccounts/', ''))"
-                } elseif ($activeSetting.eventHubAuthorizationRuleId) {
-                    "Event Hub"
-                } else { "unknown destination" }
+                $adminLog = @($activeSetting.logs) | Where-Object {
+                    $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True'
+                } | Select-Object -First 1
 
-                $results.Add((New-CISResult `
-                    -ControlId "6.1.1.3" `
-                    -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                    -Level 1 -Section $sec -Status $script:PASS `
-                    -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to $destDesc. Verify destination retention >= 365 days." `
-                    -Remediation "" `
-                    -SubscriptionId $sid -SubscriptionName $sname))
+                if ($activeSetting.workspaceId) {
+                    $destDesc = "Log Analytics ($($activeSetting.workspaceId -replace '.*/workspaces/', ''))"
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to $destDesc. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } elseif ($activeSetting.storageAccountId) {
+                    # For storage-account destinations the retentionPolicy on the diagnostic
+                    # setting's log entry defines how long data is kept in that account.
+                    # retentionPolicy.enabled = false means indefinite (unlimited) — acceptable.
+                    # retentionPolicy.enabled = true requires days >= 365 per CIS 6.1.1.3.
+                    $retPolicy  = $adminLog.retentionPolicy
+                    $retEnabled = $retPolicy -and [bool]$retPolicy.enabled
+                    $retDays    = if ($retPolicy) { [int]$retPolicy.days } else { 0 }
+                    $retOk      = -not $retEnabled -or $retDays -ge 365
+                    $saName     = $activeSetting.storageAccountId -replace '.*/storageAccounts/', ''
+                    $retDesc    = if (-not $retEnabled) { "indefinite retention" } else { "$retDays-day retention" }
+
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec `
+                        -Status $(if ($retOk) { $script:PASS } else { $script:FAIL }) `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Storage ($saName) with $retDesc." `
+                        -Remediation $(if (-not $retOk) { "Monitor > Diagnostic settings > $($activeSetting.name) > Enable retention >= 365 days on Administrative log category" } else { "" }) `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } elseif ($activeSetting.eventHubAuthorizationRuleId) {
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Event Hub. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                } else {
+                    $results.Add((New-CISResult `
+                        -ControlId "6.1.1.3" `
+                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
+                        -Level 1 -Section $sec -Status $script:PASS `
+                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to an active destination. Verify destination retention >= 365 days." `
+                        -Remediation "" `
+                        -SubscriptionId $sid -SubscriptionName $sname))
+                }
             } else {
                 $results.Add((New-CISResult `
                     -ControlId "6.1.1.3" `

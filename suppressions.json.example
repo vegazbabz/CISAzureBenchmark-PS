@@ -1,0 +1,34 @@
+{
+    "_comment": "Suppression file — copy to suppressions.json and add your entries. Loaded at report-generation time. Suppressions never modify the raw checkpoint data on disk; removing an entry and re-running -ReportOnly immediately reinstates the finding. Required fields: control_id, justification, expires. Maximum expiry: 365 days from today.",
+
+    "suppressions": [
+
+        {
+            "_example": "7.4 — WAF / Application Gateway architecture. HTTP/HTTPS NSG rules are intentionally open because all inbound traffic is pre-filtered by an Application Gateway WAF before reaching this NSG.",
+            "control_id":    "7.4",
+            "resource":      "web-tier-nsg",
+            "subscription":  "Production",
+            "justification": "HTTP/HTTPS inbound allowed on web-tier-nsg. All traffic is pre-screened by Application Gateway (WAF Policy: Prevention mode, OWASP 3.2 ruleset) before it reaches this NSG. Compensating control reviewed and accepted by security team 2026-04-18.",
+            "expires":       "2027-04-18"
+        },
+
+        {
+            "_example": "7.4 — Azure Front Door (CDN/WAF) architecture. NSG allows HTTPS from AzureFrontDoor.Backend service tag only in production; the open rule shown is in a non-production spoke.",
+            "control_id":    "7.4",
+            "resource":      "nonprod-frontend-nsg",
+            "subscription":  "NonProduction",
+            "justification": "NSG open HTTPS rule exists in non-production only. Production traffic uses Front Door WAF. Risk accepted for dev/test environment after internal risk review 2026-04-18.",
+            "expires":       "2027-04-18"
+        },
+
+        {
+            "_example": "5.1.2 — B2B guest admin account whose MFA is enforced in the home tenant via Conditional Access; host tenant cannot inspect home-tenant MFA registration state.",
+            "control_id":    "5.1.2",
+            "resource":      "guest.admin#EXT#@contoso.onmicrosoft.com",
+            "subscription":  "Production",
+            "justification": "B2B guest account. MFA is enforced by the user's home tenant Conditional Access policy. The Microsoft Graph authentication/methods endpoint returns no methods for guests satisfying MFA in their home tenant. Confirmed with home-tenant admin 2026-04-18.",
+            "expires":       "2027-04-18"
+        }
+
+    ]
+}

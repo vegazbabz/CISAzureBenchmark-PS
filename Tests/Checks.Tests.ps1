@@ -1280,6 +1280,50 @@ Describe "Invoke-Section6Checks — 6.1.1.3 Activity Log Retention" {
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
         ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
     }
+
+    It "returns PASS when no log profile but storage destination with indefinite retention" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name             = "subscriptionToStorage"
+                workspaceId      = $null
+                storageAccountId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/diagsa"
+                logs             = @(
+                    [PSCustomObject]@{
+                        category        = "Administrative"
+                        enabled         = "True"
+                        retentionPolicy = [PSCustomObject]@{ enabled = $false; days = 0 }
+                    }
+                )
+            }) } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when no log profile but storage destination has retention < 365 days" {
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest {
+            [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{
+                name             = "subscriptionToStorage"
+                workspaceId      = $null
+                storageAccountId = "/subscriptions/test/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/diagsa"
+                logs             = @(
+                    [PSCustomObject]@{
+                        category        = "Administrative"
+                        enabled         = "True"
+                        retentionPolicy = [PSCustomObject]@{ enabled = $true; days = 90 }
+                    }
+                )
+            }) } }
+        }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+
+        $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
+        ($results | Where-Object { $_.ControlId -eq "6.1.1.3" }).Status | Should -Be "FAIL"
+    }
 }
 
 Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {
