@@ -27,16 +27,6 @@ function Write-AuditLog {
     }
 }
 
-function Write-AuditProgress {
-    <#
-    .SYNOPSIS
-    Write a single-line progress update that overwrites the current console line.
-    Used for subscription-loop status so the terminal stays compact.
-    #>
-    param([string]$Message)
-    Write-Host "`r$Message" -NoNewline -ForegroundColor DarkCyan
-}
-
 # ── Port helpers ─────────────────────────────────────────────────────────────
 
 function Remove-DuplicateResults {
