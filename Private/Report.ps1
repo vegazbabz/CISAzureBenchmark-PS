@@ -131,17 +131,18 @@ function New-CISHtmlReport {
 
     $subRowsHtml = [System.Text.StringBuilder]::new()
     $sortedSubs  = @($subStats.Keys | Sort-Object {
-        $s = $subStats[$_]; $d = $s.PASS+$s.FAIL+$s.ERROR
+        $s = $subStats[$_]; $d = $s.PASS+$s.FAIL
         if ($d -gt 0) { $s.PASS / $d * 100 } else { 0 }
     })
     foreach ($sn in $sortedSubs) {
-        $st     = $subStats[$sn]
-        $scored = [math]::Max($st.PASS+$st.FAIL+$st.ERROR, 1)
-        $pct    = [math]::Round($st.PASS / $scored * 100, 1)
-        $col    = if ($pct -ge 80) { '#16a34a' } elseif ($pct -ge 60) { '#d97706' } else { '#dc2626' }
-        $passW  = [math]::Round($st.PASS / $scored * 100)
-        $failW  = [math]::Round($st.FAIL / $scored * 100)
-        $errW   = [math]::Max(0, 100-$passW-$failW)
+        $st      = $subStats[$sn]
+        $scored  = [math]::Max($st.PASS+$st.FAIL+$st.ERROR, 1)   # bar-width base (3-segment visual)
+        $pctBase = $st.PASS + $st.FAIL
+        $pct     = if ($pctBase -gt 0) { [math]::Round($st.PASS / $pctBase * 100, 1) } else { 0 }
+        $col     = if ($pct -ge 80) { '#16a34a' } elseif ($pct -ge 60) { '#d97706' } else { '#dc2626' }
+        $passW   = [math]::Round($st.PASS / $scored * 100)
+        $failW   = [math]::Round($st.FAIL / $scored * 100)
+        $errW    = [math]::Max(0, 100-$passW-$failW)
         $bar    = "<div class=`"sbar`">" +
                   "<span style=`"width:$passW%;background:#16a34a`"></span>" +
                   "<span style=`"width:$failW%;background:#dc2626`"></span>" +
@@ -636,7 +637,7 @@ $subTable
       });
       Object.keys(secs).forEach(function(sn){
         var d=secs[sn];
-        d.score=Math.round(d.pass/Math.max(d.pass+d.fail+d.error,1)*1000)/10;
+        d.score=Math.round(d.pass/Math.max(d.pass+d.fail,1)*1000)/10;
       });
     }
     ['d-overall','d-l1','d-l2'].forEach(function(id){
@@ -648,7 +649,7 @@ $subTable
     drawDonut('d-l2',l2.pass,l2.fail,l2.error);
     renderSectionBreakdown(secs);
     function scoreColor(sc){ return sc>=80?'#16a34a':sc>=60?'#d97706':'#dc2626'; }
-    function pct(p,f,e){ return Math.round(p/Math.max(p+f+e,1)*1000)/10; }
+    function pct(p,f,e){ return Math.round(p/Math.max(p+f,1)*1000)/10; }
     var sc=pct(counts.PASS,counts.FAIL,counts.ERROR);
     var l1s=pct(l1.pass,l1.fail,l1.error);
     var l2s=pct(l2.pass,l2.fail,l2.error);

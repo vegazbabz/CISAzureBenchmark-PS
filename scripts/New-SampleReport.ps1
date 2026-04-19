@@ -262,10 +262,11 @@ foreach ($chk in $checks) {
 }
 
 # ── Synthetic history (3 prior runs for trend chart) ──────────────────────────
+# Scores use PASS/(PASS+FAIL) — consistent with the report's compliance formula.
 $history = @(
-    [PSCustomObject]@{ timestamp = "2026-02-15T10:00:00Z"; score = 58.2; pass = 410; fail = 180; error = 115 }
-    [PSCustomObject]@{ timestamp = "2026-03-01T10:00:00Z"; score = 62.7; pass = 445; fail = 155; error = 110 }
-    [PSCustomObject]@{ timestamp = "2026-03-15T10:00:00Z"; score = 65.1; pass = 460; fail = 140; error = 108 }
+    [PSCustomObject]@{ timestamp = "2026-02-15T10:00:00Z"; score = 69.5; pass = 410; fail = 180; error = 115 }
+    [PSCustomObject]@{ timestamp = "2026-03-01T10:00:00Z"; score = 74.2; pass = 445; fail = 155; error = 110 }
+    [PSCustomObject]@{ timestamp = "2026-03-15T10:00:00Z"; score = 76.7; pass = 460; fail = 140; error = 108 }
 )
 
 # ── Scope info ────────────────────────────────────────────────────────────────
