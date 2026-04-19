@@ -85,7 +85,11 @@ function Format-AzErrorMessage {
 }
 
 function New-ErrorResult {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Factory function that constructs and returns an object; does not modify system state.')]
+    <#
+    .SYNOPSIS
+    Shorthand factory for ERROR results. Passes the message through Format-AzErrorMessage
+    so raw API error strings are translated into human-readable guidance.
+    #>
     param(
         [string]$ControlId,
         [string]$Title,
@@ -103,6 +107,10 @@ function New-ErrorResult {
 }
 
 function New-InfoResult {
+    <#
+    .SYNOPSIS
+    Shorthand factory for INFO results (non-assessed — resource not present or not applicable).
+    #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Factory function that constructs and returns an object; does not modify system state.')]
     param(
         [string]$ControlId,
@@ -120,7 +128,11 @@ function New-InfoResult {
 }
 
 function New-ManualResult {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Factory function that constructs and returns an object; does not modify system state.')]
+    <#
+    .SYNOPSIS
+    Shorthand factory for MANUAL results — controls that cannot be automated and require
+    a human reviewer to verify compliance in the portal.
+    #>
     param(
         [string]$ControlId,
         [string]$Title,

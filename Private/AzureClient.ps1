@@ -277,6 +277,9 @@ function Invoke-AzRestPaged {
 }
 
 # ── Error classifiers ────────────────────────────────────────────────────────
+# These are used by check functions (mainly Section8/Section9) to produce
+# targeted remediation messages instead of raw exception text.
+# For display-facing error messages, use Format-AzErrorMessage in CheckHelpers.ps1.
 
 function Test-FirewallError {
     param([string]$Message)

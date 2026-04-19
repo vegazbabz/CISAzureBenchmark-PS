@@ -198,6 +198,14 @@ function Invoke-Section8Checks {
     }
 
     # ── 8.3.x — Key Vault checks ──────────────────────────────────────────────
+    # Static properties (purge protection, RBAC mode, network access) come from
+    # Resource Graph prefetch data. Data-plane checks (key/secret/certificate
+    # enumeration) require the Az.KeyVault cmdlets which call the vault's data-plane
+    # endpoint directly — this is separate from the ARM control-plane used above.
+    #
+    # CIS controls are numbered differently depending on whether the vault uses RBAC
+    # authorization (8.3.1/8.3.3) vs. legacy vault access policies (8.3.2/8.3.4).
+    # The $rbac flag from prefetch data selects the correct control ID at runtime.
     if ($keyvaults.Count -eq 0) {
         foreach ($cid in @("8.3.1","8.3.2","8.3.3","8.3.4","8.3.5","8.3.6","8.3.7","8.3.8","8.3.9","8.3.11")) {
             $results.Add((New-InfoResult $cid "Key Vault Check" 2 $sec "No Key Vaults found." $sid $sname))

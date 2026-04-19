@@ -3,7 +3,7 @@
 
 Set-StrictMode -Version Latest
 
-$script:CIS_VERSION   = "1.3.1"
+$script:CIS_VERSION   = "1.4.0"
 $script:BENCHMARK_VER = "5.0.0"
 
 # Status constants — avoid $Error which is a PS reserved variable
@@ -18,10 +18,14 @@ $script:SUPPRESSED = "SUPPRESSED"
 $script:ROLE_OWNER = "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
 $script:ROLE_UAA   = "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
 
-# Internet source addresses for NSG inbound rule evaluation
+# Internet source addresses for NSG inbound rule evaluation.
+# Azure uses "Internet" (service tag) and "<internet>" (legacy portal form) in addition
+# to wildcard/CIDR representations. All are treated as equivalent in check logic.
 $script:INTERNET_SRCS = @("*", "0.0.0.0", "internet", "any", "0.0.0.0/0", "<internet>")
 
-# Subnets exempt from NSG requirement (Azure platform subnets)
+# Subnets exempt from NSG requirement (Azure platform subnets).
+# Azure manages security for these platform-reserved subnets — attaching an NSG
+# is either unsupported or overridden by the platform. Checked case-insensitively.
 $script:EXEMPT_SUBNETS = @(
     "gatewaysubnet",
     "azurebastionsubnet",
@@ -30,7 +34,8 @@ $script:EXEMPT_SUBNETS = @(
     "routeserversubnet"
 )
 
-# CLI timeouts (seconds)
+# CLI timeouts (seconds). Graph and activity_log use longer values because those
+# calls aggregate data across many resources and can span multiple API pages.
 $script:TIMEOUTS = @{
     default      = 60
     storage_list = 90

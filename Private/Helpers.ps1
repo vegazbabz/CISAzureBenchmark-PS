@@ -1,6 +1,11 @@
 # Logging, console output, and NSG/port helpers
 
 function Write-AuditLog {
+    <#
+    .SYNOPSIS
+    Write a timestamped log line to the console (and optionally to a log file).
+    DEBUG/VERBOSE lines are suppressed unless the corresponding mode flag is set.
+    #>
     param(
         [Parameter(Mandatory)][string]$Message,
         [ValidateSet("INFO","WARNING","ERROR","DEBUG","VERBOSE")][string]$Level = "INFO"
@@ -23,6 +28,11 @@ function Write-AuditLog {
 }
 
 function Write-AuditProgress {
+    <#
+    .SYNOPSIS
+    Write a single-line progress update that overwrites the current console line.
+    Used for subscription-loop status so the terminal stays compact.
+    #>
     param([string]$Message)
     Write-Host "`r$Message" -NoNewline -ForegroundColor DarkCyan
 }
