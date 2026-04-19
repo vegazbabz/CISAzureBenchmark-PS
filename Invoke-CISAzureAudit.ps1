@@ -395,6 +395,13 @@ Write-Host ("`u{1F4CB} Subscriptions ({0}):" -f $subObjects.Count) -ForegroundCo
 foreach ($s in $subObjects) {
     Write-Host ("   `u{2022} {0}  ({1})" -f ([string]$s.name), ([string]$s.id)) -ForegroundColor DarkGray
 }
+$_workerLabel = if ($subObjects.Count -le 1 -or $Parallel -le 1) {
+    "sequential (1 worker)"
+} else {
+    "$Parallel parallel workers"
+}
+Write-Host ("   Workers : $_workerLabel") -ForegroundColor DarkGray
+Remove-Variable _workerLabel
 Write-Host ""
 
 Write-AuditLog "Auditing $($subIds.Count) subscription(s): $($subIds -join ', ')" -Level INFO
@@ -577,7 +584,7 @@ function Invoke-SubscriptionAudit {
                 $subResults.Add($r)
             }
             $sw.Stop()
-            Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level DEBUG
+            Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level INFO
         } catch {
             Write-AuditLog "$($group.Name) error for ${SubName}: $_" -Level WARNING
         }
@@ -692,11 +699,15 @@ if ($subsToProcess.Count -gt 0) {
                     $subResults = [System.Collections.Generic.List[object]]::new()
                     foreach ($g in $checkGroups) {
                         Write-Host "    [$subName] $($g.Name)..." -ForegroundColor DarkGray
+                        $gSw = [System.Diagnostics.Stopwatch]::StartNew()
+                        $gCount = 0
                         try {
-                            foreach ($r in @(& $g.Fn)) { $subResults.Add($r) }
+                            foreach ($r in @(& $g.Fn)) { $subResults.Add($r); $gCount++ }
                         } catch {
                             [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
                         }
+                        $gSw.Stop()
+                        Write-Host ("    [$subName] $($g.Name) done — $gCount result(s) in $($gSw.Elapsed.TotalSeconds.ToString('F1'))s") -ForegroundColor DarkGray
                     }
 
                     foreach ($r in $subResults) { $bag.Add($r) }
