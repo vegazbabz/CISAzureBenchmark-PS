@@ -781,7 +781,7 @@ $subTable
     # ── CSV export ────────────────────────────────────────────────────────────
     $csvPath = [System.IO.Path]::ChangeExtension($OutputPath, '.csv')
     $csvLines = [System.Collections.Generic.List[string]]::new()
-    $csvLines.Add('control,level,title,subscription,resource,status,details')
+    $csvLines.Add('"control","level","title","subscription","resource","status","details"')
     foreach ($r in $Results) {
         $fields = @(
             $r.ControlId,
