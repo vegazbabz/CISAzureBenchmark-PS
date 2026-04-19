@@ -27,6 +27,7 @@ BeforeAll {
         "Private\Checkpoint.ps1",
         "Private\History.ps1",
         "Private\Report.ps1",
+        "Private\Suppressions.ps1",
         "Checks\Section2.ps1",
         "Checks\Section3.ps1",
         "Checks\Section5.ps1",
@@ -2884,5 +2885,293 @@ Describe "Invoke-Section9Checks — ADLS Gen2 HNS detection (regression)" {
         Mock Get-AzResourceLock                { @() }
         Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd | Out-Null
         $script:blobApiCalled | Should -BeTrue
+    }
+}
+
+# =============================================================================
+# SUPPRESSIONS — Get-Suppressions, Invoke-Suppressions, Find-SuppressionMatch
+# =============================================================================
+
+Describe "Get-Suppressions — file loading and validation" {
+    BeforeEach {
+        $script:tmpSup = [System.IO.Path]::GetTempFileName()
+    }
+    AfterEach {
+        if (Test-Path $script:tmpSup) { Remove-Item $script:tmpSup -Force }
+    }
+
+    It "returns empty array when file does not exist" {
+        $result = @(Get-Suppressions -Path "C:\this_path_does_not_exist_xyz123.json")
+        $result | Should -HaveCount 0
+    }
+
+    It "returns empty array for invalid JSON" {
+        Set-Content $script:tmpSup -Value "not: valid: json: {{{" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "loads a valid flat-array suppression" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "7.1"
+    }
+
+    It "loads a wrapped { suppressions: [...] } format" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "{`"suppressions`":[{`"control_id`":`"5.1`",`"justification`":`"test`",`"expires`":`"$future`"}]}" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "5.1"
+    }
+
+    It "skips entry missing required field control_id" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry missing required field justification" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry missing required field expires" {
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips entry with invalid expires date format" {
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"31/12/2027`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "skips an expired entry (expires yesterday)" {
+        $past = [datetime]::Today.AddDays(-1).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$past`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 0
+    }
+
+    It "accepts an entry expiring today (not expired)" {
+        $today = [datetime]::Today.ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$today`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+    }
+
+    It "caps expiry beyond 1 year to today + 365 days" {
+        $farFuture = [datetime]::Today.AddDays(400).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$farFuture`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].Expires | Should -Be ([datetime]::Today.AddDays(365))
+    }
+
+    It "Resource is null when field is absent" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Resource | Should -BeNullOrEmpty
+    }
+
+    It "Subscription is null when field is absent" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Subscription | Should -BeNullOrEmpty
+    }
+
+    It "maps resource and subscription when present" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        Set-Content $script:tmpSup -Value "[{`"control_id`":`"7.1`",`"resource`":`"my-nsg`",`"subscription`":`"Prod`",`"justification`":`"test`",`"expires`":`"$future`"}]" -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result[0].Resource     | Should -Be "my-nsg"
+        $result[0].Subscription | Should -Be "Prod"
+    }
+
+    It "returns only valid entries from a mixed list" {
+        $future = [datetime]::Today.AddDays(30).ToString("yyyy-MM-dd")
+        $past   = [datetime]::Today.AddDays(-1).ToString("yyyy-MM-dd")
+        $json   = "[" +
+                  "{`"control_id`":`"7.1`",`"justification`":`"valid`",`"expires`":`"$future`"}," +
+                  "{`"control_id`":`"7.2`",`"justification`":`"expired`",`"expires`":`"$past`"}," +
+                  "{`"justification`":`"missing-id`",`"expires`":`"$future`"}" +
+                  "]"
+        Set-Content $script:tmpSup -Value $json -Encoding UTF8
+        $result = @(Get-Suppressions -Path $script:tmpSup)
+        $result | Should -HaveCount 1
+        $result[0].ControlId | Should -Be "7.1"
+    }
+}
+
+Describe "Invoke-Suppressions — matching and status updates" {
+    BeforeAll {
+        function New-TestResult {
+            param(
+                [string]$ControlId,
+                [string]$Status,
+                [string]$Resource    = "",
+                [string]$SubName     = "Test Sub"
+            )
+            [PSCustomObject]@{
+                ControlId        = $ControlId
+                Title            = "Test Title"
+                Level            = 1
+                Section          = "7"
+                Status           = $Status
+                Details          = "original detail"
+                Remediation      = "fix it"
+                SubscriptionId   = "aaaabbbb-0000-0000-0000-000000000000"
+                SubscriptionName = $SubName
+                Resource         = $Resource
+            }
+        }
+
+        function New-TestSup {
+            param(
+                [string]$ControlId,
+                [string]$Resource      = $null,
+                [string]$Subscription  = $null,
+                [string]$Justification = "accepted risk"
+            )
+            [PSCustomObject]@{
+                ControlId     = $ControlId
+                Resource      = $Resource
+                Subscription  = $Subscription
+                Justification = $Justification
+                Expires       = [datetime]::Today.AddDays(30)
+            }
+        }
+    }
+
+    It "returns results unchanged when suppressions list is empty" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $out = @(Invoke-Suppressions -Results $results -Suppressions @())
+        $out | Should -HaveCount 1
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "suppresses a FAIL result matching by control_id" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppresses an ERROR result matching by control_id" {
+        $results = @(New-TestResult "7.1" $script:ERR)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress a PASS result" {
+        $results = @(New-TestResult "7.1" $script:PASS)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:PASS
+    }
+
+    It "does not suppress an INFO result" {
+        $results = @(New-TestResult "7.1" $script:INFO)
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:INFO
+    }
+
+    It "does not suppress FAIL when control_id does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "9.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "suppresses FAIL when resource filter matches" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "my-nsg")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress FAIL when resource filter does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "other-nsg")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "resource filter match is case-insensitive" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "MY-NSG")
+        $sups    = @(New-TestSup "7.1" -Resource "my-nsg")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppresses FAIL when subscription filter matches" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "Production")
+        $sups    = @(New-TestSup "7.1" -Subscription "Production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "does not suppress FAIL when subscription filter does not match" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "Development")
+        $sups    = @(New-TestSup "7.1" -Subscription "Production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:FAIL
+    }
+
+    It "subscription filter match is case-insensitive" {
+        $results = @(New-TestResult "7.1" $script:FAIL -SubName "PRODUCTION")
+        $sups    = @(New-TestSup "7.1" -Subscription "production")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "suppression without resource filter matches any resource" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "some-nsg")
+        $sups    = @(New-TestSup "7.1")   # no Resource filter
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Status | Should -Be $script:SUPPRESSED
+    }
+
+    It "appends justification and expiry to Details" {
+        $results = @(New-TestResult "7.1" $script:FAIL)
+        $sups    = @(New-TestSup "7.1" -Justification "WAF in front")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].Details | Should -Match "WAF in front"
+        $out[0].Details | Should -Match "expires"
+    }
+
+    It "preserves all other result fields when suppressing" {
+        $results = @(New-TestResult "7.1" $script:FAIL -Resource "nsg-1" -SubName "Prod")
+        $sups    = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out[0].ControlId        | Should -Be "7.1"
+        $out[0].Title            | Should -Be "Test Title"
+        $out[0].Resource         | Should -Be "nsg-1"
+        $out[0].SubscriptionName | Should -Be "Prod"
+    }
+
+    It "only suppresses matched results in a mixed list" {
+        $results = @(
+            (New-TestResult "7.1" $script:FAIL),
+            (New-TestResult "8.1" $script:FAIL),
+            (New-TestResult "9.1" $script:PASS)
+        )
+        $sups = @(New-TestSup "7.1")
+        $out = @(Invoke-Suppressions -Results $results -Suppressions $sups)
+        $out | Should -HaveCount 3
+        ($out | Where-Object { $_.ControlId -eq "7.1" }).Status | Should -Be $script:SUPPRESSED
+        ($out | Where-Object { $_.ControlId -eq "8.1" }).Status | Should -Be $script:FAIL
+        ($out | Where-Object { $_.ControlId -eq "9.1" }).Status | Should -Be $script:PASS
     }
 }
