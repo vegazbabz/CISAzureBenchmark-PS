@@ -651,7 +651,7 @@ Exit code summary:
 | Code | Meaning |
 | --- | --- |
 | `0` | Audit completed — all controls passed (or all failures are suppressed) |
-| `1` | Tool setup error — az CLI missing, not logged in, or authentication failed |
+| `1` | Tool setup error — Az PowerShell module missing, not logged in to Azure, or no accessible subscriptions found |
 | `2` | Compliance failure — one or more FAIL or ERROR results detected (only with `-ExitCode`) |
 
 ---
