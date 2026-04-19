@@ -99,7 +99,7 @@ function Invoke-Section8Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         }
     } catch {
-        $results.Add((New-ErrorResult "8.1.10" "VM OS Update Assessment" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "8.1.10" "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" 1 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 8.1.12–8.1.15 — Security contact notifications (preview REST API) ──────

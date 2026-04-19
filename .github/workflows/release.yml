@@ -72,11 +72,11 @@ jobs:
 
             ### Requirements
             - PowerShell 7.0+
-            - Azure CLI (`az login` before running)
+            - Az PowerShell module (`Connect-AzAccount` before running)
 
             ### Quick Start
             ```powershell
-            az login
+            Connect-AzAccount
             .\Invoke-CISAzureAudit.ps1
             ```
 
