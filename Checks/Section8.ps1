@@ -192,8 +192,14 @@ function Invoke-Section8Checks {
             -SubscriptionId $sid -SubscriptionName $sname))
 
     } catch {
+        $scTitleMap = @{
+            "8.1.12" = "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'"
+            "8.1.13" = "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications"
+            "8.1.14" = "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'"
+            "8.1.15" = "Ensure That Attack Path Notifications Are Configured"
+        }
         foreach ($cid in @("8.1.12","8.1.13","8.1.14","8.1.15")) {
-            $results.Add((New-ErrorResult $cid "Security Contact" 1 $sec $_.Exception.Message $sid $sname))
+            $results.Add((New-ErrorResult $cid $scTitleMap[$cid] 1 $sec $_.Exception.Message $sid $sname))
         }
     }
 
