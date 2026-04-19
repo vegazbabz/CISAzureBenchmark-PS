@@ -29,7 +29,7 @@ $storageAccounts = @("stproddata01", "stprodlogs02", "ststagapp01", "stdevdata01
 $keyVaults       = @("kv-prod-keys", "kv-prod-secrets", "kv-stag-app", "kv-dev-test")
 $nsgs            = @("nsg-web-tier", "nsg-app-tier", "nsg-db-tier", "nsg-mgmt")
 
-# ── All 72 check definitions ─────────────────────────────────────────────────
+# ── All check definitions (mirrors the full set implemented in Checks/) ───────
 $checks = @(
     # Section 2 — Azure Databricks
     @{ Id="2.1.2";  Title="Ensure That NSGs Are Configured for Azure Databricks Subnets"; Level=1; Section="2 - Azure Databricks" }
@@ -38,10 +38,14 @@ $checks = @(
     @{ Id="2.1.10"; Title="Ensure That Azure Databricks Workspace Has Public Network Access Disabled"; Level=2; Section="2 - Azure Databricks" }
     @{ Id="2.1.11"; Title="Ensure That Azure Databricks Workspace Uses Private Endpoints"; Level=2; Section="2 - Azure Databricks" }
 
+    # Section 3 — Compute Services
+    @{ Id="3.1.1";  Title="Ensure Only MFA Enabled Identities Can Access Privileged Virtual Machine"; Level=2; Section="3 - Compute Services"; Tenant=$true }
+
     # Section 5 — Identity Services
     @{ Id="5.1.1";  Title="Ensure Security Defaults Are Enabled on Microsoft Entra ID"; Level=1; Section="5 - Identity Services"; Tenant=$true }
     @{ Id="5.1.2";  Title="Ensure MFA Is Enabled for All Users in Administrative Roles"; Level=1; Section="5 - Identity Services"; Tenant=$true }
     @{ Id="5.1.3";  Title="Ensure That 'Remember Multi-Factor Authentication on Trusted Devices' Is Disabled"; Level=1; Section="5 - Identity Services"; Tenant=$true }
+    @{ Id="5.28";   Title="Ensure Privileged Users Are Protected by Phishing-Resistant MFA"; Level=1; Section="5 - Identity Services"; Tenant=$true }
     @{ Id="5.4";    Title="Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'"; Level=1; Section="5 - Identity Services"; Tenant=$true }
     @{ Id="5.14";   Title="Ensure That 'Users Can Register Applications' Is Set to 'No'"; Level=1; Section="5 - Identity Services"; Tenant=$true }
     @{ Id="5.15";   Title="Ensure That 'Guest Users Access Restrictions' Is Set to 'Guest user access is restricted'"; Level=1; Section="5 - Identity Services"; Tenant=$true }
