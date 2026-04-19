@@ -120,13 +120,26 @@ function Invoke-Section6Checks {
             # Modern Azure subscriptions route activity logs via diagnostic settings, not log profiles.
             $rDiag = Invoke-ArmRest -Uri "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
 
-            $diagItems = if ($rDiag.Success -and $rDiag.Data) {
+            $raw = if ($rDiag.Success -and $rDiag.Data) {
                 if ($rDiag.Data.PSObject.Properties['value']) { @($rDiag.Data.value) }
                 else { @($rDiag.Data) }
             } else { @() }
 
+            # ARM REST wraps settings fields under .properties — normalize to a flat object
+            # so all subsequent access ($_.logs, $_.workspaceId, etc.) is uniform and strict-mode-safe.
+            $diagItems = @($raw | ForEach-Object {
+                $src = if ($_.PSObject.Properties['properties'] -and $null -ne $_.properties) { $_.properties } else { $_ }
+                [PSCustomObject]@{
+                    name                        = [string]$_.name
+                    logs                        = if ($src.PSObject.Properties['logs'] -and $null -ne $src.logs) { @($src.logs) } else { @() }
+                    workspaceId                 = if ($src.PSObject.Properties['workspaceId'])                 { $src.workspaceId }                 else { $null }
+                    storageAccountId            = if ($src.PSObject.Properties['storageAccountId'])            { $src.storageAccountId }            else { $null }
+                    eventHubAuthorizationRuleId = if ($src.PSObject.Properties['eventHubAuthorizationRuleId']) { $src.eventHubAuthorizationRuleId } else { $null }
+                }
+            })
+
             $activeSetting = $diagItems | Where-Object {
-                $_.logs | Where-Object { $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True' }
+                @($_.logs | Where-Object { $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True' }).Count -gt 0
             } | Select-Object -First 1
 
             if ($activeSetting) {
