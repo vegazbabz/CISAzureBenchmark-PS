@@ -61,7 +61,7 @@ function Get-Suppressions {
         @()
     }
     if (-not $entries -or $entries.Count -eq 0) {
-        Write-AuditLog "Suppression file '$Path' has no entries." -Level WARNING
+        Write-AuditLog "Suppression file '$Path' has no entries." -Level INFO
         return @()
     }
 
@@ -73,10 +73,11 @@ function Get-Suppressions {
         $entry = $entries[$i]
         $num   = $i + 1
 
-        # Validate required fields
+        # Validate required fields — use PSObject.Properties to avoid
+        # PropertyNotFoundException under Set-StrictMode -Version Latest
         $missing = $false
         foreach ($field in @('control_id', 'justification', 'expires')) {
-            if (-not $entry.$field) {
+            if (-not $entry.PSObject.Properties[$field] -or -not $entry.$field) {
                 Write-AuditLog "Suppression #$num in '$Path' is missing required field '$field' — skipped." -Level WARNING
                 $missing = $true
                 break

@@ -1,5 +1,9 @@
 # Azure CLI subprocess layer
 # Uses System.Diagnostics.Process for timeout enforcement and stdout/stderr capture
+#
+# NOTE: Invoke-AzCli is no longer called by the default audit flow — all check sections
+# and the permission preflight (Identity.ps1) now use Az PowerShell cmdlets directly.
+# The function is kept here as an available utility in case ad-hoc CLI calls are needed.
 
 # On Windows, az is installed as az.cmd — must be launched via cmd.exe /c
 # for the batch file's environment setup to work with System.Diagnostics.Process.
@@ -179,83 +183,71 @@ function Invoke-AzGraphQuery {
     <#
     .SYNOPSIS
     Execute a Resource Graph Kusto query, paginating through all results.
+    Uses the Az.ResourceGraph module (Search-AzGraph) instead of az CLI subprocess.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Query,
-        [string[]]$SubscriptionIds = @(),
-        [int]$TimeoutSec = 180
+        [string[]]$SubscriptionIds = @()
     )
 
-    # Append a KQL subscription filter so pagination tokens don't traverse the
-    # entire tenant. Resource Graph shards span the whole tenant even when
-    # --subscriptions is specified, causing excessive cross-tenant page fetches.
-    # The query must be on ONE line — az graph query -q stops at the first newline.
-    $scopedQuery = $Query -replace '\r?\n', ' ' -replace '\s{2,}', ' '
-    if ($SubscriptionIds.Count -gt 0) {
-        $quotedIds = ($SubscriptionIds | ForEach-Object { "'$_'" }) -join ", "
-        $scopedQuery = "$scopedQuery | where subscriptionId in ($quotedIds)"
+    try {
+        $allData    = [System.Collections.Generic.List[object]]::new()
+        $cleanQuery = $Query -replace '\r?\n', ' ' -replace '\s{2,}', ' '
+        $params     = @{ Query = $cleanQuery; First = 1000 }
+        if ($SubscriptionIds.Count -gt 0) { $params['Subscription'] = $SubscriptionIds }
+
+        $response = Search-AzGraph @params
+        foreach ($item in $response) { $allData.Add($item) }
+
+        while ($response.SkipToken) {
+            Write-AuditLog "    Paginating Resource Graph: $($allData.Count) records so far..." -Level DEBUG
+            $response = Search-AzGraph @params -SkipToken $response.SkipToken
+            foreach ($item in $response) { $allData.Add($item) }
+        }
+
+        return [PSCustomObject]@{ Success = $true; Data = $allData.ToArray(); Error = $null }
+    } catch {
+        return [PSCustomObject]@{ Success = $false; Data = @(); Error = $_.Exception.Message }
     }
-
-    $baseArgs = [System.Collections.Generic.List[string]]@(
-        "graph", "query", "-q", $scopedQuery, "--first", "1000"
-    )
-    if ($SubscriptionIds.Count -gt 0) {
-        $baseArgs.Add("--subscriptions")
-        foreach ($s in $SubscriptionIds) { $baseArgs.Add($s) }
-    }
-
-    $allData   = [System.Collections.Generic.List[object]]::new()
-    $skipToken = $null
-
-    do {
-        $pageArgs = [System.Collections.Generic.List[string]]::new($baseArgs)
-        if ($skipToken) {
-            $pageArgs.Add("--skip-token")
-            $pageArgs.Add($skipToken)
-        }
-
-        $result = Invoke-AzCli -Arguments $pageArgs.ToArray() -TimeoutSec $TimeoutSec
-
-        if (-not $result.Success) {
-            return [PSCustomObject]@{ Success = $false; Data = @(); Error = $result.Error }
-        }
-
-        if ($result.Data -and $result.Data.PSObject.Properties['data']) {
-            foreach ($item in $result.Data.data) { $allData.Add($item) }
-        }
-
-        # az graph query returns snake_case: skip_token / total_records (not camelCase)
-        $skipToken = $null
-        if ($result.Data -and $result.Data.PSObject.Properties['skip_token']) {
-            $skipToken = $result.Data.skip_token
-            $total = if ($result.Data.PSObject.Properties['total_records']) { $result.Data.total_records } else { '?' }
-            Write-AuditLog "    Paginating: $($allData.Count)/$total records fetched so far..." -Level DEBUG
-        }
-
-    } while ($skipToken)
-
-    return [PSCustomObject]@{ Success = $true; Data = $allData.ToArray(); Error = $null }
 }
 
-function Invoke-AzRest {
+function Invoke-ArmRest {
     <#
     .SYNOPSIS
-    Call an ARM or Microsoft Graph REST endpoint via az rest.
+    Call an ARM or Microsoft Graph REST endpoint via Invoke-AzRestMethod.
+    Returns the same {Success, Data, Error, ExitCode} shape as before.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Uri,
-        [string]$Method     = "GET",
-        [int]$TimeoutSec    = 60
+        [string]$Method = "GET"
     )
-    $cliArgs = @("rest", "--method", $Method, "--uri", $Uri)
-    # Explicitly set --resource for Microsoft Graph URLs so az rest acquires the
-    # correct token even when the default az login session has no Graph scope.
-    if ($Uri -match '^https://graph\.microsoft\.com/') {
-        $cliArgs += @("--resource", "https://graph.microsoft.com")
+    try {
+        $response = Invoke-AzRestMethod -Uri $Uri -Method $Method -ErrorAction Stop
+
+        if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+            if (-not $response.Content) {
+                return [PSCustomObject]@{ Success = $true; Data = $null; Error = $null; ExitCode = 0 }
+            }
+            try {
+                $data = $response.Content | ConvertFrom-Json -Depth 30
+                return [PSCustomObject]@{ Success = $true; Data = $data; Error = $null; ExitCode = 0 }
+            } catch {
+                return [PSCustomObject]@{ Success = $false; Data = $null; Error = "JSON parse error: $_"; ExitCode = 0 }
+            }
+        } else {
+            $errMsg = "HTTP $($response.StatusCode)"
+            try {
+                $errObj = $response.Content | ConvertFrom-Json
+                $inner  = $errObj.error.message ?? $errObj.message
+                if ($inner) { $errMsg = [string]$inner }
+            } catch {}
+            return [PSCustomObject]@{ Success = $false; Data = $null; Error = $errMsg; ExitCode = $response.StatusCode }
+        }
+    } catch {
+        return [PSCustomObject]@{ Success = $false; Data = $null; Error = $_.Exception.Message; ExitCode = -1 }
     }
-    Invoke-AzCli -Arguments $cliArgs -TimeoutSec $TimeoutSec
 }
 
 function Invoke-AzRestPaged {
@@ -265,15 +257,14 @@ function Invoke-AzRestPaged {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][string]$Uri,
-        [int]$TimeoutSec = 60
+        [Parameter(Mandatory)][string]$Uri
     )
 
     $all     = [System.Collections.Generic.List[object]]::new()
     $nextUri = $Uri
 
     while ($nextUri) {
-        $result = Invoke-AzRest -Uri $nextUri -TimeoutSec $TimeoutSec
+        $result = Invoke-ArmRest -Uri $nextUri
         if (-not $result.Success) {
             return [PSCustomObject]@{ Success = $false; Data = @(); Error = $result.Error }
         }
@@ -290,6 +281,9 @@ function Invoke-AzRestPaged {
 }
 
 # ── Error classifiers ────────────────────────────────────────────────────────
+# These are used by check functions (mainly Section8/Section9) to produce
+# targeted remediation messages instead of raw exception text.
+# For display-facing error messages, use Format-AzErrorMessage in CheckHelpers.ps1.
 
 function Test-FirewallError {
     param([string]$Message)
