@@ -14,7 +14,11 @@
       - Reader role (or higher) on target subscriptions
 
 .PARAMETER Subscriptions
-    One or more subscription IDs to audit. Defaults to all accessible subscriptions.
+    One or more subscription IDs to audit. Either -Subscriptions or -TenantId must be specified.
+
+.PARAMETER TenantId
+    The Azure AD tenant ID to audit. Scopes subscription enumeration to this tenant.
+    Either -TenantId or -Subscriptions must be specified.
 
 .PARAMETER Output
     Path for the HTML report. Defaults to cis_audit_report.html in the current directory.
@@ -52,18 +56,19 @@
     Optional path to write a log file.
 
 .EXAMPLE
-    .\Invoke-CISAzureAudit.ps1
+    .\Invoke-CISAzureAudit.ps1 -TenantId "00000000-0000-0000-0000-000000000000"
 
 .EXAMPLE
     .\Invoke-CISAzureAudit.ps1 -Subscriptions "sub-id-1","sub-id-2" -Output report.html -Parallel 5
 
 .EXAMPLE
-    .\Invoke-CISAzureAudit.ps1 -Fresh
+    .\Invoke-CISAzureAudit.ps1 -TenantId "00000000-0000-0000-0000-000000000000" -Fresh
 #>
 
 [CmdletBinding(PositionalBinding=$false)]
 param(
     [string[]]$Subscriptions      = @(),
+    [string]  $TenantId           = "",
     [string]  $Output             = "",
     [int]     $Parallel           = 3,
     [switch]  $NoCheckpoint,
@@ -218,7 +223,7 @@ if (-not $azCtx) {
 }
 $callerName = [string]$azCtx.Account.Id
 $callerType = [string]$azCtx.Account.Type
-$tenantId   = [string]$azCtx.Tenant.Id
+$tenantId   = if ($PSBoundParameters.ContainsKey('TenantId') -and $TenantId) { $TenantId } else { [string]$azCtx.Tenant.Id }
 $typeLabel  = switch ($callerType) {
     'ServicePrincipal' { 'Service Principal' }
     'User'             { 'User'              }
@@ -317,6 +322,17 @@ if ($ReportOnly) {
         exit 2
     }
     exit 0
+}
+
+# ── Require explicit audit scope ─────────────────────────────────────────────
+
+if (-not $PSBoundParameters.ContainsKey('TenantId') -and $Subscriptions.Count -eq 0) {
+    Write-Host ""
+    Write-Host "  [ERROR] Specify -TenantId or -Subscriptions to define the audit scope." -ForegroundColor Red
+    Write-Host "          -TenantId <id>              audit all enabled subscriptions in the given tenant" -ForegroundColor Yellow
+    Write-Host "          -Subscriptions <id|name>    audit one or more specific subscriptions by ID or name" -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
 }
 
 # ── Ensure Az.ResourceGraph module is available ──────────────────────────────
