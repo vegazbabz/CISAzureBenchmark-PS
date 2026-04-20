@@ -333,7 +333,7 @@ Write-Host ""
 Write-AuditLog "Resolving subscriptions..." -Level INFO
 
 # Get ALL subscriptions (any state) so we can give accurate diagnostics
-$allSubs = @(Get-SubscriptionList)
+$allSubs = @(Get-SubscriptionList -TenantId $tenantId)
 
 if ($Subscriptions.Count -eq 0) {
     # Default: audit every Enabled subscription
@@ -647,6 +647,13 @@ if ($subsToProcess.Count -gt 0) {
 
         Write-AuditLog "Running parallel audit ($currentParallel concurrent workers)..." -Level INFO
 
+        # Disable Az context autosave so parallel runspaces don't compete over the
+        # shared on-disk context file (~/.Azure/AzureRmContext.json). Without this,
+        # Set-AzContext in one runspace can overwrite another's context, causing
+        # Az cmdlets (Get-AzStorageAccount, Get-AzStorageBlobServiceProperty, etc.)
+        # to target the wrong subscription and return 'NotFound' errors.
+        $null = Disable-AzContextAutosave -Scope Process
+
         $batchIdx = 0
         $completedCounter = [System.Collections.Concurrent.ConcurrentBag[int]]::new()
         while ($batchIdx -lt $subPairs.Count) {
@@ -661,6 +668,7 @@ if ($subsToProcess.Count -gt 0) {
                 $subTotal      = $using:totalToProcess
                 $pd            = $using:prefetchData
                 $modRoot       = $using:moduleRoot_
+                $tenantId_     = $using:tenantId
                 $noCheckpoint  = $using:NoCheckpoint
                 $bag           = $using:resultBag
                 $tBag          = $using:throttleBag
@@ -679,10 +687,12 @@ if ($subsToProcess.Count -gt 0) {
                 )
                 foreach ($f in $files) { . (Join-Path $modRoot $f) }
 
-                # Set Az context so PS cmdlets (Get-AzLogProfile, etc.) target this subscription
-                # 3>$null suppresses the Az SDK "Unable to acquire token for tenant" warning
-                # that fires when the account has access to multiple tenants (expected/harmless).
-                $null = Set-AzContext -SubscriptionId $subId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
+                # Set Az context so PS cmdlets (Get-AzLogProfile, etc.) target this subscription.
+                # -Tenant pins the switch to the current tenant so that accounts with guest access
+                # to multiple tenants don't silently land on the wrong tenant context.
+                # Disable-AzContextAutosave (called before the parallel loop) ensures each runspace
+                # has an isolated in-memory context — no shared disk file race condition.
+                $null = Set-AzContext -SubscriptionId $subId -Tenant $tenantId_ -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
 
                 # Wire up shared state for adaptive concurrency and Ctrl+C cleanup
                 $script:_throttleBag  = $tBag

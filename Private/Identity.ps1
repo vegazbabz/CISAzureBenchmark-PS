@@ -17,11 +17,20 @@ function Get-SubscriptionList {
     <#
     .SYNOPSIS
     Return all subscriptions accessible to the current identity (all states).
+    Scoped to the specified tenant when provided — prevents cross-tenant subscription
+    leakage when the account is a guest in multiple tenants (Get-AzSubscription without
+    -TenantId can return subscriptions from all accessible tenants).
     Returns array of {id, name, state} objects.
     Callers are responsible for state-filtering so they can emit useful diagnostics.
     #>
+    param([string]$TenantId = "")
     try {
-        return @(Get-AzSubscription -WarningAction SilentlyContinue | ForEach-Object {
+        $subs = if ($TenantId) {
+            Get-AzSubscription -TenantId $TenantId -WarningAction SilentlyContinue
+        } else {
+            Get-AzSubscription -WarningAction SilentlyContinue
+        }
+        return @($subs | ForEach-Object {
             [PSCustomObject]@{ id = $_.Id; name = $_.Name; state = $_.State }
         })
     } catch {
