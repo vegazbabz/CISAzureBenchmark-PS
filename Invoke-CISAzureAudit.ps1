@@ -203,6 +203,16 @@ Write-Host ""
 Write-Host "`u{1F512} CIS Azure Foundations Benchmark v$($script:BENCHMARK_VER) — Audit Tool v$($script:CIS_VERSION)" -ForegroundColor Cyan
 Write-Host ""
 
+# ── Require explicit audit scope (fail fast, before any network calls) ────────
+
+if (-not $ReportOnly -and -not $PSBoundParameters.ContainsKey('TenantId') -and $Subscriptions.Count -eq 0) {
+    Write-Host "  [ERROR] Specify -TenantId or -Subscriptions to define the audit scope." -ForegroundColor Red
+    Write-Host "          -TenantId <id>              audit all enabled subscriptions in the given tenant" -ForegroundColor Yellow
+    Write-Host "          -Subscriptions <id|name>    audit one or more specific subscriptions by ID or name" -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
+}
+
 # ── Verify Az PowerShell module is available ─────────────────────────────────
 
 $azAccountsModule = Get-Module -ListAvailable Az.Accounts | Sort-Object Version -Descending | Select-Object -First 1
@@ -322,17 +332,6 @@ if ($ReportOnly) {
         exit 2
     }
     exit 0
-}
-
-# ── Require explicit audit scope ─────────────────────────────────────────────
-
-if (-not $PSBoundParameters.ContainsKey('TenantId') -and $Subscriptions.Count -eq 0) {
-    Write-Host ""
-    Write-Host "  [ERROR] Specify -TenantId or -Subscriptions to define the audit scope." -ForegroundColor Red
-    Write-Host "          -TenantId <id>              audit all enabled subscriptions in the given tenant" -ForegroundColor Yellow
-    Write-Host "          -Subscriptions <id|name>    audit one or more specific subscriptions by ID or name" -ForegroundColor Yellow
-    Write-Host ""
-    exit 1
 }
 
 # ── Ensure Az.ResourceGraph module is available ──────────────────────────────
