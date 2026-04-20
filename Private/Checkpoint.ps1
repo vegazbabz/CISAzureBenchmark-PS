@@ -154,6 +154,14 @@ function Get-AuditCheckpoints {
 
             if ($data.status -ne "completed") { continue }
 
+            # Discard checkpoints written by a different version of the tool.
+            # Control titles, remediation text, and detail strings change between
+            # versions. Loading stale data produces misleading report output.
+            if ([string]$data.tool_version -ne $script:CIS_VERSION) {
+                Write-AuditLog "Checkpoint $($file.Name) was written by v$($data.tool_version) (current: v$($script:CIS_VERSION)) — re-running." -Level WARNING
+                continue
+            }
+
             $results = @($data.results | ForEach-Object {
                 New-CISResult `
                     -ControlId        ([string]$_.control_id) `
