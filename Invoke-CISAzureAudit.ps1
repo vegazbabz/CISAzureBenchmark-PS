@@ -663,11 +663,11 @@ if ($subsToProcess.Count -gt 0) {
 
         Write-AuditLog "Running parallel audit ($currentParallel concurrent workers)..." -Level INFO
 
-        # Disable Az context autosave so parallel runspaces don't compete over the
-        # shared on-disk context file (~/.Azure/AzureRmContext.json). Without this,
-        # Set-AzContext in one runspace can overwrite another's context, causing
-        # Az cmdlets (Get-AzStorageAccount, Get-AzStorageBlobServiceProperty, etc.)
-        # to target the wrong subscription and return 'NotFound' errors.
+        # Disable Az context autosave at the process level so the shared on-disk
+        # context file (~/.Azure/AzureRmContext.json) is not written between runspaces.
+        # Each parallel runspace also calls Disable-AzContextAutosave for itself so
+        # that module re-initialisation inside the runspace cannot re-enable autosave
+        # and cause in-memory context sharing between workers.
         $null = Disable-AzContextAutosave -Scope Process
 
         $batchIdx = 0
@@ -703,11 +703,17 @@ if ($subsToProcess.Count -gt 0) {
                 )
                 foreach ($f in $files) { . (Join-Path $modRoot $f) }
 
-                # Set Az context so PS cmdlets (Get-AzLogProfile, etc.) target this subscription.
-                # -Tenant pins the switch to the current tenant so that accounts with guest access
+                # Disable Az context autosave in THIS runspace before setting the context.
+                # The parent-runspace call alone is not sufficient: when Az.Accounts is first
+                # used in a new runspace it re-initialises its module state (resetting the
+                # autosave mode to the default). Without this per-runspace call, all parallel
+                # workers share the same in-memory context object and Set-AzContext in one
+                # worker silently overwrites the context for all others.
+                $null = Disable-AzContextAutosave -Scope Process
+
+                # Set Az context so PS cmdlets target this subscription.
+                # -Tenant pins the switch to the current tenant so accounts with guest access
                 # to multiple tenants don't silently land on the wrong tenant context.
-                # Disable-AzContextAutosave (called before the parallel loop) ensures each runspace
-                # has an isolated in-memory context — no shared disk file race condition.
                 $null = Set-AzContext -SubscriptionId $subId -Tenant $tenantId_ -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
 
                 # Wire up shared state for adaptive concurrency and Ctrl+C cleanup
