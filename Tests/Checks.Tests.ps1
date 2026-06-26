@@ -271,6 +271,83 @@ Describe "New-InfoResult" {
 }
 
 # =============================================================================
+# RETRY / THROTTLE (AzureClient)
+# =============================================================================
+
+Describe "Test-TransientError" {
+    It "matches throttling and 5xx phrasings" {
+        Test-TransientError "Response status code does not indicate success: 429 (Too Many Requests)" | Should -BeTrue
+        Test-TransientError "TooManyRequests"            | Should -BeTrue
+        Test-TransientError "Transient HTTP status (503)" | Should -BeTrue
+        Test-TransientError "request was throttled"      | Should -BeTrue
+        Test-TransientError "InternalServerError"        | Should -BeTrue
+        Test-TransientError "connection was reset"       | Should -BeTrue
+    }
+    It "does not match ordinary errors" {
+        Test-TransientError "AuthorizationFailed: caller does not have permission" | Should -BeFalse
+        Test-TransientError "Resource not found (404)" | Should -BeFalse
+        Test-TransientError "Found 500 storage accounts" | Should -BeFalse
+    }
+}
+
+Describe "Invoke-WithRetry" {
+    BeforeEach {
+        Mock Start-Sleep {}
+        $script:_throttleBag = $null
+    }
+
+    It "returns the value on first success without retrying" {
+        $script:wrCalls = 0
+        $result = Invoke-WithRetry -ScriptBlock { $script:wrCalls++; "ok" }
+        $result | Should -Be "ok"
+        $script:wrCalls | Should -Be 1
+    }
+
+    It "succeeds after N transient failures" {
+        $script:wrCalls = 0
+        $result = Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            if ($script:wrCalls -lt 3) { throw "Transient HTTP status (429)" }
+            "recovered"
+        }
+        $result | Should -Be "recovered"
+        $script:wrCalls | Should -Be 3
+    }
+
+    It "gives up after MaxRetries transient failures" {
+        $script:wrCalls = 0
+        { Invoke-WithRetry -MaxRetries 2 -ScriptBlock {
+            $script:wrCalls++
+            throw "Too Many Requests"
+        } } | Should -Throw
+        # 1 initial attempt + 2 retries = 3 invocations
+        $script:wrCalls | Should -Be 3
+    }
+
+    It "does not retry non-transient errors" {
+        $script:wrCalls = 0
+        { Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            throw "AuthorizationFailed"
+        } } | Should -Throw
+        $script:wrCalls | Should -Be 1
+    }
+
+    It "feeds the throttle bag once per transient retry" {
+        $script:_throttleBag = [System.Collections.Concurrent.ConcurrentBag[int]]::new()
+        $script:wrCalls = 0
+        Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            if ($script:wrCalls -lt 3) { throw "Transient HTTP status (503)" }
+            "done"
+        } | Out-Null
+        # 2 transient retries before success
+        $script:_throttleBag.Count | Should -Be 2
+        $script:_throttleBag = $null
+    }
+}
+
+# =============================================================================
 # SECTION 2 — DATABRICKS
 # =============================================================================
 
