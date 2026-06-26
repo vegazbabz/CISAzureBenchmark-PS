@@ -107,25 +107,9 @@ if ($_ExtraSubscriptions.Count -gt 0) {
 
 $moduleRoot = $PSScriptRoot
 
-foreach ($__f in @(
-    "Private\Config.ps1",
-    "Private\Models.ps1",
-    "Private\AzureClient.ps1",
-    "Private\Helpers.ps1",
-    "Private\CheckHelpers.ps1",
-    "Private\Identity.ps1",
-    "Private\Checkpoint.ps1",
-    "Private\History.ps1",
-    "Private\Report.ps1",
-    "Private\Suppressions.ps1",
-    "Checks\Section2.ps1",
-    "Checks\Section3.ps1",
-    "Checks\Section5.ps1",
-    "Checks\Section6.ps1",
-    "Checks\Section7.ps1",
-    "Checks\Section8.ps1",
-    "Checks\Section9.ps1"
-)) {
+. (Join-Path $moduleRoot "Private\ModuleManifest.ps1")
+
+foreach ($__f in $script:ModuleFiles) {
     $__full = Join-Path $moduleRoot $__f
     if (-not (Test-Path $__full)) { throw "Missing module file: $__full" }
     . $__full
@@ -692,15 +676,11 @@ if ($subsToProcess.Count -gt 0) {
 
                 Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
 
-                # Re-import all module files in the parallel runspace
-                $files = @(
-                    "Private\Config.ps1","Private\Models.ps1","Private\AzureClient.ps1",
-                    "Private\Helpers.ps1","Private\CheckHelpers.ps1","Private\Identity.ps1",
-                    "Private\Checkpoint.ps1","Private\History.ps1","Private\Report.ps1",
-                    "Checks\Section2.ps1","Checks\Section5.ps1","Checks\Section6.ps1",
-                    "Checks\Section7.ps1","Checks\Section8.ps1","Checks\Section9.ps1"
-                )
-                foreach ($f in $files) { . (Join-Path $modRoot $f) }
+                # Re-import all module files in the parallel runspace from the
+                # single shared manifest (Private\ModuleManifest.ps1) so this list
+                # can never drift from the top-level loader.
+                . (Join-Path $modRoot "Private\ModuleManifest.ps1")
+                foreach ($f in $script:ModuleFiles) { . (Join-Path $modRoot $f) }
 
                 # Disable Az context autosave in THIS runspace before setting the context.
                 # The parent-runspace call alone is not sufficient: when Az.Accounts is first

@@ -17,25 +17,8 @@ param()
 BeforeAll {
     # Dot-source all module files so check functions are available in test scope
     $moduleRoot = Split-Path $PSScriptRoot -Parent
-    foreach ($f in @(
-        "Private\Config.ps1",
-        "Private\Models.ps1",
-        "Private\AzureClient.ps1",
-        "Private\Helpers.ps1",
-        "Private\CheckHelpers.ps1",
-        "Private\Identity.ps1",
-        "Private\Checkpoint.ps1",
-        "Private\History.ps1",
-        "Private\Report.ps1",
-        "Private\Suppressions.ps1",
-        "Checks\Section2.ps1",
-        "Checks\Section3.ps1",
-        "Checks\Section5.ps1",
-        "Checks\Section6.ps1",
-        "Checks\Section7.ps1",
-        "Checks\Section8.ps1",
-        "Checks\Section9.ps1"
-    )) {
+    . (Join-Path $moduleRoot "Private\ModuleManifest.ps1")
+    foreach ($f in $script:ModuleFiles) {
         . (Join-Path $moduleRoot $f)
     }
 
@@ -344,6 +327,32 @@ Describe "Invoke-WithRetry" {
         # 2 transient retries before success
         $script:_throttleBag.Count | Should -Be 2
         $script:_throttleBag = $null
+    }
+}
+
+# =============================================================================
+# MODULE MANIFEST CONSISTENCY
+# =============================================================================
+
+Describe "Module manifest (Private\ModuleManifest.ps1)" {
+    BeforeAll {
+        $script:repoRoot = Split-Path $PSScriptRoot -Parent
+        . (Join-Path $script:repoRoot "Private\ModuleManifest.ps1")
+    }
+
+    It "lists every Private\*.ps1 and Checks\*.ps1 on disk (except the manifest itself)" {
+        $onDisk = Get-ChildItem -Path (Join-Path $script:repoRoot 'Private'), (Join-Path $script:repoRoot 'Checks') -Filter *.ps1 |
+            Where-Object { $_.Name -ne 'ModuleManifest.ps1' } |
+            ForEach-Object { (Resolve-Path $_.FullName).Path }
+        $listed = $script:ModuleFiles | ForEach-Object { (Resolve-Path (Join-Path $script:repoRoot $_)).Path }
+        $missing = @($onDisk | Where-Object { $_ -notin $listed })
+        $missing | Should -BeNullOrEmpty -Because "every module file must be in the shared manifest so parallel workers load it"
+    }
+
+    It "references only files that exist" {
+        foreach ($f in $script:ModuleFiles) {
+            Test-Path (Join-Path $script:repoRoot $f) | Should -BeTrue -Because "$f is listed in the manifest"
+        }
     }
 }
 
