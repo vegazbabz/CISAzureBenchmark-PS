@@ -165,6 +165,7 @@ Private/
   History.ps1                 Run history tracking
   Identity.ps1                Subscription enumeration, permission checks
   Models.ps1                  New-CISResult / New-ErrorResult / New-InfoResult
+  ModuleManifest.ps1          Single source of truth for the dot-source load order
   Report.ps1                  HTML report generation
 Checks/
   Section2.ps1                Databricks checks (5 controls)
