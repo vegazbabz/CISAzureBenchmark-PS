@@ -2718,9 +2718,6 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
         ($results | Where-Object { $_.ControlId -eq "9.2.1" }).Status | Should -Be "PASS"
         ($results | Where-Object { $_.ControlId -eq "9.2.2" }).Status | Should -Be "PASS"
         ($results | Where-Object { $_.ControlId -eq "9.2.3" }).Status | Should -Be "PASS"
-        ($results | Where-Object { $_.ControlId -eq "9.2.4" }).Status | Should -Be "PASS"
-        ($results | Where-Object { $_.ControlId -eq "9.2.5" }).Status | Should -Be "PASS"
-        ($results | Where-Object { $_.ControlId -eq "9.2.6" }).Status | Should -Be "PASS"
     }
 
     It "returns FAIL when blob soft delete disabled" {
@@ -2739,7 +2736,6 @@ Describe "Invoke-Section9Checks — 9.2.x Blob Service" {
         ($results | Where-Object { $_.ControlId -eq "9.2.1" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.2.2" }).Status | Should -Be "FAIL"
         ($results | Where-Object { $_.ControlId -eq "9.2.3" }).Status | Should -Be "FAIL"
-        ($results | Where-Object { $_.ControlId -eq "9.2.4" }).Status | Should -Be "FAIL"
     }
 }
 

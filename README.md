@@ -174,7 +174,7 @@ Checks/
   Section6.ps1                Logging & monitoring checks (17 controls)
   Section7.ps1                Networking checks (13 controls)
   Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (24 controls — 101 total)
+  Section9.ps1                Storage checks (21 controls — 98 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner

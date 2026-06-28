@@ -39,9 +39,6 @@ function Invoke-Section9Checks {
             ,@("9.2.1","Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled",1)
             ,@("9.2.2","Ensure That Container Soft Delete Is Set to 'Enabled'",1)
             ,@("9.2.3","Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts",2)
-            ,@("9.2.4","Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests",2)
-            ,@("9.2.5","Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests",2)
-            ,@("9.2.6","Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests",2)
             ,@("9.3.7","Ensure That 'Cross Tenant Replication' Is Not Enabled for Storage Accounts",1)
             ,@("9.3.1.3","Ensure That 'Shared Key Access' Is Disabled for Storage Accounts",2)
             ,@("9.3.3.1","Ensure That 'Default to Microsoft Entra ID Authorization' Is Set to 'Enabled'",2)
@@ -239,75 +236,30 @@ function Invoke-Section9Checks {
                     -Remediation $(if (-not $versionOn) { "Storage account > $acctName > Data management > Data protection > Enable blob versioning" } else { "" }) `
                     -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
 
-                # 9.2.4/5/6 — Blob logging (Read/Write/Delete)
-                $bpLog     = if ($bp.PSObject.Properties['Logging'] -and $null -ne $bp.Logging) { $bp.Logging } else { $null }
-                $logRead   = [bool]($null -ne $bpLog -and $bpLog.PSObject.Properties['Read']   -and $bpLog.Read)
-                $logWrite  = [bool]($null -ne $bpLog -and $bpLog.PSObject.Properties['Write']  -and $bpLog.Write)
-                $logDelete = [bool]($null -ne $bpLog -and $bpLog.PSObject.Properties['Delete'] -and $bpLog.Delete)
-
-                $results.Add((New-CISResult `
-                    -ControlId "9.2.4" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" `
-                    -Level 2 -Section $sec `
-                    -Status $(if ($logRead) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Blob logging read: $logRead" `
-                    -Remediation $(if (-not $logRead) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Read logging" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                $results.Add((New-CISResult `
-                    -ControlId "9.2.5" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" `
-                    -Level 2 -Section $sec `
-                    -Status $(if ($logWrite) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Blob logging write: $logWrite" `
-                    -Remediation $(if (-not $logWrite) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Write logging" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
-                $results.Add((New-CISResult `
-                    -ControlId "9.2.6" -Title "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" `
-                    -Level 2 -Section $sec `
-                    -Status $(if ($logDelete) { $script:PASS } else { $script:FAIL }) `
-                    -Details "Blob logging delete: $logDelete" `
-                    -Remediation $(if (-not $logDelete) { "Storage account > $acctName > Monitoring > Diagnostic settings > Enable Delete logging" } else { "" }) `
-                    -SubscriptionId $sid -SubscriptionName $sname -Resource $acctName))
-
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-NotApplicableError $errMsg) {
                     $results.Add((New-InfoResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
                     $results.Add((New-InfoResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec "Blob service not supported for this account type." $sid $sname $acctName))
                     $results.Add((New-InfoResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec "Blob service not supported." $sid $sname $acctName))
-                    $results.Add((New-InfoResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec "Blob service not supported." $sid $sname $acctName))
                 } elseif (Test-AuthzError $errMsg) {
                     $results.Add((New-ErrorResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec "Insufficient permissions to read blob service properties." $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec "Insufficient permissions." $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec "Insufficient permissions." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec "Insufficient permissions." $sid $sname $acctName))
                 } elseif (Test-FirewallError $errMsg) {
                     $results.Add((New-ErrorResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec "Storage account firewall or network configuration is blocking access. Verify that the storage account is accessible from the audit machine." $sid $sname $acctName))
                 } else {
                     $results.Add((New-ErrorResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec $errMsg $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec $errMsg $sid $sname $acctName))
                     $results.Add((New-ErrorResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec $errMsg $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec $errMsg $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec $errMsg $sid $sname $acctName))
-                    $results.Add((New-ErrorResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec $errMsg $sid $sname $acctName))
                 }
             }
         } else {
             $results.Add((New-InfoResult "9.2.1" "Ensure that soft delete for blobs on Azure Blob Storage storage accounts is Enabled" 1 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
             $results.Add((New-InfoResult "9.2.2" "Ensure That Container Soft Delete Is Set to 'Enabled'" 1 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
             $results.Add((New-InfoResult "9.2.3" "Ensure 'Versioning' is set to 'Enabled' on Azure Blob Storage storage accounts" 2 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
-            $results.Add((New-InfoResult "9.2.4" "Ensure Storage Logging Is Enabled for Blob Service for 'Read' Requests" 2 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
-            $results.Add((New-InfoResult "9.2.5" "Ensure Storage Logging Is Enabled for Blob Service for 'Write' Requests" 2 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
-            $results.Add((New-InfoResult "9.2.6" "Ensure Storage Logging Is Enabled for Blob Service for 'Delete' Requests" 2 $sec "ADLS Gen2 — blob service properties API not applicable." $sid $sname $acctName))
         }
 
         # ── Group 3: File service soft delete ─────────────────────────────────
