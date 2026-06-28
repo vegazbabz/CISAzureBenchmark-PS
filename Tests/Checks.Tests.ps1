@@ -65,6 +65,32 @@ BeforeAll {
             destinationPortRanges   = @()
         }
     }
+
+    # ── Hermetic default mocks ────────────────────────────────────────────────
+    # Every real Az cmdlet (and the AzureClient REST wrappers) a check function
+    # can invoke is mocked here with a benign empty return. Without these, a check
+    # path not explicitly mocked by a test (e.g. Section2's 2.1.2 block still runs
+    # the 2.1.7 Get-AzDiagnosticSetting call) makes a live API call. On a CI runner
+    # with no Az context that call hangs and aborts the whole run; it only "passes"
+    # on a dev machine that happens to be logged in. These root-level mocks keep the
+    # suite offline; per-Describe/It Mock calls override them where output matters.
+    Mock Get-AzDiagnosticSetting        { @() }
+    Mock Get-AzLogProfile               { @() }
+    Mock Get-AzActivityLogAlert         { @() }
+    Mock Get-AzNetworkWatcherFlowLog    { @() }
+    Mock Get-AzRoleDefinition           { @() }
+    Mock Get-AzStorageAccount           { @() }
+    Mock Get-AzStorageBlobServiceProperty { $null }
+    Mock Get-AzStorageFileServiceProperty { $null }
+    Mock Get-AzResourceLock             { @() }
+    Mock Get-AzSecurityPricing          { $null }
+    Mock Get-AzKeyVaultKey              { @() }
+    Mock Get-AzKeyVaultSecret           { @() }
+    Mock Get-AzKeyVaultCertificate      { @() }
+    Mock Get-AzKeyVaultKeyRotationPolicy { $null }
+    Mock Invoke-ArmRest                 { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
+    Mock Invoke-AzRestPaged             { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
+    Mock Invoke-AzGraphQuery            { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
 }
 
 # =============================================================================
