@@ -171,10 +171,10 @@ Checks/
   Section2.ps1                Databricks checks (5 controls)
   Section3.ps1                Compute checks (1 manual control)
   Section5.ps1                Identity & access checks (15 controls)
-  Section6.ps1                Logging & monitoring checks (17 controls)
+  Section6.ps1                Logging & monitoring checks (24 controls)
   Section7.ps1                Networking checks (13 controls)
   Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (21 controls — 102 total)
+  Section9.ps1                Storage checks (21 controls — 109 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -471,21 +471,19 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 5.23 | No custom subscription administrator roles | L1 | |
 | 5.27 | Between 2 and 3 subscription owners | L1 | |
 
-### Section 6 — Logging & Monitoring (17 automated)
+### Section 6 — Logging & Monitoring (15 automated · 9 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 6.1.1.1 | Diagnostic Setting exists for Subscription Activity Logs | L1 |
-| 6.1.1.2 | Diagnostic Setting captures required categories | L1 |
-| 6.1.1.3 | Activity log retention >= 365 days | L1 |
-
-> **6.1.1.3 storage destinations:** When subscription diagnostic settings route activity logs to a
-> Storage Account, the check now inspects the retention policy on the Administrative log category.
-> A setting with `retentionPolicy.enabled = false` (indefinite) passes; `enabled = true` with
-> `days < 365` fails. Log Analytics workspace and Event Hub destinations always pass this check
-> (retention is configured on the destination resource itself).
-| 6.1.1.4 | Key Vault diagnostic logging enabled | L1 |
-| 6.1.1.6 | Azure AppService HTTP logs enabled | L2 |
+| 6.1.1.2 | Diagnostic Setting captures appropriate categories | L1 |
+| 6.1.1.3 | Storage Account with activity-logs container encrypted with CMK (manual) | L2 |
+| 6.1.1.4 | Logging for Azure Key Vault enabled | L1 |
+| 6.1.1.5 | NSG Flow Logs captured and sent to Log Analytics (manual) | L2 |
+| 6.1.1.6 | Virtual Network Flow Logs captured and sent to Log Analytics (manual) | L2 |
+| 6.1.1.7 | Entra Diagnostic Setting for Microsoft Graph Activity Logs (manual) | L2 |
+| 6.1.1.8 | Entra Diagnostic Setting for Microsoft Entra Activity Logs (manual) | L2 |
+| 6.1.1.9 | Intune Logs captured and sent to Log Analytics (manual) | L2 |
 | 6.1.2.1 | Activity Log Alert: Create Policy Assignment | L1 |
 | 6.1.2.2 | Activity Log Alert: Delete Policy Assignment | L1 |
 | 6.1.2.3 | Activity Log Alert: Create or Update NSG | L1 |
@@ -498,6 +496,9 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 6.1.2.10 | Activity Log Alert: Delete Public IP | L1 |
 | 6.1.2.11 | Activity Log Alert: Service Health | L1 |
 | 6.1.3.1 | Application Insights configured | L2 |
+| 6.1.4 | Azure Monitor resource logging enabled for all supported services (manual) | L1 |
+| 6.1.5 | Basic/Free/Consumption SKUs not used on production artifacts (manual) | L2 |
+| 6.2 | Resource Locks set for mission-critical resources (manual) | L2 |
 
 ### Section 7 — Networking Services (13 automated)
 

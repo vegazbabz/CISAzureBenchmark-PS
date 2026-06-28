@@ -560,9 +560,9 @@ if (-not $SkipTenantChecks) {
         Write-AuditLog "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCheckpoint.Count) results)." -Level INFO
         foreach ($r in $tenantCheckpoint) { $allResults.Add($r) }
     } else {
-        Write-AuditLog "Running tenant-level checks (Section 3, Section 5)..." -Level INFO
+        Write-AuditLog "Running tenant-level checks (Section 3, Section 5, Section 6)..." -Level INFO
         try {
-            $tenantResults = @(Invoke-Section3TenantChecks) + @(Invoke-Section5TenantChecks)
+            $tenantResults = @(Invoke-Section3TenantChecks) + @(Invoke-Section5TenantChecks) + @(Invoke-Section6TenantChecks)
             foreach ($r in $tenantResults) { $allResults.Add($r) }
             if (-not $NoCheckpoint) { Save-TenantCheckpoint -Results $tenantResults }
             Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
