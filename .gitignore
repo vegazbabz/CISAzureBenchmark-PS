@@ -19,6 +19,7 @@ smoketest.ps1
 # Local notes / AI session files
 *improvements.txt
 REVIEW_TODO.md
+ARCHITECT_REVIEW.md
 
 # Editor / OS
 .vscode/
