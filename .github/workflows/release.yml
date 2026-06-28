@@ -67,7 +67,7 @@ jobs:
           body: |
             ## CISAzureBenchmark-PS ${{ github.ref_name }}
 
-            **Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0
+            **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0
             **Coverage:** See [README](https://github.com/${{ github.repository }}/blob/main/README.md) for current control coverage
 
             ### Requirements

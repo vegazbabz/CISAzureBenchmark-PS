@@ -1,5 +1,5 @@
 # Section 6 — Monitoring & Management
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section6Checks {
     [CmdletBinding()]
@@ -132,7 +132,7 @@ function Invoke-Section6Checks {
         $results.Add((New-ErrorResult "6.1.1.4" "Ensure that Logging for Azure Key Vault is 'Enabled'" 1 $sec $_.Exception.Message $sid $sname))
     }
 
-    # ── 6.1.2.x — Activity log alerts (CIS v5.0.0 controls 1–11) ────────────
+    # ── 6.1.2.x — Activity log alerts (CIS v6.0.0 controls 6.1.2.1–11) ────────────
     # IDs and operations aligned with Python implementation / CIS benchmark PDF.
     # 6.1.2.1–10: operationName field matching.
     # 6.1.2.11: category field (ServiceHealth) — different check logic.

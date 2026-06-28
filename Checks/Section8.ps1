@@ -1,5 +1,5 @@
 # Section 8 — Security Services
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section8Checks {
     [CmdletBinding()]

@@ -5,7 +5,7 @@
     CIS Microsoft Azure Foundations Benchmark Audit Tool — PowerShell Edition
 
 .DESCRIPTION
-    Audits Azure subscriptions against the CIS Microsoft Azure Foundations Benchmark v5.0.0.
+    Audits Azure subscriptions against the CIS Microsoft Azure Foundations Benchmark v6.0.0.
     Produces an HTML report with per-control PASS/FAIL/ERROR/INFO/MANUAL results.
 
     Requires:

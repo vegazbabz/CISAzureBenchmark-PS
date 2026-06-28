@@ -1,7 +1,7 @@
-# CIS Microsoft Azure Foundations Benchmark v5.0.0 — Audit Tool (PowerShell)
+# CIS Microsoft Azure Foundations Benchmark v6.0.0 — Audit Tool (PowerShell)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-v5.0.0-orange.svg)](https://www.cisecurity.org/benchmark/azure)
+[![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-v6.0.0-blue.svg)](https://www.cisecurity.org/benchmark/azure)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0%2B-blue.svg)](https://learn.microsoft.com/en-us/powershell/)
 [![CI](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml/badge.svg)](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml)
 
@@ -10,14 +10,14 @@
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
 **Version:** 1.0.0
-**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
+**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
 
 ---
 
 ## Overview
 
-A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
+A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
 
 All audit checks use the Az PowerShell module — no Azure CLI required.
 The optional permission preflight uses `Get-AzRoleAssignment` in parallel runspaces to verify
@@ -751,7 +751,7 @@ at your own risk. See [LICENSE](LICENSE) for the full MIT disclaimer.
 ## Attribution
 
 This is an independent community implementation referencing the publicly available
-**[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)**.
+**[CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure)**.
 CIS Benchmarks are the property of the Center for Internet Security (<https://www.cisecurity.org>),
 used under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 This tool is not affiliated with, endorsed by, or approved by CIS.
@@ -761,5 +761,5 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 [MIT](LICENSE)
 
 **Version:** 1.0.0
-**Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
+**Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
