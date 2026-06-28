@@ -5,7 +5,7 @@
     CIS Microsoft Azure Foundations Benchmark Audit Tool — PowerShell Edition
 
 .DESCRIPTION
-    Audits Azure subscriptions against the CIS Microsoft Azure Foundations Benchmark v5.0.0.
+    Audits Azure subscriptions against the CIS Microsoft Azure Foundations Benchmark v6.0.0.
     Produces an HTML report with per-control PASS/FAIL/ERROR/INFO/MANUAL results.
 
     Requires:
@@ -560,9 +560,9 @@ if (-not $SkipTenantChecks) {
         Write-AuditLog "   `u{1F4BE} Loaded tenant checks from checkpoint ($($tenantCheckpoint.Count) results)." -Level INFO
         foreach ($r in $tenantCheckpoint) { $allResults.Add($r) }
     } else {
-        Write-AuditLog "Running tenant-level checks (Section 3, Section 5)..." -Level INFO
+        Write-AuditLog "Running tenant-level checks (Sections 2, 3, 5, 6, 7, 8)..." -Level INFO
         try {
-            $tenantResults = @(Invoke-Section3TenantChecks) + @(Invoke-Section5TenantChecks)
+            $tenantResults = @(Invoke-Section2TenantChecks) + @(Invoke-Section3TenantChecks) + @(Invoke-Section5TenantChecks) + @(Invoke-Section6TenantChecks) + @(Invoke-Section7TenantChecks) + @(Invoke-Section8TenantChecks)
             foreach ($r in $tenantResults) { $allResults.Add($r) }
             if (-not $NoCheckpoint) { Save-TenantCheckpoint -Results $tenantResults }
             Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO

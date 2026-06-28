@@ -1,5 +1,5 @@
 # Section 6 — Monitoring & Management
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section6Checks {
     [CmdletBinding()]
@@ -33,7 +33,7 @@ function Invoke-Section6Checks {
 
         $results.Add((New-CISResult `
             -ControlId "6.1.1.1" `
-            -Title "Ensure That a Diagnostic Setting Exists for the Subscription" `
+            -Title "Ensure that a 'Diagnostic Setting' Exists for Subscription Activity Logs" `
             -Level 1 -Section $sec `
             -Status $(if ($hasDiag) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($hasDiag) { "Found $($settings.Count) subscription-level diagnostic setting(s)." } else { "No subscription-level diagnostic settings found." }) `
@@ -65,7 +65,7 @@ function Invoke-Section6Checks {
             if ($settings.Count -eq 0) {
                 $results.Add((New-CISResult `
                     -ControlId "6.1.1.2" `
-                    -Title "Ensure Diagnostic Setting Captures Required Log Categories" `
+                    -Title "Ensure Diagnostic Setting Captures Appropriate Categories" `
                     -Level 1 -Section $sec -Status $script:FAIL `
                     -Details "No subscription diagnostic settings — cannot evaluate categories." `
                     -Remediation "Enable a diagnostic setting and configure all four categories: Security, Administrative, Alert, Policy." `
@@ -73,138 +73,25 @@ function Invoke-Section6Checks {
             } elseif ($missingCats.Count -eq 0) {
                 $results.Add((New-CISResult `
                     -ControlId "6.1.1.2" `
-                    -Title "Ensure Diagnostic Setting Captures Required Log Categories" `
+                    -Title "Ensure Diagnostic Setting Captures Appropriate Categories" `
                     -Level 1 -Section $sec -Status $script:PASS `
                     -Details "All required categories enabled: Security, Administrative, Alert, Policy." `
                     -SubscriptionId $sid -SubscriptionName $sname))
             } else {
                 $results.Add((New-CISResult `
                     -ControlId "6.1.1.2" `
-                    -Title "Ensure Diagnostic Setting Captures Required Log Categories" `
+                    -Title "Ensure Diagnostic Setting Captures Appropriate Categories" `
                     -Level 1 -Section $sec -Status $script:FAIL `
                     -Details "Missing required log categories: $($missingCats -join ', '). Found: $($foundCategories -join ', ')." `
                     -Remediation "Monitor > Activity Log > Export Activity Logs > Edit diagnostic setting > Enable: Administrative, Security, Alert, Policy" `
                     -SubscriptionId $sid -SubscriptionName $sname))
             }
         } catch {
-            $results.Add((New-ErrorResult "6.1.1.2" "Ensure Diagnostic Setting Captures Required Log Categories" 1 $sec $_.Exception.Message $sid $sname))
+            $results.Add((New-ErrorResult "6.1.1.2" "Ensure Diagnostic Setting Captures Appropriate Categories" 1 $sec $_.Exception.Message $sid $sname))
         }
     } catch {
-        $results.Add((New-ErrorResult "6.1.1.1" "Ensure That a Diagnostic Setting Exists for the Subscription" 1 $sec $_.Exception.Message $sid $sname))
-        $results.Add((New-ErrorResult "6.1.1.2" "Ensure Diagnostic Setting Captures Required Log Categories" 1 $sec $_.Exception.Message $sid $sname))
-    }
-
-    # ── 6.1.1.3 — Subscription activity log retention >= 365 days ──────────────
-    # Classic: Log Profile API. Modern (preferred since ~2022): Subscription Diagnostic Settings.
-    # Both paths must be checked — modern Azure subscriptions use diagnostic settings exclusively.
-    try {
-        $logProfiles = @(Get-AzLogProfile -ErrorAction SilentlyContinue)
-
-        if ($logProfiles.Count -gt 0) {
-            # Legacy log profile found — evaluate retention
-            $logProfile = $logProfiles | Select-Object -First 1
-            $days    = if ($logProfile.RetentionPolicy) { [int]$logProfile.RetentionPolicy.Days } else { 0 }
-            $enabled = $logProfile.RetentionPolicy -and $logProfile.RetentionPolicy.Enabled
-            $pass    = -not $enabled -or $days -ge 365
-
-            $results.Add((New-CISResult `
-                -ControlId "6.1.1.3" `
-                -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                -Level 1 -Section $sec `
-                -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-                -Details "Log Profile retention: $days days (policy enabled: $enabled)." `
-                -Remediation $(if (-not $pass) { "Monitor > Activity Log > Export > Retention >= 365 days" } else { "" }) `
-                -SubscriptionId $sid -SubscriptionName $sname))
-        } else {
-            # No log profile — check modern subscription-level diagnostic settings.
-            # Modern Azure subscriptions route activity logs via diagnostic settings, not log profiles.
-            $rDiag = Invoke-ArmRest -Uri "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
-
-            $raw = if ($rDiag.Success -and $rDiag.Data) {
-                if ($rDiag.Data.PSObject.Properties['value']) { @($rDiag.Data.value) }
-                else { @($rDiag.Data) }
-            } else { @() }
-
-            # ARM REST wraps settings fields under .properties — normalize to a flat object
-            # so all subsequent access ($_.logs, $_.workspaceId, etc.) is uniform and strict-mode-safe.
-            $diagItems = @($raw | ForEach-Object {
-                $src = if ($_.PSObject.Properties['properties'] -and $null -ne $_.properties) { $_.properties } else { $_ }
-                [PSCustomObject]@{
-                    name                        = [string]$_.name
-                    logs                        = if ($src.PSObject.Properties['logs'] -and $null -ne $src.logs) { @($src.logs) } else { @() }
-                    workspaceId                 = if ($src.PSObject.Properties['workspaceId'])                 { $src.workspaceId }                 else { $null }
-                    storageAccountId            = if ($src.PSObject.Properties['storageAccountId'])            { $src.storageAccountId }            else { $null }
-                    eventHubAuthorizationRuleId = if ($src.PSObject.Properties['eventHubAuthorizationRuleId']) { $src.eventHubAuthorizationRuleId } else { $null }
-                }
-            })
-
-            $activeSetting = $diagItems | Where-Object {
-                @($_.logs | Where-Object { $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True' }).Count -gt 0
-            } | Select-Object -First 1
-
-            if ($activeSetting) {
-                $adminLog = @($activeSetting.logs) | Where-Object {
-                    $_.category -eq 'Administrative' -and [string]$_.enabled -eq 'True'
-                } | Select-Object -First 1
-
-                if ($activeSetting.workspaceId) {
-                    $destDesc = "Log Analytics ($($activeSetting.workspaceId -replace '.*/workspaces/', ''))"
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.3" `
-                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                        -Level 1 -Section $sec -Status $script:PASS `
-                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to $destDesc. Verify destination retention >= 365 days." `
-                        -Remediation "" `
-                        -SubscriptionId $sid -SubscriptionName $sname))
-                } elseif ($activeSetting.storageAccountId) {
-                    # For storage-account destinations the retentionPolicy on the diagnostic
-                    # setting's log entry defines how long data is kept in that account.
-                    # retentionPolicy.enabled = false means indefinite (unlimited) — acceptable.
-                    # retentionPolicy.enabled = true requires days >= 365 per CIS 6.1.1.3.
-                    $retPolicy  = $adminLog.retentionPolicy
-                    $retEnabled = $retPolicy -and [bool]$retPolicy.enabled
-                    $retDays    = if ($retPolicy) { [int]$retPolicy.days } else { 0 }
-                    $retOk      = -not $retEnabled -or $retDays -ge 365
-                    $saName     = $activeSetting.storageAccountId -replace '.*/storageAccounts/', ''
-                    $retDesc    = if (-not $retEnabled) { "indefinite retention" } else { "$retDays-day retention" }
-
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.3" `
-                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                        -Level 1 -Section $sec `
-                        -Status $(if ($retOk) { $script:PASS } else { $script:FAIL }) `
-                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Storage ($saName) with $retDesc." `
-                        -Remediation $(if (-not $retOk) { "Monitor > Diagnostic settings > $($activeSetting.name) > Enable retention >= 365 days on Administrative log category" } else { "" }) `
-                        -SubscriptionId $sid -SubscriptionName $sname))
-                } elseif ($activeSetting.eventHubAuthorizationRuleId) {
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.3" `
-                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                        -Level 1 -Section $sec -Status $script:PASS `
-                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to Event Hub. Verify destination retention >= 365 days." `
-                        -Remediation "" `
-                        -SubscriptionId $sid -SubscriptionName $sname))
-                } else {
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.3" `
-                        -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                        -Level 1 -Section $sec -Status $script:PASS `
-                        -Details "Subscription diagnostic setting '$($activeSetting.name)' routes Administrative logs to an active destination. Verify destination retention >= 365 days." `
-                        -Remediation "" `
-                        -SubscriptionId $sid -SubscriptionName $sname))
-                }
-            } else {
-                $results.Add((New-CISResult `
-                    -ControlId "6.1.1.3" `
-                    -Title "Ensure the Activity Retention Log Is Set to at Least One Year" `
-                    -Level 1 -Section $sec -Status $script:FAIL `
-                    -Details "No activity log profile or subscription diagnostic setting with Administrative logs enabled found." `
-                    -Remediation "Monitor > Activity Log > Diagnostic settings > Add setting > Enable Administrative logs > Send to Log Analytics (retention >= 365 days)" `
-                    -SubscriptionId $sid -SubscriptionName $sname))
-            }
-        }
-    } catch {
-        $results.Add((New-ErrorResult "6.1.1.3" "Ensure the Activity Retention Log Is Set to at Least One Year" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "6.1.1.1" "Ensure that a 'Diagnostic Setting' Exists for Subscription Activity Logs" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "6.1.1.2" "Ensure Diagnostic Setting Captures Appropriate Categories" 1 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 6.1.1.4 — Key Vault diagnostic logging ───────────────────────────────
@@ -212,7 +99,7 @@ function Invoke-Section6Checks {
         $kvs = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "keyvaults" -SubscriptionId $sid)
 
         if ($kvs.Count -eq 0) {
-            $results.Add((New-InfoResult "6.1.1.4" "Ensure Diagnostic Logging for Key Vaults Is Enabled" 1 $sec "No Key Vaults found." $sid $sname))
+            $results.Add((New-InfoResult "6.1.1.4" "Ensure that Logging for Azure Key Vault is 'Enabled'" 1 $sec "No Key Vaults found." $sid $sname))
         } else {
             foreach ($kv in $kvs) {
                 $kvName  = [string]$kv.name
@@ -233,7 +120,7 @@ function Invoke-Section6Checks {
 
                 $results.Add((New-CISResult `
                     -ControlId "6.1.1.4" `
-                    -Title "Ensure Diagnostic Logging for Key Vaults Is Enabled" `
+                    -Title "Ensure that Logging for Azure Key Vault is 'Enabled'" `
                     -Level 1 -Section $sec `
                     -Status $(if ($hasAudit) { $script:PASS } else { $script:FAIL }) `
                     -Details $(if ($hasAudit) { "Vault '$kvName': audit/allLogs diagnostic logging enabled." } else { "Vault '$kvName': no audit logging enabled (requires 'audit' or 'allLogs' category)." }) `
@@ -242,79 +129,10 @@ function Invoke-Section6Checks {
             }
         }
     } catch {
-        $results.Add((New-ErrorResult "6.1.1.4" "Ensure Diagnostic Logging for Key Vaults Is Enabled" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "6.1.1.4" "Ensure that Logging for Azure Key Vault is 'Enabled'" 1 $sec $_.Exception.Message $sid $sname))
     }
 
-    # ── 6.1.1.6 — App Service resource logs ──────────────────────────────────
-    # Mirrors the Azure built-in policy "App Service apps should have resource
-    # logs enabled" — function apps are excluded, only standard web apps checked.
-    # Compliant if any diagnostic setting has an enabled log either routed to
-    # Log Analytics (no retention requirement) or to storage with >= 365 day
-    # retention (or infinite / retention disabled).
-    try {
-        $apps = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "app_services" -SubscriptionId $sid)
-        # Exclude function apps (CIS policy scopes to kind != functionapp)
-        $webApps = @($apps | Where-Object { [string]$_.kind -notmatch "functionapp" })
-
-        if ($apps.Count -eq 0) {
-            $results.Add((New-InfoResult "6.1.1.6" "Ensure App Service Resource Logs Are Enabled" 2 $sec "No App Services found." $sid $sname))
-        } elseif ($webApps.Count -eq 0) {
-            $results.Add((New-InfoResult "6.1.1.6" "Ensure App Service Resource Logs Are Enabled" 2 $sec "No standard App Services found ($($apps.Count) function app(s) excluded)." $sid $sname))
-        } else {
-            foreach ($app in $webApps) {
-                $appName  = [string]$app.name
-                $appId    = [string]$app.id
-                $appKind  = [string]$app.kind
-                $diagList = @(Get-AzDiagnosticSetting -ResourceId $appId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
-                $compliant = $false
-
-                foreach ($setting in $diagList) {
-                    if ($compliant) { break }
-                    $hasStorage = [bool]$setting.StorageAccountId
-                    # @() coercion handles both the current fixed-array and the upcoming List<T>
-                    # type change in Az.Monitor 7.0 (Get-AzDiagnosticSetting breaking change)
-                    foreach ($log in @($setting.Log)) {
-                        if (-not $log.Enabled) { continue }
-                        $retEnabled = $log.RetentionPolicyEnabled
-                        $retDays    = [int]$log.RetentionPolicyDay
-
-                        # Branch A: retention enforced, infinite (0) or >= 365 days
-                        if ($retEnabled -and ($retDays -eq 0 -or $retDays -ge 365)) { $compliant = $true; break }
-                        # Branch B: no storage account → Log Analytics, no retention needed
-                        if (-not $hasStorage) { $compliant = $true; break }
-                        # Branch B variant: retention policy not enforced
-                        if (-not $retEnabled) { $compliant = $true; break }
-                    }
-                }
-
-                if ($compliant) {
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.6" -Title "Ensure App Service Resource Logs Are Enabled" `
-                        -Level 2 -Section $sec -Status $script:PASS `
-                        -Details "App '$appName' (kind: $appKind): compliant diagnostic setting found." `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $appName))
-                } elseif ($diagList.Count -gt 0) {
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.6" -Title "Ensure App Service Resource Logs Are Enabled" `
-                        -Level 2 -Section $sec -Status $script:FAIL `
-                        -Details "App '$appName': diagnostic settings exist but no log meets the retention requirement (>= 365 days or Log Analytics destination)." `
-                        -Remediation "App Service > $appName > Monitoring > Diagnostic settings > Send logs to Log Analytics, or set storage retention >= 365 days." `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $appName))
-                } else {
-                    $results.Add((New-CISResult `
-                        -ControlId "6.1.1.6" -Title "Ensure App Service Resource Logs Are Enabled" `
-                        -Level 2 -Section $sec -Status $script:FAIL `
-                        -Details "App '$appName': no diagnostic settings configured." `
-                        -Remediation "App Service > $appName > Monitoring > Diagnostic settings > Add diagnostic setting > Enable resource logs to Log Analytics." `
-                        -SubscriptionId $sid -SubscriptionName $sname -Resource $appName))
-                }
-            }
-        }
-    } catch {
-        $results.Add((New-ErrorResult "6.1.1.6" "Ensure App Service Resource Logs Are Enabled" 2 $sec $_.Exception.Message $sid $sname))
-    }
-
-    # ── 6.1.2.x — Activity log alerts (CIS v5.0.0 controls 1–11) ────────────
+    # ── 6.1.2.x — Activity log alerts (CIS v6.0.0 controls 6.1.2.1–11) ────────────
     # IDs and operations aligned with Python implementation / CIS benchmark PDF.
     # 6.1.2.1–10: operationName field matching.
     # 6.1.2.11: category field (ServiceHealth) — different check logic.
@@ -322,16 +140,16 @@ function Invoke-Section6Checks {
         $alerts = @(Get-AzActivityLogAlert -ErrorAction SilentlyContinue)
 
         $alertChecks = @(
-            @{ Id="6.1.2.1";  Op="microsoft.authorization/policyassignments/write";           Title="Ensure Activity Log Alert: Create Policy Assignment" }
-            @{ Id="6.1.2.2";  Op="microsoft.authorization/policyassignments/delete";          Title="Ensure Activity Log Alert: Delete Policy Assignment" }
-            @{ Id="6.1.2.3";  Op="microsoft.network/networksecuritygroups/write";             Title="Ensure Activity Log Alert: Create/Update NSG" }
-            @{ Id="6.1.2.4";  Op="microsoft.network/networksecuritygroups/delete";            Title="Ensure Activity Log Alert: Delete NSG" }
-            @{ Id="6.1.2.5";  Op="microsoft.security/securitysolutions/write";               Title="Ensure Activity Log Alert: Create/Update Security Solution" }
-            @{ Id="6.1.2.6";  Op="microsoft.security/securitysolutions/delete";              Title="Ensure Activity Log Alert: Delete Security Solution" }
-            @{ Id="6.1.2.7";  Op="microsoft.sql/servers/firewallrules/write";                Title="Ensure Activity Log Alert: Create/Update SQL Server Firewall Rule" }
-            @{ Id="6.1.2.8";  Op="microsoft.sql/servers/firewallrules/delete";               Title="Ensure Activity Log Alert: Delete SQL Server Firewall Rule" }
-            @{ Id="6.1.2.9";  Op="microsoft.network/publicipaddresses/write";                Title="Ensure Activity Log Alert: Create/Update Public IP Address" }
-            @{ Id="6.1.2.10"; Op="microsoft.network/publicipaddresses/delete";               Title="Ensure Activity Log Alert: Delete Public IP Address" }
+            @{ Id="6.1.2.1";  Op="microsoft.authorization/policyassignments/write";           Title="Ensure that Activity Log Alert Exists for Create Policy Assignment" }
+            @{ Id="6.1.2.2";  Op="microsoft.authorization/policyassignments/delete";          Title="Ensure that Activity Log Alert exists for Delete Policy Assignment" }
+            @{ Id="6.1.2.3";  Op="microsoft.network/networksecuritygroups/write";             Title="Ensure that Activity Log Alert Exists for Create or Update Network Security Group" }
+            @{ Id="6.1.2.4";  Op="microsoft.network/networksecuritygroups/delete";            Title="Ensure that Activity Log Alert Exists for Delete Network Security Group" }
+            @{ Id="6.1.2.5";  Op="microsoft.security/securitysolutions/write";               Title="Ensure that Activity Log Alert Exists for Create or Update Security Solution" }
+            @{ Id="6.1.2.6";  Op="microsoft.security/securitysolutions/delete";              Title="Ensure that Activity Log Alert Exists for Delete Security Solution" }
+            @{ Id="6.1.2.7";  Op="microsoft.sql/servers/firewallrules/write";                Title="Ensure that Activity Log Alert Exists for Create or Update SQL Server Firewall Rule" }
+            @{ Id="6.1.2.8";  Op="microsoft.sql/servers/firewallrules/delete";               Title="Ensure that Activity Log Alert Exists for Delete SQL Server Firewall Rule" }
+            @{ Id="6.1.2.9";  Op="microsoft.network/publicipaddresses/write";                Title="Ensure that Activity Log Alert Exists for Create or Update Public IP Address rule" }
+            @{ Id="6.1.2.10"; Op="microsoft.network/publicipaddresses/delete";               Title="Ensure that Activity Log Alert Exists for Delete Public IP Address rule" }
         )
 
         foreach ($ac in $alertChecks) {
@@ -366,7 +184,7 @@ function Invoke-Section6Checks {
 
         $results.Add((New-CISResult `
             -ControlId "6.1.2.11" `
-            -Title "Ensure Activity Log Alert: Service Health Notifications" `
+            -Title "Ensure that an Activity Log Alert Exists for Service Health" `
             -Level 1 -Section $sec `
             -Status $(if ($shPass) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($shPass) { "Service Health activity log alert found." } else { "No Service Health activity log alert found." }) `
@@ -389,15 +207,41 @@ function Invoke-Section6Checks {
 
         $results.Add((New-CISResult `
             -ControlId "6.1.3.1" `
-            -Title "Ensure Application Insights Are Configured" `
+            -Title "Ensure Application Insights are Configured" `
             -Level 2 -Section $sec `
             -Status $(if ($hasAppInsights) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($hasAppInsights) { "$count Application Insights component(s) found." } else { "No Application Insights components found." }) `
             -Remediation $(if (-not $hasAppInsights) { "Create Application Insights component via Azure Portal > Monitor > Application Insights > + Create" } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname))
     } catch {
-        $results.Add((New-ErrorResult "6.1.3.1" "Ensure Application Insights Are Configured" 2 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "6.1.3.1" "Ensure Application Insights are Configured" 2 $sec $_.Exception.Message $sid $sname))
     }
 
+    return $results.ToArray()
+}
+
+function Invoke-Section6TenantChecks {
+    <#
+    .SYNOPSIS
+    Tenant-level Section 6 controls that v6 defines as Manual (no reliable automated
+    read) — surfaced once so the report mirrors the benchmark's control set.
+    #>
+    $sec = "6 - Management & Governance"
+    $manual = @(
+        @{ Id="6.1.1.3"; Lvl=2; Title="Ensure the Storage Account Containing the Container with Activity Logs is Encrypted with Customer-managed Key (CMK)"; Msg="Manual verification required — confirm the storage account holding the activity-log container is encrypted with a customer-managed key (CMK) in Azure Key Vault." }
+        @{ Id="6.1.1.5"; Lvl=2; Title="Ensure that Network Security Group Flow Logs are Captured and Sent to Log Analytics"; Msg="Manual verification required — Network Watcher > NSG flow logs: ensure flow logs are enabled and traffic analytics sends data to a Log Analytics workspace." }
+        @{ Id="6.1.1.6"; Lvl=2; Title="Ensure that Virtual Network Flow Logs are Captured and Sent to Log Analytics"; Msg="Manual verification required — Network Watcher > VNet flow logs: ensure flow logs are enabled and traffic analytics sends data to a Log Analytics workspace." }
+        @{ Id="6.1.1.7"; Lvl=2; Title="Ensure that a Microsoft Entra Diagnostic Setting Exists to Send Microsoft Graph Activity Logs to an Appropriate Destination"; Msg="Manual verification required — Microsoft Entra ID > Diagnostic settings: ensure MicrosoftGraphActivityLogs are sent to an appropriate destination." }
+        @{ Id="6.1.1.8"; Lvl=2; Title="Ensure that a Microsoft Entra Diagnostic Setting Exists to Send Microsoft Entra Activity Logs to an Appropriate Destination"; Msg="Manual verification required — Microsoft Entra ID > Diagnostic settings: ensure Entra activity logs (AuditLogs, SignInLogs, etc.) are sent to an appropriate destination." }
+        @{ Id="6.1.1.9"; Lvl=2; Title="Ensure that Intune Logs are Captured and Sent to Log Analytics"; Msg="Manual verification required — Intune (Microsoft Entra) > Diagnostic settings: ensure Intune audit and operational logs are sent to a Log Analytics workspace." }
+        @{ Id="6.1.4";   Lvl=1; Title="Ensure that Azure Monitor Resource Logging is Enabled for All Services that Support it"; Msg="Manual verification required — review Azure Policy compliance (e.g. 'Audit diagnostic setting') to confirm resource logging is enabled across all supported services." }
+        @{ Id="6.1.5";   Lvl=2; Title="Ensure Basic, Free, and Consumption SKUs are not used on Production artifacts requiring monitoring and SLA"; Msg="Manual verification required — confirm production artifacts that require monitoring and an SLA are not running on Basic, Free, or Consumption SKUs." }
+        @{ Id="6.2";     Lvl=2; Title="Ensure that Resource Locks are set for Mission-Critical Azure Resources"; Msg="Manual verification required — confirm CanNotDelete or ReadOnly resource locks are applied to mission-critical resources." }
+    )
+
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($m in $manual) {
+        $results.Add((New-ManualResult $m.Id $m.Title $m.Lvl $sec $m.Msg))
+    }
     return $results.ToArray()
 }

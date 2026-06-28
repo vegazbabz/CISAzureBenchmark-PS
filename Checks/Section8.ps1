@@ -1,5 +1,5 @@
 # Section 8 — Security Services
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section8Checks {
     [CmdletBinding()]
@@ -21,18 +21,18 @@ function Invoke-Section8Checks {
 
     # ── 8.1.x — Microsoft Defender plans ─────────────────────────────────────
     $defenderPlans = @(
-        @{ Id="8.1.1.1"; Plan="CloudPosture";                 Title="Ensure Microsoft Defender CSPM Is Set to 'On'" }
-        @{ Id="8.1.2.1"; Plan="Api";                          Title="Ensure Microsoft Defender for APIs Is Set to 'On'" }
-        @{ Id="8.1.3.1"; Plan="VirtualMachines";              Title="Ensure Microsoft Defender for Servers Is Set to 'On'" }
-        @{ Id="8.1.4.1"; Plan="Containers";                   Title="Ensure Microsoft Defender for Containers Is Set to 'On'" }
-        @{ Id="8.1.5.1"; Plan="StorageAccounts";              Title="Ensure Microsoft Defender for Storage Is Set to 'On'" }
-        @{ Id="8.1.6.1"; Plan="AppServices";                  Title="Ensure Microsoft Defender for App Service Is Set to 'On'" }
-        @{ Id="8.1.7.1"; Plan="CosmosDbs";                    Title="Ensure Microsoft Defender for Azure Cosmos DB Is Set to 'On'" }
-        @{ Id="8.1.7.2"; Plan="OpenSourceRelationalDatabases";Title="Ensure Microsoft Defender for Open-Source Relational Databases Is Set to 'On'" }
-        @{ Id="8.1.7.3"; Plan="SqlServers";                   Title="Ensure Microsoft Defender for Azure SQL Databases Is Set to 'On'" }
-        @{ Id="8.1.7.4"; Plan="SqlServerVirtualMachines";     Title="Ensure Microsoft Defender for SQL Servers on Machines Is Set to 'On'" }
-        @{ Id="8.1.8.1"; Plan="KeyVaults";                    Title="Ensure Microsoft Defender for Key Vault Is Set to 'On'" }
-        @{ Id="8.1.9.1"; Plan="Arm";                          Title="Ensure Microsoft Defender for Resource Manager Is Set to 'On'" }
+        @{ Id="8.1.1.1"; Plan="CloudPosture";                 Title="Ensure Microsoft Defender CSPM is Set to 'On'" }
+        @{ Id="8.1.2.1"; Plan="Api";                          Title="Ensure Microsoft Defender for APIs is Set to 'On'" }
+        @{ Id="8.1.3.1"; Plan="VirtualMachines";              Title="Ensure that Defender for Servers is Set to 'On'" }
+        @{ Id="8.1.4.1"; Plan="Containers";                   Title="Ensure That Microsoft Defender for Containers Is Set To 'On'" }
+        @{ Id="8.1.5.1"; Plan="StorageAccounts";              Title="Ensure That Microsoft Defender for Storage Is Set To 'On'" }
+        @{ Id="8.1.6.1"; Plan="AppServices";                  Title="Ensure That Microsoft Defender for App Services Is Set To 'On'" }
+        @{ Id="8.1.7.1"; Plan="CosmosDbs";                    Title="Ensure That Microsoft Defender for Azure Cosmos DB Is Set To 'On'" }
+        @{ Id="8.1.7.2"; Plan="OpenSourceRelationalDatabases";Title="Ensure That Microsoft Defender for Open-Source Relational Databases Is Set To 'On'" }
+        @{ Id="8.1.7.3"; Plan="SqlServers";                   Title="Ensure That Microsoft Defender for (Managed Instance) Azure SQL Databases Is Set To 'On'" }
+        @{ Id="8.1.7.4"; Plan="SqlServerVirtualMachines";     Title="Ensure That Microsoft Defender for SQL Servers on Machines Is Set To 'On'" }
+        @{ Id="8.1.8.1"; Plan="KeyVaults";                    Title="Ensure That Microsoft Defender for Key Vault Is Set To 'On'" }
+        @{ Id="8.1.9.1"; Plan="Arm";                          Title="Ensure That Microsoft Defender for Resource Manager Is Set To 'On'" }
     )
 
     foreach ($plan in $defenderPlans) {
@@ -59,20 +59,20 @@ function Invoke-Section8Checks {
         $r   = Invoke-ArmRest -Uri $url
 
         if (-not $r.Success) {
-            $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' component status is set to 'On'" 1 $sec $r.Error $sid $sname))
+            $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' Component Status is set to 'On'" 2 $sec $r.Error $sid $sname))
         } else {
             $enabled = [string]$r.Data.properties.enabled -eq "True" -or [string]$r.Data.properties.enabled -eq "true"
             $results.Add((New-CISResult `
                 -ControlId "8.1.3.3" `
-                -Title "Ensure that 'Endpoint protection' component status is set to 'On'" `
-                -Level 1 -Section $sec `
+                -Title "Ensure that 'Endpoint protection' Component Status is set to 'On'" `
+                -Level 2 -Section $sec `
                 -Status $(if ($enabled) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($enabled) { "Microsoft Defender for Endpoint integration: Enabled." } else { "Microsoft Defender for Endpoint integration: Disabled." }) `
                 -Remediation $(if (-not $enabled) { "Defender for Cloud > Environment Settings > Integrations > Enable MDE integration" } else { "" }) `
                 -SubscriptionId $sid -SubscriptionName $sname))
         }
     } catch {
-        $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' component status is set to 'On'" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "8.1.3.3" "Ensure that 'Endpoint protection' Component Status is set to 'On'" 2 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 8.1.10 — MDE TVM VM OS update check ──────────────────────────────────
@@ -81,7 +81,7 @@ function Invoke-Section8Checks {
         $r   = Invoke-ArmRest -Uri $url
 
         if (-not $r.Success) {
-            $results.Add((New-ErrorResult "8.1.10" "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" 1 $sec $r.Error $sid $sname))
+            $results.Add((New-ErrorResult "8.1.10" "Ensure that Microsoft Defender for Cloud is Configured to Check VM Operating Systems for Updates" 1 $sec $r.Error $sid $sname))
         } else {
             $settingsArr = $r.Data.PSObject.Properties['value']?.Value
             $settings    = if ($settingsArr) { @($settingsArr) } else { @() }
@@ -91,7 +91,7 @@ function Invoke-Section8Checks {
             }).Count -gt 0
             $results.Add((New-CISResult `
                 -ControlId "8.1.10" `
-                -Title "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" `
+                -Title "Ensure that Microsoft Defender for Cloud is Configured to Check VM Operating Systems for Updates" `
                 -Level 1 -Section $sec `
                 -Status $(if ($enabled) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($enabled) { "MDE TVM vulnerability assessment: enabled." } else { "MDE TVM vulnerability assessment: NOT enabled." }) `
@@ -99,7 +99,7 @@ function Invoke-Section8Checks {
                 -SubscriptionId $sid -SubscriptionName $sname))
         }
     } catch {
-        $results.Add((New-ErrorResult "8.1.10" "Ensure That Microsoft Defender for Cloud Is Set to Assess VMs for OS Updates" 1 $sec $_.Exception.Message $sid $sname))
+        $results.Add((New-ErrorResult "8.1.10" "Ensure that Microsoft Defender for Cloud is Configured to Check VM Operating Systems for Updates" 1 $sec $_.Exception.Message $sid $sname))
     }
 
     # ── 8.1.12–8.1.15 — Security contact notifications (preview REST API) ──────
@@ -126,7 +126,7 @@ function Invoke-Section8Checks {
 
         $results.Add((New-CISResult `
             -ControlId "8.1.12" `
-            -Title "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'" `
+            -Title "Ensure That 'All users with the following roles' is Set to 'Owner'" `
             -Level 1 -Section $sec `
             -Status $(if ($ownersNotified) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($ownersNotified) { "Owner role configured for security alert notifications." } else { "Owner role NOT configured for notifications." }) `
@@ -143,7 +143,7 @@ function Invoke-Section8Checks {
 
         $results.Add((New-CISResult `
             -ControlId "8.1.13" `
-            -Title "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications" `
+            -Title "Ensure 'Additional email addresses' is Configured with a Security Contact Email" `
             -Level 1 -Section $sec `
             -Status $(if ($hasEmail) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($hasEmail) { "Additional email address(es) configured." } else { "No additional email addresses configured." }) `
@@ -160,7 +160,7 @@ function Invoke-Section8Checks {
 
         $results.Add((New-CISResult `
             -ControlId "8.1.14" `
-            -Title "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'" `
+            -Title "Ensure that 'Notify about alerts with the following severity (or higher)' is Enabled" `
             -Level 1 -Section $sec `
             -Status $(if ($alertOn) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($alertOn) { "Alert notification state: On." } else { "Alert notification state is not 'On'." }) `
@@ -184,7 +184,7 @@ function Invoke-Section8Checks {
 
         $results.Add((New-CISResult `
             -ControlId "8.1.15" `
-            -Title "Ensure That Attack Path Notifications Are Configured" `
+            -Title "Ensure that 'Notify about attack paths with the following risk level (or higher)' is Enabled" `
             -Level 1 -Section $sec `
             -Status $(if ($attackOn) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($attackOn) { "Attack path notifications configured." } else { "Attack path notifications NOT configured." }) `
@@ -193,10 +193,10 @@ function Invoke-Section8Checks {
 
     } catch {
         $scTitleMap = @{
-            "8.1.12" = "Ensure That 'All Users with the Following Roles' Is Set to 'Owner'"
-            "8.1.13" = "Ensure a Security Contact Email Is Set for Microsoft Defender for Cloud Notifications"
-            "8.1.14" = "Ensure That 'Send Notifications About Alerts with Severity High or Above' Is Set to 'On'"
-            "8.1.15" = "Ensure That Attack Path Notifications Are Configured"
+            "8.1.12" = "Ensure That 'All users with the following roles' is Set to 'Owner'"
+            "8.1.13" = "Ensure 'Additional email addresses' is Configured with a Security Contact Email"
+            "8.1.14" = "Ensure that 'Notify about alerts with the following severity (or higher)' is Enabled"
+            "8.1.15" = "Ensure that 'Notify about attack paths with the following risk level (or higher)' is Enabled"
         }
         foreach ($cid in @("8.1.12","8.1.13","8.1.14","8.1.15")) {
             $results.Add((New-ErrorResult $cid $scTitleMap[$cid] 1 $sec $_.Exception.Message $sid $sname))
@@ -227,7 +227,7 @@ function Invoke-Section8Checks {
             $eps   = [int]($kv.privateEps)
 
             $ctrlKeyExp  = if ($rbac) { "8.3.1" } else { "8.3.2" }
-            $titleKeyExp = if ($rbac) { "Ensure that the Expiration Date is set for all Keys in RBAC Key Vaults" } else { "Ensure That the Expiration Date Is Set on All Keys" }
+            $titleKeyExp = if ($rbac) { "Ensure that the Expiration Date is Set for all Keys in Key Vaults using RBAC" } else { "Ensure that the Expiration Date is set for All Keys in Key Vaults using access policies (legacy)" }
             $cachedKeys = $null
             try {
                 # Filter out certificate-backed keys (Managed = $true) — those are managed by the
@@ -262,7 +262,7 @@ function Invoke-Section8Checks {
 
             # 8.3.3/8.3.4 — Secret expiration set (RBAC vs access-policy vault)
             $ctrlSecExp  = if ($rbac) { "8.3.3" } else { "8.3.4" }
-            $titleSecExp = if ($rbac) { "Ensure that the Expiration Date is set for all Secrets in RBAC Key Vaults" } else { "Ensure That the Expiration Date Is Set on All Secrets" }
+            $titleSecExp = if ($rbac) { "Ensure that the Expiration Date is set for All Secrets in Key Vaults using RBAC" } else { "Ensure that the Expiration Date is set for All Secrets in Key Vaults using access policies (legacy)" }
             try {
                 # Filter out certificate-backed secrets (Managed = $true) — those are managed by
                 # the certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
@@ -298,7 +298,7 @@ function Invoke-Section8Checks {
                 $allCerts = @(Get-AzKeyVaultCertificate -VaultName $kvName -ErrorAction Stop)
 
                 if ($allCerts.Count -eq 0) {
-                    $results.Add((New-InfoResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "No certificates found." $sid $sname $kvName))
+                    $results.Add((New-InfoResult "8.3.11" "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'" 1 $sec "No certificates found." $sid $sname $kvName))
                 } else {
                     $longCerts = @($allCerts | Where-Object {
                         $attr = if ($_.PSObject.Properties['Attributes'] -and $null -ne $_.Attributes) { $_.Attributes } else { $null }
@@ -309,7 +309,7 @@ function Invoke-Section8Checks {
                     })
                     $pass = $longCerts.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId "8.3.11" -Title "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" `
+                        -ControlId "8.3.11" -Title "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'" `
                         -Level 1 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "All certificates have valid (<= 12 month) lifetimes." } else { "$($longCerts.Count) certificate(s) with lifetime > 12 months: $(($longCerts | ForEach-Object { $_.Name }) -join ', ')" }) `
@@ -319,9 +319,9 @@ function Invoke-Section8Checks {
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-AuthzError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'" 1 $sec "Insufficient permissions to list certificates. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Certificate List permission." $sid $sname $kvName))
                 } elseif (Test-FirewallError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.11" "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.11" "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'" 1 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                 } else {
                     $results.Add((New-ErrorResult "8.3.11" "Certificate Validity" 1 $sec $errMsg $sid $sname $kvName))
                 }
@@ -329,7 +329,7 @@ function Invoke-Section8Checks {
 
             # 8.3.6 — RBAC authorization enabled
             $results.Add((New-CISResult `
-                -ControlId "8.3.6" -Title "Ensure That Azure Key Vault Uses RBAC for Authorization" `
+                -ControlId "8.3.6" -Title "Ensure that Role Based Access Control for Azure Key Vault is Enabled" `
                 -Level 2 -Section $sec `
                 -Status $(if ($rbac) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($rbac) { "RBAC authorization model enabled." } else { "Using legacy Vault Access Policy, not RBAC." }) `
@@ -338,7 +338,7 @@ function Invoke-Section8Checks {
 
             # 8.3.5 — Purge protection enabled
             $results.Add((New-CISResult `
-                -ControlId "8.3.5" -Title "Ensure That Azure Key Vault Has Purge Protection Enabled" `
+                -ControlId "8.3.5" -Title "Ensure 'Purge protection' is Set to 'Enabled'" `
                 -Level 1 -Section $sec `
                 -Status $(if ($purge) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($purge) { "Purge protection enabled." } else { "Purge protection not enabled." }) `
@@ -348,7 +348,7 @@ function Invoke-Section8Checks {
             # 8.3.7 — Public network access disabled
             $pubOk = $pub -eq "Disabled"
             $results.Add((New-CISResult `
-                -ControlId "8.3.7" -Title "Ensure That Azure Key Vault Disables Public Network Access" `
+                -ControlId "8.3.7" -Title "Ensure Public Network Access is Disabled" `
                 -Level 1 -Section $sec `
                 -Status $(if ($pubOk) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($pubOk) { "Public network access: Disabled." } else { "Public network access: $pub." }) `
@@ -357,7 +357,7 @@ function Invoke-Section8Checks {
 
             # 8.3.8 — Private endpoints configured
             $results.Add((New-CISResult `
-                -ControlId "8.3.8" -Title "Ensure That Private Endpoints Are Used for Azure Key Vaults" `
+                -ControlId "8.3.8" -Title "Ensure Private Endpoints are Used to Access Azure Key Vault" `
                 -Level 2 -Section $sec `
                 -Status $(if ($eps -gt 0) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($eps -gt 0) { "Private endpoint(s) configured: $eps." } else { "No private endpoints configured." }) `
@@ -391,21 +391,21 @@ function Invoke-Section8Checks {
 
                     $pass = $noRotation.Count -eq 0
                     $results.Add((New-CISResult `
-                        -ControlId "8.3.9" -Title "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" `
+                        -ControlId "8.3.9" -Title "Ensure Automatic Key Rotation is Enabled within Azure Key Vault" `
                         -Level 2 -Section $sec `
                         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
                         -Details $(if ($pass) { "All keys have automatic rotation configured." } else { "Keys without automatic rotation configured: $($noRotation -join ', ')" }) `
                         -Remediation $(if (-not $pass) { "Key Vault > $kvName > Keys > Rotation policy > Set rotation action" } else { "" }) `
                         -SubscriptionId $sid -SubscriptionName $sname -Resource $kvName))
                 } else {
-                    $results.Add((New-InfoResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "No keys found in vault." $sid $sname $kvName))
+                    $results.Add((New-InfoResult "8.3.9" "Ensure Automatic Key Rotation is Enabled within Azure Key Vault" 2 $sec "No keys found in vault." $sid $sname $kvName))
                 }
             } catch {
                 $errMsg = $_.Exception.Message
                 if (Test-AuthzError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.9" "Ensure Automatic Key Rotation is Enabled within Azure Key Vault" 2 $sec "Insufficient permissions to list keys. Grant the 'Key Vault Reader' data-plane role or a Key Vault access policy with Key List permission." $sid $sname $kvName))
                 } elseif (Test-FirewallError $errMsg) {
-                    $results.Add((New-ErrorResult "8.3.9" "Ensure That Automatic Key Rotation Is Enabled for Key Vault Keys" 2 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
+                    $results.Add((New-ErrorResult "8.3.9" "Ensure Automatic Key Rotation is Enabled within Azure Key Vault" 2 $sec "Key Vault firewall is blocking access. Add the audit machine's IP to the vault's firewall allowlist." $sid $sname $kvName))
                 } else {
                     $results.Add((New-ErrorResult "8.3.9" "Key Rotation Auto-Rotation" 2 $sec $errMsg $sid $sname $kvName))
                 }
@@ -415,11 +415,11 @@ function Invoke-Section8Checks {
 
     # ── 8.4.1 — Azure Bastion deployed (if VMs exist) ─────────────────────────
     if ($vms.Count -eq 0) {
-        $results.Add((New-InfoResult "8.4.1" "Ensure That Azure Bastion Host Exists" 2 $sec "No VMs found in subscription." $sid $sname))
+        $results.Add((New-InfoResult "8.4.1" "Ensure an Azure Bastion Host Exists" 2 $sec "No VMs found in subscription." $sid $sname))
     } else {
         $hasBastion = $bastion.Count -gt 0
         $results.Add((New-CISResult `
-            -ControlId "8.4.1" -Title "Ensure That Azure Bastion Host Exists" -Level 2 -Section $sec `
+            -ControlId "8.4.1" -Title "Ensure an Azure Bastion Host Exists" -Level 2 -Section $sec `
             -Status $(if ($hasBastion) { $script:PASS } else { $script:FAIL }) `
             -Details $(if ($hasBastion) { "Azure Bastion found: $(($bastion | ForEach-Object { [string]$_.name }) -join ', ')" } else { "No Azure Bastion found. $($vms.Count) VM(s) present." }) `
             -Remediation $(if (-not $hasBastion) { "Create an Azure Bastion host in a dedicated AzureBastionSubnet for secure VM access." } else { "" }) `
@@ -428,12 +428,12 @@ function Invoke-Section8Checks {
 
     # ── 8.5 — DDoS Network Protection on VNets ───────────────────────────────
     if ($vnets.Count -eq 0) {
-        $results.Add((New-InfoResult "8.5" "Ensure That Azure DDoS Network Protection Is Enabled" 2 $sec "No VNets found." $sid $sname))
+        $results.Add((New-InfoResult "8.5" "Ensure Azure DDoS Network Protection is Enabled on Virtual Networks" 2 $sec "No VNets found." $sid $sname))
     } else {
         foreach ($vnet in $vnets) {
             $hasDdos = [string]$vnet.hasDdos -in @("True", "true", "1")
             $results.Add((New-CISResult `
-                -ControlId "8.5" -Title "Ensure That Azure DDoS Network Protection Is Enabled" -Level 2 -Section $sec `
+                -ControlId "8.5" -Title "Ensure Azure DDoS Network Protection is Enabled on Virtual Networks" -Level 2 -Section $sec `
                 -Status $(if ($hasDdos) { $script:PASS } else { $script:FAIL }) `
                 -Details $(if ($hasDdos) { "DDoS Network Protection enabled." } else { "DDoS Network Protection not enabled." }) `
                 -Remediation $(if (-not $hasDdos) { "VNet > $([string]$vnet.name) > DDoS protection > Enable DDoS Network Protection plan" } else { "" }) `
@@ -441,5 +441,30 @@ function Invoke-Section8Checks {
         }
     }
 
+    return $results.ToArray()
+}
+
+function Invoke-Section8TenantChecks {
+    <#
+    .SYNOPSIS
+    Section 8 controls v6 defines as Manual (no reliable automated read) — surfaced
+    once so the report mirrors the benchmark's control set.
+    #>
+    $sec = "8 - Security Services"
+    $manual = @(
+        @{ Id="8.1.3.2";  Lvl=2; Title="Ensure that 'Vulnerability assessment for machines' Component Status is set to 'On'"; Msg="Manual verification required — Defender for Cloud > Environment settings > Defender for Servers > ensure the 'Vulnerability assessment for machines' component status is 'On'." }
+        @{ Id="8.1.3.4";  Lvl=2; Title="Ensure that 'Agentless scanning for machines' Component Status is Set to 'On'"; Msg="Manual verification required — Defender for Cloud > Environment settings > Defender for Servers > ensure the 'Agentless scanning for machines' component status is 'On'." }
+        @{ Id="8.1.3.5";  Lvl=2; Title="Ensure that 'File Integrity Monitoring' Component Status is Set to 'On'"; Msg="Manual verification required — Defender for Cloud > Environment settings > Defender for Servers > ensure the 'File Integrity Monitoring' component status is 'On'." }
+        @{ Id="8.1.5.2";  Lvl=2; Title="Ensure Advanced Threat Protection Alerts for Storage Accounts Are Monitored"; Msg="Manual verification required — confirm that Microsoft Defender for Storage threat-protection alerts are reviewed and actioned by a responsible team." }
+        @{ Id="8.1.11";   Lvl=1; Title="Ensure that non-deprecated Microsoft Cloud Security Benchmark policies are not set to 'Disabled'"; Msg="Manual verification required — Defender for Cloud > Environment settings > Security policy > ensure non-deprecated Microsoft Cloud Security Benchmark policy effects are not set to 'Disabled'." }
+        @{ Id="8.1.16";   Lvl=2; Title="Ensure that Microsoft Defender External Attack Surface Monitoring (EASM) is Enabled"; Msg="Manual verification required — confirm a Defender EASM workspace is deployed and monitoring the organisation's external attack surface." }
+        @{ Id="8.2.1";    Lvl=2; Title="Ensure That Microsoft Defender for IoT Hub Is Set To 'On'"; Msg="Manual verification required — for each IoT Hub, ensure Microsoft Defender for IoT is enabled." }
+        @{ Id="8.3.10";   Lvl=2; Title="Ensure that Azure Key Vault Managed HSM is Used when Required"; Msg="Manual verification required — where FIPS 140-2 Level 3 protection is required, confirm Azure Key Vault Managed HSM is used instead of the standard vault." }
+    )
+
+    $results = [System.Collections.Generic.List[object]]::new()
+    foreach ($m in $manual) {
+        $results.Add((New-ManualResult $m.Id $m.Title $m.Lvl $sec $m.Msg))
+    }
     return $results.ToArray()
 }

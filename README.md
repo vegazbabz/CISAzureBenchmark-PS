@@ -1,7 +1,7 @@
-# CIS Microsoft Azure Foundations Benchmark v5.0.0 — Audit Tool (PowerShell)
+# CIS Microsoft Azure Foundations Benchmark v6.0.0 — Audit Tool (PowerShell)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-v5.0.0-orange.svg)](https://www.cisecurity.org/benchmark/azure)
+[![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-v6.0.0-blue.svg)](https://www.cisecurity.org/benchmark/azure)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0%2B-blue.svg)](https://learn.microsoft.com/en-us/powershell/)
 [![CI](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml/badge.svg)](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml)
 
@@ -10,14 +10,14 @@
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
 **Version:** 1.0.0
-**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure) (September 2025)
+**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
 
 ---
 
 ## Overview
 
-A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
+A PowerShell tool that audits an Azure tenant against the **[CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure)** — the industry-standard hardening guide for Azure environments, published by the [Center for Internet Security (CIS)](https://www.cisecurity.org/).
 
 All audit checks use the Az PowerShell module — no Azure CLI required.
 The optional permission preflight uses `Get-AzRoleAssignment` in parallel runspaces to verify
@@ -168,13 +168,13 @@ Private/
   ModuleManifest.ps1          Single source of truth for the dot-source load order
   Report.ps1                  HTML report generation
 Checks/
-  Section2.ps1                Databricks checks (5 controls)
+  Section2.ps1                Databricks checks (12 controls)
   Section3.ps1                Compute checks (1 manual control)
-  Section5.ps1                Identity & access checks (11 controls)
-  Section6.ps1                Logging & monitoring checks (17 controls)
-  Section7.ps1                Networking checks (13 controls)
-  Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (24 controls — 101 total)
+  Section5.ps1                Identity & access checks (15 controls)
+  Section6.ps1                Logging & monitoring checks (24 controls)
+  Section7.ps1                Networking checks (16 controls)
+  Section8.ps1                Security services checks (38 controls)
+  Section9.ps1                Storage checks (21 controls — 127 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -431,17 +431,22 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 
 ## Controls Covered
 
-### Section 2 — Azure Databricks (5 automated)
+### Section 2 — Azure Databricks (6 automated · 6 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
+| 2.1.1 | Databricks deployed in a customer-managed VNet | L1 |
 | 2.1.2 | NSGs configured for Databricks subnets | L1 |
-| 2.1.7 | Diagnostic logging configured | L1 |
+| 2.1.3 | Traffic encrypted between cluster worker nodes (manual) | L2 |
+| 2.1.4 | Users/groups synced from Microsoft Entra ID (manual) | L1 |
+| 2.1.5 | Unity Catalog configured (manual) | L1 |
+| 2.1.6 | PAT usage restricted and expiry enforced (manual) | L1 |
+| 2.1.7 | Diagnostic log delivery configured | L1 |
+| 2.1.8 | Critical data encrypted with customer-managed keys (manual) | L2 |
 | 2.1.9 | No Public IP enabled | L1 |
-| 2.1.10 | Public network access disabled | L1 |
+| 2.1.10 | Allow Public Network Access disabled | L1 |
 | 2.1.11 | Private endpoints used to access workspaces | L2 |
-
-> **2.1.1** (Databricks in customer-managed VNet) — pending implementation.
+| 2.1.12 | Databricks groups reviewed periodically (manual) | L1 |
 
 ### Section 3 — Compute Services (1 manual)
 
@@ -449,43 +454,45 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | --- | --- | --- | --- |
 | 3.1.1 | Only MFA-enabled identities can access privileged VMs | L2 | **Manual** — requires correlating role assignments with MFA status |
 
-> **Sections 3 and 4** of the CIS Azure Foundations Benchmark v5.0.0 are largely reference
+> **Sections 3 and 4** of the CIS Azure Foundations Benchmark v6.0.0 are largely reference
 > sections — most Compute and Database controls have been relocated to the
 > *CIS Microsoft Azure Compute Services Benchmark* and *CIS Microsoft Azure Database
 > Services Benchmark* respectively. Only 3.1.1 (Virtual Machines) remains in the
 > Foundations Benchmark as an auditable control.
 
-### Section 5 — Identity Services (9 automated · 2 manual)
+### Section 5 — Identity Services (5 automated · 10 manual)
 
 | Control | Title | Level | Notes |
 | --- | --- | --- | --- |
-| 5.1.1 | Security defaults enabled | L1 | |
-| 5.1.2 | MFA enabled for all users | L1 | |
-| 5.1.3 | Allow users to remember MFA on trusted devices disabled | L1 | **Manual** |
-| 5.28 | Privileged users protected by phishing-resistant MFA | L1 | **Manual** |
-| 5.3.3 | User Access Administrator role restricted | L1 | |
-| 5.4 | Restrict non-admin users from creating tenants | L1 | |
-| 5.14 | Users cannot register applications | L1 | |
-| 5.15 | Guest access restricted to own directory objects | L1 | |
-| 5.16 | Guest invite restrictions set to admins or no one | L2 | |
-| 5.23 | No custom subscription administrator roles | L1 | |
-| 5.27 | Between 2 and 3 subscription owners | L1 | |
+| 5.1.1 | 'security defaults' enabled in Microsoft Entra ID | L1 | |
+| 5.1.2 | Require MFA to register or join devices | L1 | **Manual** |
+| 5.1.3 | 'multifactor authentication' enabled for all users | L1 | |
+| 5.1.4 | Remember MFA on trusted devices disabled | L1 | **Manual** |
+| 5.3.1 | Azure admin accounts not used for daily operations | L1 | **Manual** |
+| 5.3.2 | Guest users reviewed regularly | L1 | **Manual** |
+| 5.3.3 | Use of 'User Access Administrator' role restricted | L1 | |
+| 5.3.4 | Privileged role assignments periodically reviewed | L1 | **Manual** |
+| 5.3.5 | Disabled accounts have no Read/Write/Owner permissions | L1 | **Manual** |
+| 5.3.6 | 'Tenant Creator' role assignments periodically reviewed | L1 | **Manual** |
+| 5.3.7 | Non-privileged role assignments periodically reviewed | L1 | **Manual** |
+| 5.4 | No custom subscription administrator roles | L1 | |
+| 5.5 | Custom role assigned for administering resource locks | L2 | **Manual** |
+| 5.6 | Subscription leaving/entering tenant set to 'Permit no one' | L2 | **Manual** |
+| 5.7 | Between 2 and 3 subscription owners | L1 | |
 
-### Section 6 — Logging & Monitoring (17 automated)
+### Section 6 — Logging & Monitoring (15 automated · 9 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 6.1.1.1 | Diagnostic Setting exists for Subscription Activity Logs | L1 |
-| 6.1.1.2 | Diagnostic Setting captures required categories | L1 |
-| 6.1.1.3 | Activity log retention >= 365 days | L1 |
-
-> **6.1.1.3 storage destinations:** When subscription diagnostic settings route activity logs to a
-> Storage Account, the check now inspects the retention policy on the Administrative log category.
-> A setting with `retentionPolicy.enabled = false` (indefinite) passes; `enabled = true` with
-> `days < 365` fails. Log Analytics workspace and Event Hub destinations always pass this check
-> (retention is configured on the destination resource itself).
-| 6.1.1.4 | Key Vault diagnostic logging enabled | L1 |
-| 6.1.1.6 | Azure AppService HTTP logs enabled | L2 |
+| 6.1.1.2 | Diagnostic Setting captures appropriate categories | L1 |
+| 6.1.1.3 | Storage Account with activity-logs container encrypted with CMK (manual) | L2 |
+| 6.1.1.4 | Logging for Azure Key Vault enabled | L1 |
+| 6.1.1.5 | NSG Flow Logs captured and sent to Log Analytics (manual) | L2 |
+| 6.1.1.6 | Virtual Network Flow Logs captured and sent to Log Analytics (manual) | L2 |
+| 6.1.1.7 | Entra Diagnostic Setting for Microsoft Graph Activity Logs (manual) | L2 |
+| 6.1.1.8 | Entra Diagnostic Setting for Microsoft Entra Activity Logs (manual) | L2 |
+| 6.1.1.9 | Intune Logs captured and sent to Log Analytics (manual) | L2 |
 | 6.1.2.1 | Activity Log Alert: Create Policy Assignment | L1 |
 | 6.1.2.2 | Activity Log Alert: Delete Policy Assignment | L1 |
 | 6.1.2.3 | Activity Log Alert: Create or Update NSG | L1 |
@@ -498,35 +505,45 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 6.1.2.10 | Activity Log Alert: Delete Public IP | L1 |
 | 6.1.2.11 | Activity Log Alert: Service Health | L1 |
 | 6.1.3.1 | Application Insights configured | L2 |
+| 6.1.4 | Azure Monitor resource logging enabled for all supported services (manual) | L1 |
+| 6.1.5 | Basic/Free/Consumption SKUs not used on production artifacts (manual) | L2 |
+| 6.2 | Resource Locks set for mission-critical resources (manual) | L2 |
 
-### Section 7 — Networking Services (13 automated)
+### Section 7 — Networking Services (13 automated · 3 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 7.1 | RDP (3389) not open to internet | L1 |
 | 7.2 | SSH (22) not open to internet | L1 |
-| 7.3 | UDP access from internet restricted | L1 |
+| 7.3 | UDP port access from internet restricted | L1 |
 | 7.4 | HTTP/HTTPS (80/443) from internet evaluated and restricted | L1 |
 | 7.5 | NSG flow log retention >= 90 days | L2 |
-| 7.6 | Network Watcher enabled for all regions in use | L1 |
+| 7.6 | Network Watcher enabled for all regions in use | L2 |
+| 7.7 | Public IP addresses evaluated periodically (manual) | L1 |
 | 7.8 | VNet flow log retention >= 90 days | L2 |
+| 7.9 | VPN Gateway P2S authentication type = Entra ID only (manual) | L2 |
 | 7.10 | WAF enabled on Azure Application Gateway | L2 |
 | 7.11 | Subnets associated with NSGs | L1 |
 | 7.12 | App Gateway SSL policy min TLS 1.2+ | L1 |
 | 7.13 | HTTP2 enabled on Application Gateway | L1 |
 | 7.14 | WAF request body inspection enabled | L2 |
 | 7.15 | WAF bot protection enabled | L2 |
+| 7.16 | Network Security Perimeter used for PaaS resources (manual) | L2 |
 
-### Section 8 — Security Services (30 automated)
+### Section 8 — Security Services (30 automated · 8 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 8.1.1.1 | Microsoft Defender CSPM | L2 |
 | 8.1.2.1 | Microsoft Defender for APIs | L2 |
 | 8.1.3.1 | Microsoft Defender for Servers | L2 |
-| 8.1.3.3 | Endpoint protection (WDATP) component | L1 |
+| 8.1.3.2 | Vulnerability assessment for machines component (manual) | L2 |
+| 8.1.3.3 | Endpoint protection (WDATP) component | L2 |
+| 8.1.3.4 | Agentless scanning for machines component (manual) | L2 |
+| 8.1.3.5 | File Integrity Monitoring component (manual) | L2 |
 | 8.1.4.1 | Microsoft Defender for Containers | L2 |
 | 8.1.5.1 | Microsoft Defender for Storage | L2 |
+| 8.1.5.2 | ATP alerts for storage accounts monitored (manual) | L2 |
 | 8.1.6.1 | Microsoft Defender for App Services | L2 |
 | 8.1.7.1 | Microsoft Defender for Azure Cosmos DB | L2 |
 | 8.1.7.2 | Microsoft Defender for Open-Source Relational DBs | L2 |
@@ -535,36 +552,37 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 8.1.8.1 | Microsoft Defender for Key Vault | L2 |
 | 8.1.9.1 | Microsoft Defender for Resource Manager | L2 |
 | 8.1.10 | Defender configured to check VM OS updates | L1 |
+| 8.1.11 | Non-deprecated MCSB policies not Disabled (manual) | L1 |
 | 8.1.12 | Security alerts notify subscription Owners | L1 |
 | 8.1.13 | Additional email addresses for security contact | L1 |
 | 8.1.14 | Alert severity notifications configured | L1 |
 | 8.1.15 | Attack path notifications configured | L1 |
-| 8.3.1 | Key expiration set — RBAC Key Vaults | L1 |
-| 8.3.2 | Key expiration set — non-RBAC Key Vaults | L1 |
-| 8.3.3 | Secret expiration set — RBAC Key Vaults | L1 |
-| 8.3.4 | Secret expiration set — non-RBAC Key Vaults | L1 |
+| 8.1.16 | Defender External Attack Surface Monitoring (EASM) (manual) | L2 |
+| 8.2.1 | Microsoft Defender for IoT Hub (manual) | L2 |
+| 8.3.1 | Key expiration set — Key Vaults using RBAC | L1 |
+| 8.3.2 | Key expiration set — access policies (legacy) | L1 |
+| 8.3.3 | Secret expiration set — Key Vaults using RBAC | L1 |
+| 8.3.4 | Secret expiration set — access policies (legacy) | L1 |
 | 8.3.5 | Key Vault purge protection enabled | L1 |
 | 8.3.6 | Key Vault RBAC authorization enabled | L2 |
 | 8.3.7 | Key Vault public network access disabled | L1 |
 | 8.3.8 | Private endpoints used to access Key Vault | L2 |
 | 8.3.9 | Automatic key rotation enabled | L2 |
+| 8.3.10 | Azure Key Vault Managed HSM used when required (manual) | L2 |
 | 8.3.11 | Certificate validity period <= 12 months | L1 |
 | 8.4.1 | Azure Bastion Host exists | L2 |
 | 8.5 | DDoS Network Protection enabled on VNets | L2 |
 
-### Section 9 — Storage Services (24 automated)
+### Section 9 — Storage Services (21 automated)
 
 | Control | Title | Level |
 | --- | --- | --- |
-| 9.1.1 | Azure Files soft delete enabled | L1 |
+| 9.1.1 | Soft delete for Azure File Shares enabled | L1 |
 | 9.1.2 | SMB protocol version >= 3.1.1 | L1 |
 | 9.1.3 | SMB channel encryption AES-256-GCM or higher | L1 |
 | 9.2.1 | Blob soft delete enabled | L1 |
 | 9.2.2 | Container soft delete enabled | L1 |
 | 9.2.3 | Blob versioning enabled | L2 |
-| 9.2.4 | Storage logging enabled for Blob Service read requests | L2 |
-| 9.2.5 | Storage logging enabled for Blob Service write requests | L2 |
-| 9.2.6 | Storage logging enabled for Blob Service delete requests | L2 |
 | 9.3.1.1 | Key rotation reminders enabled | L1 |
 | 9.3.1.2 | Access keys regenerated within 90 days | L1 |
 | 9.3.1.3 | Storage account key access disabled | L1 |
@@ -573,13 +591,16 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 9.3.2.3 | Default network access rule is Deny | L1 |
 | 9.3.3.1 | Default to Microsoft Entra authorization in Azure portal | L1 |
 | 9.3.4 | Secure transfer (HTTPS) required | L1 |
-| 9.3.5 | Allow Azure trusted services to access storage | L2 |
+| 9.3.5 | Allow trusted Microsoft services to access storage | L2 |
 | 9.3.6 | Minimum TLS version 1.2 | L1 |
 | 9.3.7 | Cross-tenant replication disabled | L1 |
 | 9.3.8 | Blob anonymous access disabled | L1 |
-| 9.3.9 | Storage account has CanNotDelete resource lock | L1 |
-| 9.3.10 | Storage account has ReadOnly resource lock | L2 |
+| 9.3.9 | ARM delete locks applied to storage accounts | L1 |
+| 9.3.10 | ARM ReadOnly locks considered for storage accounts | L2 |
 | 9.3.11 | Redundancy set to geo-redundant (GRS) | L2 |
+
+> **9.3.9 / 9.3.10 resource locks** are marked *Manual* in the v6 benchmark, but this tool
+> evaluates them automatically (via `Get-AzResourceLock`) to provide a real PASS/FAIL signal.
 
 ---
 
@@ -684,16 +705,13 @@ the runner account to the vault's access policy (non-RBAC vaults). Without this,
 return ERROR with an explanatory message. The report clearly distinguishes this from a clean
 result — compliance is unknown, not assumed clean.
 
-**Graph API for identity checks** — controls 5.4, 5.14, 5.15, and 5.16 call the Microsoft Graph
+**Graph API for identity checks** — controls 5.1.1 and 5.1.3 call the Microsoft Graph
 API via `Invoke-AzRestMethod`. If the required Graph permissions have not been consented for the
 identity running the audit, these will return ERROR. Test with:
 
 ```powershell
-Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
+Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
 ```
-
-**Conditional Access policies (5.2.x)** — marked Manual in the benchmark and not checked by this
-tool. They require review in the Entra ID portal.
 
 ---
 
@@ -733,7 +751,7 @@ at your own risk. See [LICENSE](LICENSE) for the full MIT disclaimer.
 ## Attribution
 
 This is an independent community implementation referencing the publicly available
-**[CIS Microsoft Azure Foundations Benchmark v5.0.0](https://www.cisecurity.org/benchmark/azure)**.
+**[CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure)**.
 CIS Benchmarks are the property of the Center for Internet Security (<https://www.cisecurity.org>),
 used under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 This tool is not affiliated with, endorsed by, or approved by CIS.
@@ -743,5 +761,5 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 [MIT](LICENSE)
 
 **Version:** 1.0.0
-**Benchmark:** CIS Microsoft Azure Foundations Benchmark v5.0.0 (September 2025)
+**Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output

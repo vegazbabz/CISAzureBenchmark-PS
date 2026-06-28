@@ -1,10 +1,10 @@
 # CIS Azure Benchmark PS - Configuration
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 Set-StrictMode -Version Latest
 
-$script:CIS_VERSION   = "1.0.0"
-$script:BENCHMARK_VER = "5.0.0"
+$script:CIS_VERSION   = "2.0.0"
+$script:BENCHMARK_VER = "6.0.0"
 
 # Status constants — avoid $Error which is a PS reserved variable
 $script:PASS       = "PASS"
