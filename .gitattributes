@@ -1,0 +1,32 @@
+# Normalize line endings so cross-platform contributors don't produce
+# whole-file CRLF/LF churn. Text is stored as LF in the repo and checked out
+# with the platform's native ending (Git honours core.autocrlf on Windows).
+* text=auto
+
+# Explicit text types
+*.ps1   text
+*.psm1  text
+*.psd1  text
+*.md    text
+*.json  text
+*.jsonc text
+*.yml   text
+*.yaml  text
+*.html  text
+*.css   text
+*.js    text
+*.csv   text
+*.xml   text
+*.txt   text
+*.example text
+
+# Binary assets — never normalize or diff
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.gz    binary
+*.bundle binary
