@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Pester unit tests for CIS Azure Benchmark PS check functions.
@@ -17,25 +17,8 @@ param()
 BeforeAll {
     # Dot-source all module files so check functions are available in test scope
     $moduleRoot = Split-Path $PSScriptRoot -Parent
-    foreach ($f in @(
-        "Private\Config.ps1",
-        "Private\Models.ps1",
-        "Private\AzureClient.ps1",
-        "Private\Helpers.ps1",
-        "Private\CheckHelpers.ps1",
-        "Private\Identity.ps1",
-        "Private\Checkpoint.ps1",
-        "Private\History.ps1",
-        "Private\Report.ps1",
-        "Private\Suppressions.ps1",
-        "Checks\Section2.ps1",
-        "Checks\Section3.ps1",
-        "Checks\Section5.ps1",
-        "Checks\Section6.ps1",
-        "Checks\Section7.ps1",
-        "Checks\Section8.ps1",
-        "Checks\Section9.ps1"
-    )) {
+    . (Join-Path $moduleRoot "Private\ModuleManifest.ps1")
+    foreach ($f in $script:ModuleFiles) {
         . (Join-Path $moduleRoot $f)
     }
 
@@ -82,6 +65,32 @@ BeforeAll {
             destinationPortRanges   = @()
         }
     }
+
+    # ── Hermetic default mocks ────────────────────────────────────────────────
+    # Every real Az cmdlet (and the AzureClient REST wrappers) a check function
+    # can invoke is mocked here with a benign empty return. Without these, a check
+    # path not explicitly mocked by a test (e.g. Section2's 2.1.2 block still runs
+    # the 2.1.7 Get-AzDiagnosticSetting call) makes a live API call. On a CI runner
+    # with no Az context that call hangs and aborts the whole run; it only "passes"
+    # on a dev machine that happens to be logged in. These root-level mocks keep the
+    # suite offline; per-Describe/It Mock calls override them where output matters.
+    Mock Get-AzDiagnosticSetting        { @() }
+    Mock Get-AzLogProfile               { @() }
+    Mock Get-AzActivityLogAlert         { @() }
+    Mock Get-AzNetworkWatcherFlowLog    { @() }
+    Mock Get-AzRoleDefinition           { @() }
+    Mock Get-AzStorageAccount           { @() }
+    Mock Get-AzStorageBlobServiceProperty { $null }
+    Mock Get-AzStorageFileServiceProperty { $null }
+    Mock Get-AzResourceLock             { @() }
+    Mock Get-AzSecurityPricing          { $null }
+    Mock Get-AzKeyVaultKey              { @() }
+    Mock Get-AzKeyVaultSecret           { @() }
+    Mock Get-AzKeyVaultCertificate      { @() }
+    Mock Get-AzKeyVaultKeyRotationPolicy { $null }
+    Mock Invoke-ArmRest                 { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
+    Mock Invoke-AzRestPaged             { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
+    Mock Invoke-AzGraphQuery            { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
 }
 
 # =============================================================================
@@ -271,6 +280,109 @@ Describe "New-InfoResult" {
 }
 
 # =============================================================================
+# RETRY / THROTTLE (AzureClient)
+# =============================================================================
+
+Describe "Test-TransientError" {
+    It "matches throttling and 5xx phrasings" {
+        Test-TransientError "Response status code does not indicate success: 429 (Too Many Requests)" | Should -BeTrue
+        Test-TransientError "TooManyRequests"            | Should -BeTrue
+        Test-TransientError "Transient HTTP status (503)" | Should -BeTrue
+        Test-TransientError "request was throttled"      | Should -BeTrue
+        Test-TransientError "InternalServerError"        | Should -BeTrue
+        Test-TransientError "connection was reset"       | Should -BeTrue
+    }
+    It "does not match ordinary errors" {
+        Test-TransientError "AuthorizationFailed: caller does not have permission" | Should -BeFalse
+        Test-TransientError "Resource not found (404)" | Should -BeFalse
+        Test-TransientError "Found 500 storage accounts" | Should -BeFalse
+    }
+}
+
+Describe "Invoke-WithRetry" {
+    BeforeEach {
+        Mock Start-Sleep {}
+        $script:_throttleBag = $null
+    }
+
+    It "returns the value on first success without retrying" {
+        $script:wrCalls = 0
+        $result = Invoke-WithRetry -ScriptBlock { $script:wrCalls++; "ok" }
+        $result | Should -Be "ok"
+        $script:wrCalls | Should -Be 1
+    }
+
+    It "succeeds after N transient failures" {
+        $script:wrCalls = 0
+        $result = Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            if ($script:wrCalls -lt 3) { throw "Transient HTTP status (429)" }
+            "recovered"
+        }
+        $result | Should -Be "recovered"
+        $script:wrCalls | Should -Be 3
+    }
+
+    It "gives up after MaxRetries transient failures" {
+        $script:wrCalls = 0
+        { Invoke-WithRetry -MaxRetries 2 -ScriptBlock {
+            $script:wrCalls++
+            throw "Too Many Requests"
+        } } | Should -Throw
+        # 1 initial attempt + 2 retries = 3 invocations
+        $script:wrCalls | Should -Be 3
+    }
+
+    It "does not retry non-transient errors" {
+        $script:wrCalls = 0
+        { Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            throw "AuthorizationFailed"
+        } } | Should -Throw
+        $script:wrCalls | Should -Be 1
+    }
+
+    It "feeds the throttle bag once per transient retry" {
+        $script:_throttleBag = [System.Collections.Concurrent.ConcurrentBag[int]]::new()
+        $script:wrCalls = 0
+        Invoke-WithRetry -MaxRetries 3 -ScriptBlock {
+            $script:wrCalls++
+            if ($script:wrCalls -lt 3) { throw "Transient HTTP status (503)" }
+            "done"
+        } | Out-Null
+        # 2 transient retries before success
+        $script:_throttleBag.Count | Should -Be 2
+        $script:_throttleBag = $null
+    }
+}
+
+# =============================================================================
+# MODULE MANIFEST CONSISTENCY
+# =============================================================================
+
+Describe "Module manifest (Private\ModuleManifest.ps1)" {
+    BeforeAll {
+        $script:repoRoot = Split-Path $PSScriptRoot -Parent
+        . (Join-Path $script:repoRoot "Private\ModuleManifest.ps1")
+    }
+
+    It "lists every Private\*.ps1 and Checks\*.ps1 on disk (except the manifest itself)" {
+        $onDisk = Get-ChildItem -Path (Join-Path $script:repoRoot 'Private'), (Join-Path $script:repoRoot 'Checks') -Filter *.ps1 |
+            Where-Object { $_.Name -ne 'ModuleManifest.ps1' } |
+            ForEach-Object { (Resolve-Path $_.FullName).Path }
+        $listed = $script:ModuleFiles | ForEach-Object { (Resolve-Path (Join-Path $script:repoRoot $_)).Path }
+        $missing = @($onDisk | Where-Object { $_ -notin $listed })
+        $missing | Should -BeNullOrEmpty -Because "every module file must be in the shared manifest so parallel workers load it"
+    }
+
+    It "references only files that exist" {
+        foreach ($f in $script:ModuleFiles) {
+            Test-Path (Join-Path $script:repoRoot $f) | Should -BeTrue -Because "$f is listed in the manifest"
+        }
+    }
+}
+
+# =============================================================================
 # SECTION 2 — DATABRICKS
 # =============================================================================
 
@@ -301,7 +413,6 @@ Describe "Invoke-Section2Checks — 2.1.2 NSGs" {
             (New-PD "subnets"    $subnets)
         )
 
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "diag1" }) } }
 
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $nsgResult = $results | Where-Object { $_.ControlId -eq "2.1.2" }
@@ -323,7 +434,6 @@ Describe "Invoke-Section2Checks — 2.1.2 NSGs" {
             (New-PD "subnets"    $subnets)
         )
 
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $nsgResult = $results | Where-Object { $_.ControlId -eq "2.1.2" }
@@ -338,7 +448,6 @@ Describe "Invoke-Section2Checks — 2.1.9 No Public IP" {
             vnetId = ""; noPublicIp = "true"; publicAccess = "Enabled"; privateEps = 0
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.9" }).Status | Should -Be "PASS"
     }
@@ -349,7 +458,6 @@ Describe "Invoke-Section2Checks — 2.1.9 No Public IP" {
             vnetId = ""; noPublicIp = "false"; publicAccess = "Enabled"; privateEps = 0
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.9" }).Status | Should -Be "FAIL"
     }
@@ -362,7 +470,6 @@ Describe "Invoke-Section2Checks — 2.1.10 Public Network Access" {
             vnetId = ""; noPublicIp = "true"; publicAccess = "Disabled"; privateEps = 1
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.10" }).Status | Should -Be "PASS"
     }
@@ -373,7 +480,6 @@ Describe "Invoke-Section2Checks — 2.1.10 Public Network Access" {
             vnetId = ""; noPublicIp = "true"; publicAccess = "Enabled"; privateEps = 0
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.10" }).Status | Should -Be "FAIL"
     }
@@ -718,7 +824,6 @@ Describe "Invoke-Section7Checks — no NSGs returns INFO" {
             (New-PD "subnets"      @())
             (New-PD "vnets"        @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.1" }).Status | Should -Be "INFO"
@@ -741,7 +846,6 @@ Describe "Invoke-Section7Checks — 7.1 RDP" {
             (New-PD "subnets"      @())
             (New-PD "vnets"        @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.1" }).Status | Should -Be "PASS"
@@ -761,7 +865,6 @@ Describe "Invoke-Section7Checks — 7.1 RDP" {
             (New-PD "subnets"      @())
             (New-PD "vnets"        @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.1" }).Status | Should -Be "FAIL"
@@ -783,7 +886,6 @@ Describe "Invoke-Section7Checks — 7.2 SSH" {
             (New-PD "subnets"      @())
             (New-PD "vnets"        @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.2" }).Status | Should -Be "FAIL"
@@ -1094,7 +1196,6 @@ Describe "Invoke-Section2Checks — 2.1.11 Private Endpoints" {
             vnetId = ""; noPublicIp = "true"; publicAccess = "Disabled"; privateEps = 2
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.11" }).Status | Should -Be "PASS"
     }
@@ -1105,7 +1206,6 @@ Describe "Invoke-Section2Checks — 2.1.11 Private Endpoints" {
             vnetId = ""; noPublicIp = "true"; publicAccess = "Disabled"; privateEps = 0
         }
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.11" }).Status | Should -Be "FAIL"
     }
@@ -1349,24 +1449,6 @@ Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {
         $kv = [PSCustomObject]@{ id = "/sub/x/kv/kv1"; name = "kv1" }
         $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "app_services" @()))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'kv1') {
-                return [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{
-                    logs = @([PSCustomObject]@{ enabled = "False"; category = "AuditEvent" })
-                }) }
-            }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "activity-log") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1376,13 +1458,6 @@ Describe "Invoke-Section6Checks — 6.1.1.4 Key Vault Diagnostic Logging" {
     It "returns INFO when no Key Vaults" {
         $pd = Merge-PD @((New-PD "keyvaults" @()), (New-PD "app_services" @()))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1413,18 +1488,6 @@ Describe "Invoke-Section6Checks — 6.1.1.6 App Service Resource Logs" {
         $app = [PSCustomObject]@{ id = "/sub/x/sites/app2"; name = "app2"; kind = "app" }
         $pd = Merge-PD @((New-PD "keyvaults" @()), (New-PD "app_services" @($app)))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments[-1] -match 'app2') {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "diagnostic-settings" -and $Arguments -contains "subscription") {
-                return [PSCustomObject]@{ Success = $true; Data = @() }
-            }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1434,13 +1497,6 @@ Describe "Invoke-Section6Checks — 6.1.1.6 App Service Resource Logs" {
     It "returns INFO when no App Services" {
         $pd = Merge-PD @((New-PD "keyvaults" @()), (New-PD "app_services" @()))
 
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
@@ -1533,13 +1589,6 @@ Describe "Invoke-Section6Checks — 6.1.3.1 Application Insights" {
     }
 
     It "returns PASS when App Insights components exist" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @([PSCustomObject]@{ name = "ai1" }) } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1547,13 +1596,6 @@ Describe "Invoke-Section6Checks — 6.1.3.1 Application Insights" {
     }
 
     It "returns FAIL when no App Insights components" {
-        Mock Invoke-AzCli {
-            param($Arguments)
-            if ($Arguments -contains "diagnostic-settings") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "log-profiles") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            if ($Arguments -contains "activity-log") { return [PSCustomObject]@{ Success = $true; Data = @() } }
-            return [PSCustomObject]@{ Success = $true; Data = @() }
-        }
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
 
         $results = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD))
@@ -1579,7 +1621,6 @@ Describe "Invoke-Section7Checks — 7.3 UDP" {
             (New-PD "nsgs" @($nsg)), (New-PD "app_gateways" @()), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.3" }).Status | Should -Be "FAIL"
     }
@@ -1593,7 +1634,6 @@ Describe "Invoke-Section7Checks — 7.3 UDP" {
             (New-PD "nsgs" @($nsg)), (New-PD "app_gateways" @()), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.3" }).Status | Should -Be "PASS"
     }
@@ -1609,7 +1649,6 @@ Describe "Invoke-Section7Checks — 7.4 HTTP/HTTPS" {
             (New-PD "nsgs" @($nsg)), (New-PD "app_gateways" @()), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.4" }).Status | Should -Be "FAIL"
     }
@@ -1623,7 +1662,6 @@ Describe "Invoke-Section7Checks — 7.4 HTTP/HTTPS" {
             (New-PD "nsgs" @($nsg)), (New-PD "app_gateways" @()), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.4" }).Status | Should -Be "PASS"
     }
@@ -1653,7 +1691,6 @@ Describe "Invoke-Section7Checks — 7.5 NSG Flow Log Retention" {
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.5" }).Status | Should -Be "FAIL"
     }
@@ -1687,7 +1724,6 @@ Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
         Mock Get-AzNetworkWatcherFlowLog { @() }
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "PASS"
     }
@@ -1700,7 +1736,6 @@ Describe "Invoke-Section7Checks — 7.6 Network Watcher" {
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
         Mock Get-AzNetworkWatcherFlowLog { @() }
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.6" }).Status | Should -Be "FAIL"
     }
@@ -1730,7 +1765,6 @@ Describe "Invoke-Section7Checks — 7.8 VNet Flow Logs" {
             (New-PD "locations" @([PSCustomObject]@{ location = "eastus" })),
             (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.8" }).Status | Should -Be "FAIL"
     }
@@ -1747,7 +1781,6 @@ Describe "Invoke-Section7Checks — 7.11 Subnet-NSG Association" {
             (New-PD "locations" @()), (New-PD "waf_policies" @()),
             (New-PD "subnets" $subnets), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $s711 = @($results | Where-Object { $_.ControlId -eq "7.11" })
         $s711 | ForEach-Object { $_.Status | Should -Be "PASS" }
@@ -1763,7 +1796,6 @@ Describe "Invoke-Section7Checks — 7.11 Subnet-NSG Association" {
             (New-PD "locations" @()), (New-PD "waf_policies" @()),
             (New-PD "subnets" $subnets), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $s711 = @($results | Where-Object { $_.ControlId -eq "7.11" })
         ($s711 | Where-Object { $_.Status -eq "FAIL" }).Count | Should -BeGreaterThan 0
@@ -1778,7 +1810,6 @@ Describe "Invoke-Section7Checks — 7.11 Subnet-NSG Association" {
             (New-PD "locations" @()), (New-PD "waf_policies" @()),
             (New-PD "subnets" $subnets), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         $s711 = @($results | Where-Object { $_.ControlId -eq "7.11" })
         $s711 | ForEach-Object { $_.Status | Should -Be "INFO" }
@@ -1795,7 +1826,6 @@ Describe "Invoke-Section7Checks — 7.10 WAF Enabled" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.10" }).Status | Should -Be "PASS"
     }
@@ -1809,7 +1839,6 @@ Describe "Invoke-Section7Checks — 7.10 WAF Enabled" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.10" }).Status | Should -Be "FAIL"
     }
@@ -1819,7 +1848,6 @@ Describe "Invoke-Section7Checks — 7.10 WAF Enabled" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @()), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.10" }).Status | Should -Be "INFO"
     }
@@ -1835,7 +1863,6 @@ Describe "Invoke-Section7Checks — 7.12 TLS 1.2+" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.12" }).Status | Should -Be "PASS"
     }
@@ -1849,7 +1876,6 @@ Describe "Invoke-Section7Checks — 7.12 TLS 1.2+" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.12" }).Status | Should -Be "FAIL"
     }
@@ -1865,7 +1891,6 @@ Describe "Invoke-Section7Checks — 7.13 HTTP2" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.13" }).Status | Should -Be "PASS"
     }
@@ -1879,7 +1904,6 @@ Describe "Invoke-Section7Checks — 7.13 HTTP2" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.13" }).Status | Should -Be "FAIL"
     }
@@ -1895,7 +1919,6 @@ Describe "Invoke-Section7Checks — 7.14 WAF Body Inspection" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.14" }).Status | Should -Be "PASS"
     }
@@ -1911,7 +1934,6 @@ Describe "Invoke-Section7Checks — 7.14 WAF Body Inspection" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @($pol)), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.14" }).Status | Should -Be "PASS"
     }
@@ -1929,7 +1951,6 @@ Describe "Invoke-Section7Checks — 7.15 Bot Protection" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @($pol)), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.15" }).Status | Should -Be "PASS"
     }
@@ -1945,7 +1966,6 @@ Describe "Invoke-Section7Checks — 7.15 Bot Protection" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @($pol)), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.15" }).Status | Should -Be "FAIL"
     }
@@ -1959,7 +1979,6 @@ Describe "Invoke-Section7Checks — 7.15 Bot Protection" {
             (New-PD "nsgs" @()), (New-PD "app_gateways" @($agw)), (New-PD "watchers" @()),
             (New-PD "locations" @()), (New-PD "waf_policies" @()), (New-PD "subnets" @()), (New-PD "vnets" @())
         )
-        Mock Invoke-AzCli { [PSCustomObject]@{ Success = $true; Data = @() } }
         $results = @(Invoke-Section7Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "7.15" }).Status | Should -Be "INFO"
     }
