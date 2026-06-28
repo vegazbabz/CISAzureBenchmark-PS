@@ -564,19 +564,16 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 8.4.1 | Azure Bastion Host exists | L2 |
 | 8.5 | DDoS Network Protection enabled on VNets | L2 |
 
-### Section 9 — Storage Services (24 automated)
+### Section 9 — Storage Services (21 automated)
 
 | Control | Title | Level |
 | --- | --- | --- |
-| 9.1.1 | Azure Files soft delete enabled | L1 |
+| 9.1.1 | Soft delete for Azure File Shares enabled | L1 |
 | 9.1.2 | SMB protocol version >= 3.1.1 | L1 |
 | 9.1.3 | SMB channel encryption AES-256-GCM or higher | L1 |
 | 9.2.1 | Blob soft delete enabled | L1 |
 | 9.2.2 | Container soft delete enabled | L1 |
 | 9.2.3 | Blob versioning enabled | L2 |
-| 9.2.4 | Storage logging enabled for Blob Service read requests | L2 |
-| 9.2.5 | Storage logging enabled for Blob Service write requests | L2 |
-| 9.2.6 | Storage logging enabled for Blob Service delete requests | L2 |
 | 9.3.1.1 | Key rotation reminders enabled | L1 |
 | 9.3.1.2 | Access keys regenerated within 90 days | L1 |
 | 9.3.1.3 | Storage account key access disabled | L1 |
@@ -585,13 +582,16 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 9.3.2.3 | Default network access rule is Deny | L1 |
 | 9.3.3.1 | Default to Microsoft Entra authorization in Azure portal | L1 |
 | 9.3.4 | Secure transfer (HTTPS) required | L1 |
-| 9.3.5 | Allow Azure trusted services to access storage | L2 |
+| 9.3.5 | Allow trusted Microsoft services to access storage | L2 |
 | 9.3.6 | Minimum TLS version 1.2 | L1 |
 | 9.3.7 | Cross-tenant replication disabled | L1 |
 | 9.3.8 | Blob anonymous access disabled | L1 |
-| 9.3.9 | Storage account has CanNotDelete resource lock | L1 |
-| 9.3.10 | Storage account has ReadOnly resource lock | L2 |
+| 9.3.9 | ARM delete locks applied to storage accounts | L1 |
+| 9.3.10 | ARM ReadOnly locks considered for storage accounts | L2 |
 | 9.3.11 | Redundancy set to geo-redundant (GRS) | L2 |
+
+> **9.3.9 / 9.3.10 resource locks** are marked *Manual* in the v6 benchmark, but this tool
+> evaluates them automatically (via `Get-AzResourceLock`) to provide a real PASS/FAIL signal.
 
 ---
 
