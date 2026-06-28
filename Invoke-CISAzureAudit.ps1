@@ -107,25 +107,9 @@ if ($_ExtraSubscriptions.Count -gt 0) {
 
 $moduleRoot = $PSScriptRoot
 
-foreach ($__f in @(
-    "Private\Config.ps1",
-    "Private\Models.ps1",
-    "Private\AzureClient.ps1",
-    "Private\Helpers.ps1",
-    "Private\CheckHelpers.ps1",
-    "Private\Identity.ps1",
-    "Private\Checkpoint.ps1",
-    "Private\History.ps1",
-    "Private\Report.ps1",
-    "Private\Suppressions.ps1",
-    "Checks\Section2.ps1",
-    "Checks\Section3.ps1",
-    "Checks\Section5.ps1",
-    "Checks\Section6.ps1",
-    "Checks\Section7.ps1",
-    "Checks\Section8.ps1",
-    "Checks\Section9.ps1"
-)) {
+. (Join-Path $moduleRoot "Private\ModuleManifest.ps1")
+
+foreach ($__f in $script:ModuleFiles) {
     $__full = Join-Path $moduleRoot $__f
     if (-not (Test-Path $__full)) { throw "Missing module file: $__full" }
     . $__full
@@ -341,6 +325,31 @@ if (-not (Get-Module -ListAvailable Az.ResourceGraph)) {
     exit 1
 }
 Write-Host "`u{2705} Az.ResourceGraph module ready" -ForegroundColor Green
+
+# ── Preflight the remaining Az modules ───────────────────────────────────────
+# Az.Accounts and Az.ResourceGraph above are mandatory (auth + prefetch). These
+# are per-section: a missing one would otherwise surface as opaque per-resource
+# ERROR rows. Sweep once and warn with a single, actionable install hint rather
+# than blocking — a user may deliberately run a subset of sections.
+
+$optionalModules = [ordered]@{
+    'Az.Monitor'   = 'log profiles, diagnostic settings, activity log alerts'
+    'Az.Network'   = 'network watcher flow logs'
+    'Az.Storage'   = 'storage account enumeration'
+    'Az.KeyVault'  = 'key rotation policies'
+    'Az.Resources' = 'role definitions'
+    'Az.Security'  = 'Microsoft Defender for Cloud checks'
+}
+$missingModules = @($optionalModules.Keys | Where-Object { -not (Get-Module -ListAvailable $_) })
+if ($missingModules.Count -gt 0) {
+    Write-Host ("`u{26A0} {0} Az module(s) not installed — related checks will report ERROR:" -f $missingModules.Count) -ForegroundColor Yellow
+    foreach ($m in $missingModules) {
+        Write-Host ("    {0,-13} ({1})" -f $m, $optionalModules[$m]) -ForegroundColor Yellow
+    }
+    Write-Host ("    Install: Install-Module {0} -Scope CurrentUser" -f ($missingModules -join ', ')) -ForegroundColor Yellow
+} else {
+    Write-Host "`u{2705} All section Az modules present" -ForegroundColor Green
+}
 Write-Host ""
 
 # ── Resolve subscription list ─────────────────────────────────────────────────
@@ -692,15 +701,11 @@ if ($subsToProcess.Count -gt 0) {
 
                 Write-Host "  [$subIdx/$subTotal] Starting:  $subName" -ForegroundColor DarkCyan
 
-                # Re-import all module files in the parallel runspace
-                $files = @(
-                    "Private\Config.ps1","Private\Models.ps1","Private\AzureClient.ps1",
-                    "Private\Helpers.ps1","Private\CheckHelpers.ps1","Private\Identity.ps1",
-                    "Private\Checkpoint.ps1","Private\History.ps1","Private\Report.ps1",
-                    "Checks\Section2.ps1","Checks\Section5.ps1","Checks\Section6.ps1",
-                    "Checks\Section7.ps1","Checks\Section8.ps1","Checks\Section9.ps1"
-                )
-                foreach ($f in $files) { . (Join-Path $modRoot $f) }
+                # Re-import all module files in the parallel runspace from the
+                # single shared manifest (Private\ModuleManifest.ps1) so this list
+                # can never drift from the top-level loader.
+                . (Join-Path $modRoot "Private\ModuleManifest.ps1")
+                foreach ($f in $script:ModuleFiles) { . (Join-Path $modRoot $f) }
 
                 # Disable Az context autosave in THIS runspace before setting the context.
                 # The parent-runspace call alone is not sufficient: when Az.Accounts is first
