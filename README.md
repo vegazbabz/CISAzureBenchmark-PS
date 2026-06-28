@@ -172,9 +172,9 @@ Checks/
   Section3.ps1                Compute checks (1 manual control)
   Section5.ps1                Identity & access checks (15 controls)
   Section6.ps1                Logging & monitoring checks (24 controls)
-  Section7.ps1                Networking checks (13 controls)
+  Section7.ps1                Networking checks (16 controls)
   Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (21 controls — 109 total)
+  Section9.ps1                Storage checks (21 controls — 112 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -500,23 +500,26 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 6.1.5 | Basic/Free/Consumption SKUs not used on production artifacts (manual) | L2 |
 | 6.2 | Resource Locks set for mission-critical resources (manual) | L2 |
 
-### Section 7 — Networking Services (13 automated)
+### Section 7 — Networking Services (13 automated · 3 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 7.1 | RDP (3389) not open to internet | L1 |
 | 7.2 | SSH (22) not open to internet | L1 |
-| 7.3 | UDP access from internet restricted | L1 |
+| 7.3 | UDP port access from internet restricted | L1 |
 | 7.4 | HTTP/HTTPS (80/443) from internet evaluated and restricted | L1 |
 | 7.5 | NSG flow log retention >= 90 days | L2 |
-| 7.6 | Network Watcher enabled for all regions in use | L1 |
+| 7.6 | Network Watcher enabled for all regions in use | L2 |
+| 7.7 | Public IP addresses evaluated periodically (manual) | L1 |
 | 7.8 | VNet flow log retention >= 90 days | L2 |
+| 7.9 | VPN Gateway P2S authentication type = Entra ID only (manual) | L2 |
 | 7.10 | WAF enabled on Azure Application Gateway | L2 |
 | 7.11 | Subnets associated with NSGs | L1 |
 | 7.12 | App Gateway SSL policy min TLS 1.2+ | L1 |
 | 7.13 | HTTP2 enabled on Application Gateway | L1 |
 | 7.14 | WAF request body inspection enabled | L2 |
 | 7.15 | WAF bot protection enabled | L2 |
+| 7.16 | Network Security Perimeter used for PaaS resources (manual) | L2 |
 
 ### Section 8 — Security Services (30 automated)
 

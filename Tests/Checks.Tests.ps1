@@ -1758,6 +1758,16 @@ Describe "Invoke-Section7Checks — 7.15 Bot Protection" {
     }
 }
 
+Describe "Invoke-Section7TenantChecks — v6 manual controls" {
+    It "emits the 3 v6 manual networking controls, all MANUAL" {
+        $results = @(Invoke-Section7TenantChecks)
+        ($results | Measure-Object).Count | Should -Be 3
+        @($results | Where-Object { $_.Status -ne 'MANUAL' }).Count | Should -Be 0
+        $ids = ($results.ControlId | Sort-Object) -join ','
+        $ids | Should -Be (@('7.16','7.7','7.9') -join ',')
+    }
+}
+
 # =============================================================================
 # SECTION 8 — SECURITY SERVICES (additional coverage)
 # =============================================================================
