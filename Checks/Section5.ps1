@@ -1,11 +1,11 @@
 # Section 5 — Identity Services
-# CIS Microsoft Azure Foundations Benchmark v5.0.0
+# CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 # ── Tenant-level checks (run once, not per subscription) ─────────────────────
 
 function Invoke-Check5_1_1 {
     # Security defaults enabled OR Conditional Access in use
-    $cid = "5.1.1"; $title = "Ensure Security Defaults Are Enabled on Microsoft Entra ID"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.1.1"; $title = "Ensure that 'security defaults' is Enabled in Microsoft Entra ID"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
     $r   = Invoke-ArmRest -Uri $url
@@ -33,9 +33,17 @@ function Invoke-Check5_1_1 {
 }
 
 function Invoke-Check5_1_2 {
-    # MFA registration report via Graph beta — uses the current userRegistrationDetails endpoint.
+    # Manual — device registration MFA setting lives in the Entra portal and has no
+    # stable Graph endpoint for read.
+    $cid = "5.1.2"; $title = "Ensure that 'Require Multifactor Authentication to register or join devices with Microsoft Entra' is set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — Microsoft Entra ID > Devices > Device settings > ensure 'Require Multifactor Authentication to register or join devices with Microsoft Entra' is set to 'Yes'."
+}
+
+function Invoke-Check5_1_3 {
+    # MFA registered for ALL users — uses the current userRegistrationDetails endpoint.
     # The older credentialUserRegistrationDetails endpoint is deprecated and does not paginate.
-    $cid = "5.1.2"; $title = "Ensure MFA Is Enabled for All Users in Administrative Roles"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.1.3"; $title = "Ensure that 'multifactor authentication' is 'enabled' For All Users"; $level = 1; $sec = "5 - Identity Services"
 
     $url = "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails"
     $r   = Invoke-AzRestPaged -Uri $url
@@ -44,131 +52,79 @@ function Invoke-Check5_1_2 {
         return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'UserAuthenticationMethod.Read.All (or Reports.Read.All)')
     }
 
-    $users      = @($r.Data)
-    # Filter to users assigned to at least one admin role — the isAdmin field is
-    # populated by the userRegistrationDetails endpoint and reflects membership
-    # in any Azure AD directory role.
-    $adminUsers  = @($users | Where-Object { [string]$_.isAdmin -eq 'True' -or [string]$_.isAdmin -eq 'true' })
-    $noMfa       = @($adminUsers | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
-    $noMfaCount  = $noMfa.Count
+    $users = @($r.Data)
+    $noMfa = @($users | Where-Object { [string]$_.isMfaRegistered -ne 'True' -and [string]$_.isMfaRegistered -ne 'true' })
+    $noMfaCount = $noMfa.Count
 
     if ($noMfaCount -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($adminUsers.Count) admin user(s) (of $($users.Count) total) have MFA registered."
+        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($users.Count) user(s) have MFA registered."
     }
 
     $sample = ($noMfa | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
     New-CISResult $cid $title $level $sec $script:FAIL `
-        -Details "$noMfaCount admin user(s) without MFA registered (of $($adminUsers.Count) admin users, $($users.Count) total). Sample: $sample" `
-        -Remediation "Entra ID > Per-user MFA or Conditional Access > Require MFA for all administrative roles."
+        -Details "$noMfaCount user(s) without MFA registered (of $($users.Count) total). Sample: $sample" `
+        -Remediation "Entra ID > Security > Conditional Access (or per-user MFA) > Require MFA for all users."
 }
 
-function Invoke-Check5_1_3 {
-    $cid = "5.1.3"; $title = "Ensure That 'Remember Multi-Factor Authentication on Trusted Devices' Is Disabled"; $level = 1; $sec = "5 - Identity Services"
-    New-CISResult $cid $title $level $sec $script:MANUAL `
-        -Details "Manual verification required — setting is in the deprecated Per-user MFA portal." `
-        -Remediation "Disable 'Allow users to remember MFA on trusted devices' in the legacy MFA portal, or migrate to Conditional Access sign-in frequency policies."
+function Invoke-Check5_1_4 {
+    $cid = "5.1.4"; $title = "Ensure that 'Allow users to remember multifactor authentication on devices they trust' is Disabled"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — setting is in the deprecated Per-user MFA portal. Disable 'Allow users to remember MFA on trusted devices', or migrate to Conditional Access sign-in frequency policies."
 }
 
-function Invoke-Check5_28 {
-    $cid = "5.28"; $title = "Ensure Privileged Users Are Protected by Phishing-Resistant MFA"; $level = 1; $sec = "5 - Identity Services"
-    New-CISResult $cid $title $level $sec $script:MANUAL `
-        -Details "Manual verification required — review privileged-role MFA methods in the Entra ID portal." `
-        -Remediation "Entra ID > Users > Per-user MFA, or Conditional Access > Grant > Require authentication strength > Phishing-resistant MFA for all privileged roles."
+function Invoke-Check5_3_1 {
+    $cid = "5.3.1"; $title = "Ensure that Azure Admin Accounts Are Not Used for Daily Operations"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — confirm that privileged (admin) accounts are dedicated to administration and are not used for daily/non-privileged activities (email, web browsing, etc.)."
 }
 
-function Invoke-Check5_4 {
-    $cid = "5.4"; $title = "Ensure That 'Restrict Non-Admin Users From Creating Tenants' Is Set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
-
-    $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-ArmRest -Uri $url
-
-    if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
-    }
-
-    $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
-    $allowed = [string]($policy.PSObject.Properties['defaultUserRolePermissions']?.Value.PSObject.Properties['allowedToCreateTenants']?.Value)
-    $restricted = $allowed -eq "False" -or $allowed -eq "false"
-
-    New-CISResult $cid $title $level $sec `
-        -Status $(if ($restricted) { $script:PASS } else { $script:FAIL }) `
-        -Details $(if ($restricted) { "Non-admin tenant creation is restricted." } else { "Non-admin users can create tenants (defaultUserRolePermissions.allowedToCreateTenants: $allowed)." }) `
-        -Remediation $(if (-not $restricted) { "Entra ID > Users > User settings > Restrict non-admin users from creating tenants > Yes" } else { "" })
+function Invoke-Check5_3_2 {
+    $cid = "5.3.2"; $title = "Ensure that Guest Users are Reviewed on a Regular Basis"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — Entra ID > Users > filter User type = Guest; review guest accounts regularly and remove those no longer required (or use Access Reviews)."
 }
 
-function Invoke-Check5_14 {
-    $cid = "5.14"; $title = "Ensure That 'Users Can Register Applications' Is Set to 'No'"; $level = 1; $sec = "5 - Identity Services"
-
-    $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-ArmRest -Uri $url
-
-    if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
-    }
-
-    $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
-    $allowed = [string]($policy.PSObject.Properties['defaultUserRolePermissions']?.Value.PSObject.Properties['allowedToCreateApps']?.Value)
-    $restricted = $allowed -eq "False" -or $allowed -eq "false"
-
-    New-CISResult $cid $title $level $sec `
-        -Status $(if ($restricted) { $script:PASS } else { $script:FAIL }) `
-        -Details $(if ($restricted) { "Users cannot register applications." } else { "Users can register applications." }) `
-        -Remediation $(if (-not $restricted) { "Entra ID > User Settings > App registrations > Users can register applications > No" } else { "" })
+function Invoke-Check5_3_4 {
+    $cid = "5.3.4"; $title = "Ensure that All 'Privileged' Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — review privileged role assignments periodically (Entra ID > Roles and administrators, or PIM Access Reviews) and remove unnecessary assignments."
 }
 
-function Invoke-Check5_15 {
-    $cid = "5.15"; $title = "Ensure That 'Guest Users Access Restrictions' Is Set to 'Guest user access is restricted'"; $level = 1; $sec = "5 - Identity Services"
-
-    $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-ArmRest -Uri $url
-
-    if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
-    }
-
-    # GuestUserRoleId:
-    #   10dae51f-b6af-4016-8d66-8c2a99b929b3 = Restricted Guest User (most restrictive) — PASS only
-    #   2af84b1e-32c8-42b7-82bc-daa82404023b = Guest User (can read non-hidden directory objects) — FAIL
-    #   a0b1b346-4d3e-4e8b-98f8-753987be4970 = Same access as members — FAIL
-    $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
-    $roleId = [string]$policy.guestUserRoleId
-    $restrictedGuestId = "10dae51f-b6af-4016-8d66-8c2a99b929b3"
-    $pass = $roleId -eq $restrictedGuestId
-
-    New-CISResult $cid $title $level $sec `
-        -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-        -Details $(if ($pass) { "Guest user access is restricted to most restrictive level (Restricted Guest User)." } else { "Guest user role is not the most restrictive setting (current: $roleId). Must be Restricted Guest User ($restrictedGuestId)." }) `
-        -Remediation $(if (-not $pass) { "Entra ID > External Identities > External collaboration settings > Guest access restrictions > Guest user access is restricted to properties and memberships of their own directory objects" } else { "" })
+function Invoke-Check5_3_5 {
+    $cid = "5.3.5"; $title = "Ensure Disabled User Accounts do not Have Read, Write, or Owner Permissions"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — identify disabled (blocked sign-in) accounts and ensure they hold no Read, Write, or Owner role assignments on Azure resources."
 }
 
-function Invoke-Check5_16 {
-    $cid = "5.16"; $title = "Ensure That 'Guest Invite Restrictions' Is Set to 'Only Admins and Users in the Guest Inviter Role'"; $level = 2; $sec = "5 - Identity Services"
+function Invoke-Check5_3_6 {
+    $cid = "5.3.6"; $title = "Ensure 'Tenant Creator' Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — review members of the 'Tenant Creator' role periodically and remove assignments that are no longer required."
+}
 
-    $url = "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
-    $r   = Invoke-ArmRest -Uri $url
+function Invoke-Check5_3_7 {
+    $cid = "5.3.7"; $title = "Ensure All Non-privileged Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — periodically review non-privileged role assignments (Access Reviews) and remove access that is no longer required."
+}
 
-    if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All')
-    }
+function Invoke-Check5_5 {
+    $cid = "5.5"; $title = "Ensure that a Custom Role is Assigned Permissions for Administering Resource Locks"; $level = 2; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — confirm a custom role exists granting Microsoft.Authorization/locks/* and is assigned to the appropriate principals for managing resource locks."
+}
 
-    # allowInvitesFrom:
-    #   "adminsAndGuestInviters", "admins", or "none" = PASS
-    #   "adminsAndAllMembers", "everyone", "allUsers" = FAIL
-    $policy = if ($r.Data -is [array]) { $r.Data[0] } else { $r.Data }
-    $setting = if ($policy) { [string]$policy.allowInvitesFrom } else { '' }
-    $pass = $setting -and ($setting.ToLower() -in @("adminsandguestinviters", "admins", "none"))
-
-    New-CISResult $cid $title $level $sec `
-        -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-        -Details $(if ($pass) { "Guest invitations restricted to admins/guest inviters (allowInvitesFrom: $setting)." } else { "Any user can invite guests (allowInvitesFrom: $setting)." }) `
-        -Remediation $(if (-not $pass) { "Entra ID > External Identities > External collaboration settings > Guest invite restrictions: Only users assigned to specific admin roles" } else { "" })
+function Invoke-Check5_6 {
+    $cid = "5.6"; $title = "Ensure that 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' is set to 'Permit no one'"; $level = 2; $sec = "5 - Identity Services"
+    New-ManualResult $cid $title $level $sec `
+        "Manual verification required — Entra ID > Manage Tenants (Subscription policies) > set 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' to 'Permit no one'."
 }
 
 # ── Per-subscription checks ──────────────────────────────────────────────────
 
 function Invoke-Check5_3_3 {
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
-    $cid = "5.3.3"; $title = "Ensure 'User Access Administrator' Role Is Not Assigned at Subscription Level"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.3.3"; $title = "Ensure That Use of the 'User Access Administrator' Role is Restricted"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
@@ -190,13 +146,13 @@ function Invoke-Check5_3_3 {
     }) -join ", "
     New-CISResult $cid $title $level $sec $script:FAIL `
         -Details "User Access Administrator assigned at subscription scope to: $names" `
-        -Remediation "IAM > Role assignments > Remove UAA role from subscription scope; use resource-group scope instead." `
+        -Remediation "IAM > Role assignments > Remove UAA role from subscription scope; use resource-group scope or PIM time-bound assignments instead." `
         -SubscriptionId $sid -SubscriptionName $sname
 }
 
-function Invoke-Check5_23 {
+function Invoke-Check5_4 {
     param([string]$SubscriptionId, [string]$SubscriptionName)
-    $cid = "5.23"; $title = "Ensure That No Custom Subscription Owner Roles Are Created"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.4"; $title = "Ensure that No Custom Subscription Administrator Roles Exist"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     try {
@@ -217,14 +173,14 @@ function Invoke-Check5_23 {
 
     $names = ($customOwners | ForEach-Object { $_.name }) -join ", "
     New-CISResult $cid $title $level $sec $script:FAIL `
-        -Details "Custom role(s) with Owner-level permissions: $names" `
-        -Remediation "IAM > Roles > Review and remove custom roles with wildcard (*) actions." `
+        -Details "Custom role(s) with Administrator-level (wildcard *) permissions: $names" `
+        -Remediation "IAM > Roles > Review and remove custom roles with wildcard (*) actions assignable at subscription scope." `
         -SubscriptionId $sid -SubscriptionName $sname
 }
 
-function Invoke-Check5_27 {
+function Invoke-Check5_7 {
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
-    $cid = "5.27"; $title = "Ensure That the Subscription Has Between 2 and 3 Owners"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.7"; $title = "Ensure there are between 2 and 3 Subscription Owners"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
@@ -238,8 +194,8 @@ function Invoke-Check5_27 {
     $pass = $count -ge 2 -and $count -le 3
     New-CISResult $cid $title $level $sec `
         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
-        -Details "Found $count subscription Owner(s). CIS recommends 2–3." `
-        -Remediation $(if (-not $pass) { "IAM > Role assignments > Adjust Owner assignments to be between 2 and 3." } else { "" }) `
+        -Details "Found $count subscription Owner(s) at subscription scope. CIS recommends between 2 and 3." `
+        -Remediation $(if (-not $pass) { "IAM > Role assignments > Adjust Owner assignments to be between 2 and 3 at subscription scope." } else { "" }) `
         -SubscriptionId $sid -SubscriptionName $sname
 }
 
@@ -250,14 +206,18 @@ function Invoke-Section5TenantChecks {
     #>
     $results = [System.Collections.Generic.List[object]]::new()
     $checks  = @(
-        @{ Id = '5.1.1'; Title = 'Security Defaults';       Fn = { Invoke-Check5_1_1 } }
-        @{ Id = '5.1.2'; Title = 'MFA for Admin Roles';      Fn = { Invoke-Check5_1_2 } }
-        @{ Id = '5.1.3'; Title = 'MFA Device Memory';        Fn = { Invoke-Check5_1_3 } }
-        @{ Id = '5.28';  Title = 'Phishing-Resistant MFA';   Fn = { Invoke-Check5_28 } }
-        @{ Id = '5.4';   Title = 'Restrict Tenant Creation'; Fn = { Invoke-Check5_4  } }
-        @{ Id = '5.14';  Title = 'User App Registration';    Fn = { Invoke-Check5_14 } }
-        @{ Id = '5.15';  Title = 'Guest Access Restrictions'; Fn = { Invoke-Check5_15 } }
-        @{ Id = '5.16';  Title = 'Guest Invite Restrictions'; Fn = { Invoke-Check5_16 } }
+        @{ Id = '5.1.1'; Fn = { Invoke-Check5_1_1 } }
+        @{ Id = '5.1.2'; Fn = { Invoke-Check5_1_2 } }
+        @{ Id = '5.1.3'; Fn = { Invoke-Check5_1_3 } }
+        @{ Id = '5.1.4'; Fn = { Invoke-Check5_1_4 } }
+        @{ Id = '5.3.1'; Fn = { Invoke-Check5_3_1 } }
+        @{ Id = '5.3.2'; Fn = { Invoke-Check5_3_2 } }
+        @{ Id = '5.3.4'; Fn = { Invoke-Check5_3_4 } }
+        @{ Id = '5.3.5'; Fn = { Invoke-Check5_3_5 } }
+        @{ Id = '5.3.6'; Fn = { Invoke-Check5_3_6 } }
+        @{ Id = '5.3.7'; Fn = { Invoke-Check5_3_7 } }
+        @{ Id = '5.5';   Fn = { Invoke-Check5_5   } }
+        @{ Id = '5.6';   Fn = { Invoke-Check5_6   } }
     )
     foreach ($check in $checks) {
         try {
@@ -290,8 +250,8 @@ function Invoke-Section5SubscriptionChecks {
     $results = [System.Collections.Generic.List[object]]::new()
 
     try { $results.Add((Invoke-Check5_3_3 -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.3.3 error: $_" -Level WARNING }
-    try { $results.Add((Invoke-Check5_23  -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.23 error: $_" -Level WARNING }
-    try { $results.Add((Invoke-Check5_27  -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.27 error: $_" -Level WARNING }
+    try { $results.Add((Invoke-Check5_4   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.4 error: $_" -Level WARNING }
+    try { $results.Add((Invoke-Check5_7   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.7 error: $_" -Level WARNING }
 
     return $results.ToArray()
 }

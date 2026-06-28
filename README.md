@@ -170,11 +170,11 @@ Private/
 Checks/
   Section2.ps1                Databricks checks (5 controls)
   Section3.ps1                Compute checks (1 manual control)
-  Section5.ps1                Identity & access checks (11 controls)
+  Section5.ps1                Identity & access checks (15 controls)
   Section6.ps1                Logging & monitoring checks (17 controls)
   Section7.ps1                Networking checks (13 controls)
   Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (21 controls — 98 total)
+  Section9.ps1                Storage checks (21 controls — 102 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -684,16 +684,13 @@ the runner account to the vault's access policy (non-RBAC vaults). Without this,
 return ERROR with an explanatory message. The report clearly distinguishes this from a clean
 result — compliance is unknown, not assumed clean.
 
-**Graph API for identity checks** — controls 5.4, 5.14, 5.15, and 5.16 call the Microsoft Graph
+**Graph API for identity checks** — controls 5.1.1 and 5.1.3 call the Microsoft Graph
 API via `Invoke-AzRestMethod`. If the required Graph permissions have not been consented for the
 identity running the audit, these will return ERROR. Test with:
 
 ```powershell
-Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/authorizationPolicy"
+Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
 ```
-
-**Conditional Access policies (5.2.x)** — marked Manual in the benchmark and not checked by this
-tool. They require review in the Entra ID portal.
 
 ---
 

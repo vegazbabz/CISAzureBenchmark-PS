@@ -556,171 +556,86 @@ Describe "Invoke-Check5_1_1 — Security Defaults" {
     }
 }
 
-Describe "Invoke-Check5_1_2 — MFA All Users" {
+Describe "Invoke-Check5_1_2 — Device Registration MFA (manual)" {
+    It "returns MANUAL status" {
+        $r = Invoke-Check5_1_2
+        $r.Status    | Should -Be "MANUAL"
+        $r.ControlId | Should -Be "5.1.2"
+    }
+}
+
+Describe "Invoke-Check5_1_3 — MFA for All Users" {
     It "returns PASS when all users have MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true; isAdmin = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $true }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
-        $r = Invoke-Check5_1_2
+        $r = Invoke-Check5_1_3
         $r.Status | Should -Be "PASS"
     }
 
-    It "returns FAIL when an admin user lacks MFA" {
+    It "returns FAIL when any user lacks MFA" {
         $users = @(
-            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true;  isAdmin = $true }
-            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false; isAdmin = $true }
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; isMfaRegistered = $true }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   isMfaRegistered = $false }
         )
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
-        $r = Invoke-Check5_1_2
+        $r = Invoke-Check5_1_3
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "1 user"
+        $r.Details | Should -Match "bob@test.com"
+    }
+
+    It "returns FAIL when a non-admin user lacks MFA (all-user scope)" {
+        # v6 5.1.3 covers ALL users, not just admins — a non-admin without MFA must FAIL.
+        $users = @(
+            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $true }
+            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false }
+        )
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
+        $r = Invoke-Check5_1_3
         $r.Status | Should -Be "FAIL"
-        $r.Details | Should -Match "1 admin user"
     }
 
     It "returns ERROR on API failure" {
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $false; Error = "Forbidden"; Data = $null } }
-        $r = Invoke-Check5_1_2
-        $r.Status | Should -Be "ERROR"
+        (Invoke-Check5_1_3).Status | Should -Be "ERROR"
     }
 
     It "returns PASS for empty tenant" {
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
-        $r = Invoke-Check5_1_2
-        $r.Status | Should -Be "PASS"
-    }
-
-    It "returns PASS when only non-admin user lacks MFA (admin-scope regression)" {
-        # A non-admin user without MFA must NOT cause a FAIL — the control only covers admins.
-        $users = @(
-            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $true;  isAdmin = $true }
-            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
-        )
-        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
-        $r = Invoke-Check5_1_2
-        $r.Status | Should -Be "PASS"
-    }
-
-    It "returns FAIL when admin has no MFA even if non-admin also has no MFA" {
-        $users = @(
-            [PSCustomObject]@{ userPrincipalName = "admin@test.com";    isMfaRegistered = $false; isAdmin = $true }
-            [PSCustomObject]@{ userPrincipalName = "external@corp.com"; isMfaRegistered = $false; isAdmin = $false }
-        )
-        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = $users } }
-        $r = Invoke-Check5_1_2
-        $r.Status   | Should -Be "FAIL"
-        $r.Details  | Should -Match "1 admin user"
-        $r.Details  | Should -Match "admin@test.com"
+        (Invoke-Check5_1_3).Status | Should -Be "PASS"
     }
 }
 
-Describe "Invoke-Check5_1_3 — Remember MFA on Trusted Devices" {
-    It "returns MANUAL status" {
-        $r = Invoke-Check5_1_3
-        $r.Status    | Should -Be "MANUAL"
-        $r.ControlId | Should -Be "5.1.3"
+Describe "Section 5 manual controls" {
+    It "5.1.4 remember-MFA returns MANUAL" {
+        $r = Invoke-Check5_1_4; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.1.4"
     }
-}
-
-Describe "Invoke-Check5_28 — Phishing-Resistant MFA for Privileged Users" {
-    It "returns MANUAL status" {
-        $r = Invoke-Check5_28
-        $r.Status    | Should -Be "MANUAL"
-        $r.ControlId | Should -Be "5.28"
+    It "5.3.1 admin accounts daily ops returns MANUAL" {
+        $r = Invoke-Check5_3_1; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.1"
     }
-}
-
-Describe "Invoke-Check5_4 — Restrict Non-Admin Tenant Creation" {
-    It "returns PASS when allowedToCreateTenants is false" {
-        $policy = [PSCustomObject]@{
-            defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateTenants = $false }
-        }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_4
-        $r.Status | Should -Be "PASS"
+    It "5.3.2 guest users reviewed returns MANUAL" {
+        $r = Invoke-Check5_3_2; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.2"
     }
-
-    It "returns FAIL when allowedToCreateTenants is true" {
-        $policy = [PSCustomObject]@{
-            defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateTenants = $true }
-        }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_4
-        $r.Status | Should -Be "FAIL"
+    It "5.3.4 privileged role review returns MANUAL" {
+        $r = Invoke-Check5_3_4; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.4"
     }
-
-    It "returns ERROR on API failure" {
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Error = "Access denied"; Data = $null } }
-        $r = Invoke-Check5_4
-        $r.Status | Should -Be "ERROR"
+    It "5.3.5 disabled accounts returns MANUAL" {
+        $r = Invoke-Check5_3_5; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.5"
     }
-}
-
-Describe "Invoke-Check5_14 — Users Cannot Register Apps" {
-    It "returns PASS when allowedToCreateApps is false" {
-        $policy = [PSCustomObject]@{
-            defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateApps = $false }
-        }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_14
-        $r.Status | Should -Be "PASS"
+    It "5.3.6 tenant creator review returns MANUAL" {
+        $r = Invoke-Check5_3_6; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.6"
     }
-
-    It "returns FAIL when allowedToCreateApps is true" {
-        $policy = [PSCustomObject]@{
-            defaultUserRolePermissions = [PSCustomObject]@{ allowedToCreateApps = $true }
-        }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_14
-        $r.Status | Should -Be "FAIL"
+    It "5.3.7 non-privileged review returns MANUAL" {
+        $r = Invoke-Check5_3_7; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.7"
     }
-}
-
-Describe "Invoke-Check5_15 — Guest User Access Restrictions" {
-    It "returns PASS when guestUserRoleId is the most restrictive GUID" {
-        $policy = [PSCustomObject]@{ guestUserRoleId = "10dae51f-b6af-4016-8d66-8c2a99b929b3" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_15
-        $r.Status | Should -Be "PASS"
+    It "5.5 resource-lock custom role returns MANUAL (L2)" {
+        $r = Invoke-Check5_5; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.5"; $r.Level | Should -Be 2
     }
-
-    It "returns FAIL for member-level guest access GUID" {
-        $policy = [PSCustomObject]@{ guestUserRoleId = "a0b1b346-4d3e-4e8b-98f8-753987be4970" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        $r = Invoke-Check5_15
-        $r.Status | Should -Be "FAIL"
-    }
-}
-
-Describe "Invoke-Check5_16 — Guest Invite Restrictions" {
-    It "returns PASS for adminsAndGuestInviters" {
-        $policy = [PSCustomObject]@{ allowInvitesFrom = "adminsAndGuestInviters" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        (Invoke-Check5_16).Status | Should -Be "PASS"
-    }
-
-    It "returns PASS for admins" {
-        $policy = [PSCustomObject]@{ allowInvitesFrom = "admins" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        (Invoke-Check5_16).Status | Should -Be "PASS"
-    }
-
-    It "returns PASS for none" {
-        $policy = [PSCustomObject]@{ allowInvitesFrom = "none" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        (Invoke-Check5_16).Status | Should -Be "PASS"
-    }
-
-    It "returns FAIL for everyone" {
-        $policy = [PSCustomObject]@{ allowInvitesFrom = "everyone" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        (Invoke-Check5_16).Status | Should -Be "FAIL"
-    }
-
-    It "returns FAIL for adminsAndAllMembers" {
-        $policy = [PSCustomObject]@{ allowInvitesFrom = "adminsAndAllMembers" }
-        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = $policy } }
-        (Invoke-Check5_16).Status | Should -Be "FAIL"
+    It "5.6 subscription leaving/entering returns MANUAL (L2)" {
+        $r = Invoke-Check5_6; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.6"; $r.Level | Should -Be 2
     }
 }
 
@@ -757,7 +672,28 @@ Describe "Invoke-Check5_3_3 — No UAA at Subscription Scope" {
     }
 }
 
-Describe "Invoke-Check5_27 — 2-3 Subscription Owners" {
+Describe "Invoke-Check5_4 — No Custom Subscription Administrator Roles" {
+    It "returns PASS when no custom wildcard roles" {
+        Mock Get-AzRoleDefinition { @() }
+        $r = Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status    | Should -Be "PASS"
+        $r.ControlId | Should -Be "5.4"
+    }
+
+    It "returns FAIL when a custom role has wildcard (*) actions" {
+        Mock Get-AzRoleDefinition { @([PSCustomObject]@{ Name = "MyAdminRole"; IsCustom = $true; Actions = @('*') }) }
+        $r = Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "MyAdminRole"
+    }
+
+    It "returns ERROR on API failure" {
+        Mock Get-AzRoleDefinition { throw "AuthorizationFailed" }
+        (Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME).Status | Should -Be "ERROR"
+    }
+}
+
+Describe "Invoke-Check5_7 — 2-3 Subscription Owners" {
     BeforeAll {
         function New-Owner {
             param([string]$Name, [string]$PType = "User")
@@ -773,27 +709,27 @@ Describe "Invoke-Check5_27 — 2-3 Subscription Owners" {
 
     It "returns FAIL for zero owners" {
         $pd = New-PD "roles" @()
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
     }
 
     It "returns FAIL for one owner" {
         $pd = New-PD "roles" @(New-Owner "alice")
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
     }
 
     It "returns PASS for two owners" {
         $pd = New-PD "roles" @(New-Owner "alice"; New-Owner "bob")
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "PASS"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "PASS"
     }
 
     It "returns PASS for three owners" {
         $pd = New-PD "roles" @(New-Owner "alice"; New-Owner "bob"; New-Owner "carol")
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "PASS"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "PASS"
     }
 
     It "returns FAIL for four owners" {
         $pd = New-PD "roles" @(New-Owner "a"; New-Owner "b"; New-Owner "c"; New-Owner "d")
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
     }
 
     It "does not count management-group scoped owner" {
@@ -805,7 +741,7 @@ Describe "Invoke-Check5_27 — 2-3 Subscription Owners" {
             principalType    = "User"
         }
         $pd = New-PD "roles" @($mgOwner)
-        (Invoke-Check5_27 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
+        (Invoke-Check5_7 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd).Status | Should -Be "FAIL"
     }
 }
 
@@ -1208,33 +1144,6 @@ Describe "Invoke-Section2Checks — 2.1.11 Private Endpoints" {
         $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "2.1.11" }).Status | Should -Be "FAIL"
-    }
-}
-
-# =============================================================================
-# SECTION 5 — IDENTITY (additional coverage)
-# =============================================================================
-
-Describe "Invoke-Check5_23 — No Custom Owner Roles" {
-    It "returns PASS when no custom wildcard roles" {
-        Mock Get-AzRoleDefinition { @() }
-        $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
-        $r.Status | Should -Be "PASS"
-    }
-
-    It "returns FAIL when custom wildcard role found" {
-        Mock Get-AzRoleDefinition {
-            [PSCustomObject]@{ Name = "SuperOwner"; Id = "xyz"; Actions = @("*") }
-        }
-        $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
-        $r.Status | Should -Be "FAIL"
-        $r.Details | Should -Match "SuperOwner"
-    }
-
-    It "returns ERROR on API failure" {
-        Mock Get-AzRoleDefinition { throw "Role definition API failed" }
-        $r = Invoke-Check5_23 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
-        $r.Status | Should -Be "ERROR"
     }
 }
 
