@@ -923,6 +923,19 @@ Describe "Invoke-Section8Checks — 8.3 Key Vault purge protection" {
     }
 }
 
+Describe "Invoke-Section8TenantChecks — v6 manual controls" {
+    It "emits the 8 v6 manual security controls, all MANUAL" {
+        $results = @(Invoke-Section8TenantChecks)
+        ($results | Measure-Object).Count | Should -Be 8
+        @($results | Where-Object { $_.Status -ne 'MANUAL' }).Count | Should -Be 0
+    }
+    It "covers the expected v6 control IDs" {
+        $ids = ((Invoke-Section8TenantChecks).ControlId | Sort-Object) -join ','
+        $expected = (@('8.1.3.2','8.1.3.4','8.1.3.5','8.1.5.2','8.1.11','8.1.16','8.2.1','8.3.10') | Sort-Object) -join ','
+        $ids | Should -Be $expected
+    }
+}
+
 # =============================================================================
 # SECTION 9 — STORAGE
 # =============================================================================

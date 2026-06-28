@@ -173,8 +173,8 @@ Checks/
   Section5.ps1                Identity & access checks (15 controls)
   Section6.ps1                Logging & monitoring checks (24 controls)
   Section7.ps1                Networking checks (16 controls)
-  Section8.ps1                Security services checks (30 controls)
-  Section9.ps1                Storage checks (21 controls — 112 total)
+  Section8.ps1                Security services checks (38 controls)
+  Section9.ps1                Storage checks (21 controls — 120 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -521,16 +521,20 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 7.15 | WAF bot protection enabled | L2 |
 | 7.16 | Network Security Perimeter used for PaaS resources (manual) | L2 |
 
-### Section 8 — Security Services (30 automated)
+### Section 8 — Security Services (30 automated · 8 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
 | 8.1.1.1 | Microsoft Defender CSPM | L2 |
 | 8.1.2.1 | Microsoft Defender for APIs | L2 |
 | 8.1.3.1 | Microsoft Defender for Servers | L2 |
-| 8.1.3.3 | Endpoint protection (WDATP) component | L1 |
+| 8.1.3.2 | Vulnerability assessment for machines component (manual) | L2 |
+| 8.1.3.3 | Endpoint protection (WDATP) component | L2 |
+| 8.1.3.4 | Agentless scanning for machines component (manual) | L2 |
+| 8.1.3.5 | File Integrity Monitoring component (manual) | L2 |
 | 8.1.4.1 | Microsoft Defender for Containers | L2 |
 | 8.1.5.1 | Microsoft Defender for Storage | L2 |
+| 8.1.5.2 | ATP alerts for storage accounts monitored (manual) | L2 |
 | 8.1.6.1 | Microsoft Defender for App Services | L2 |
 | 8.1.7.1 | Microsoft Defender for Azure Cosmos DB | L2 |
 | 8.1.7.2 | Microsoft Defender for Open-Source Relational DBs | L2 |
@@ -539,19 +543,23 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 8.1.8.1 | Microsoft Defender for Key Vault | L2 |
 | 8.1.9.1 | Microsoft Defender for Resource Manager | L2 |
 | 8.1.10 | Defender configured to check VM OS updates | L1 |
+| 8.1.11 | Non-deprecated MCSB policies not Disabled (manual) | L1 |
 | 8.1.12 | Security alerts notify subscription Owners | L1 |
 | 8.1.13 | Additional email addresses for security contact | L1 |
 | 8.1.14 | Alert severity notifications configured | L1 |
 | 8.1.15 | Attack path notifications configured | L1 |
-| 8.3.1 | Key expiration set — RBAC Key Vaults | L1 |
-| 8.3.2 | Key expiration set — non-RBAC Key Vaults | L1 |
-| 8.3.3 | Secret expiration set — RBAC Key Vaults | L1 |
-| 8.3.4 | Secret expiration set — non-RBAC Key Vaults | L1 |
+| 8.1.16 | Defender External Attack Surface Monitoring (EASM) (manual) | L2 |
+| 8.2.1 | Microsoft Defender for IoT Hub (manual) | L2 |
+| 8.3.1 | Key expiration set — Key Vaults using RBAC | L1 |
+| 8.3.2 | Key expiration set — access policies (legacy) | L1 |
+| 8.3.3 | Secret expiration set — Key Vaults using RBAC | L1 |
+| 8.3.4 | Secret expiration set — access policies (legacy) | L1 |
 | 8.3.5 | Key Vault purge protection enabled | L1 |
 | 8.3.6 | Key Vault RBAC authorization enabled | L2 |
 | 8.3.7 | Key Vault public network access disabled | L1 |
 | 8.3.8 | Private endpoints used to access Key Vault | L2 |
 | 8.3.9 | Automatic key rotation enabled | L2 |
+| 8.3.10 | Azure Key Vault Managed HSM used when required (manual) | L2 |
 | 8.3.11 | Certificate validity period <= 12 months | L1 |
 | 8.4.1 | Azure Bastion Host exists | L2 |
 | 8.5 | DDoS Network Protection enabled on VNets | L2 |
