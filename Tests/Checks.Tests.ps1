@@ -387,13 +387,38 @@ Describe "Module manifest (Private\ModuleManifest.ps1)" {
 # =============================================================================
 
 Describe "Invoke-Section2Checks — no workspaces" {
-    It "returns INFO for all five controls when no Databricks workspaces found" {
+    It "returns INFO for all six controls when no Databricks workspaces found" {
         $pd = New-PD -Key "databricks" -Records @()
         # Need subnets key too to avoid null dereference
         $pd["subnets"] = @{}
         $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
-        $results | Should -HaveCount 5
+        $results | Should -HaveCount 6
         $results | ForEach-Object { $_.Status | Should -Be "INFO" }
+    }
+}
+
+Describe "Invoke-Section2Checks — 2.1.1 customer-managed VNet" {
+    It "returns PASS when workspace has a custom VNet (vnetId present)" {
+        $ws = [PSCustomObject]@{ id = "/sub/x/ws/ws1"; name = "ws1"; vnetId = "/subscriptions/x/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/my-vnet"; noPublicIp = "true"; publicAccess = "Disabled"; privateEps = 1 }
+        $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
+        $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "2.1.1" }).Status | Should -Be "PASS"
+    }
+    It "returns FAIL when workspace uses the managed VNet (no vnetId)" {
+        $ws = [PSCustomObject]@{ id = "/sub/x/ws/ws2"; name = "ws2"; vnetId = ""; noPublicIp = "true"; publicAccess = "Disabled"; privateEps = 0 }
+        $pd = Merge-PD @((New-PD "databricks" @($ws)), (New-PD "subnets" @()))
+        $results = @(Invoke-Section2Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "2.1.1" }).Status | Should -Be "FAIL"
+    }
+}
+
+Describe "Invoke-Section2TenantChecks — v6 manual controls" {
+    It "emits the 6 v6 manual Databricks controls, all MANUAL" {
+        $results = @(Invoke-Section2TenantChecks)
+        ($results | Measure-Object).Count | Should -Be 6
+        @($results | Where-Object { $_.Status -ne 'MANUAL' }).Count | Should -Be 0
+        $ids = ((Invoke-Section2TenantChecks).ControlId | Sort-Object) -join ','
+        $ids | Should -Be (@('2.1.12','2.1.3','2.1.4','2.1.5','2.1.6','2.1.8') -join ',')
     }
 }
 

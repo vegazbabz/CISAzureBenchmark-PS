@@ -168,13 +168,13 @@ Private/
   ModuleManifest.ps1          Single source of truth for the dot-source load order
   Report.ps1                  HTML report generation
 Checks/
-  Section2.ps1                Databricks checks (5 controls)
+  Section2.ps1                Databricks checks (12 controls)
   Section3.ps1                Compute checks (1 manual control)
   Section5.ps1                Identity & access checks (15 controls)
   Section6.ps1                Logging & monitoring checks (24 controls)
   Section7.ps1                Networking checks (16 controls)
   Section8.ps1                Security services checks (38 controls)
-  Section9.ps1                Storage checks (21 controls — 120 total)
+  Section9.ps1                Storage checks (21 controls — 127 total)
 Tests/
   Checks.Tests.ps1            Pester unit tests (235 tests)
   Run-Tests.ps1               Test runner
@@ -431,17 +431,22 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 
 ## Controls Covered
 
-### Section 2 — Azure Databricks (5 automated)
+### Section 2 — Azure Databricks (6 automated · 6 manual)
 
 | Control | Title | Level |
 | --- | --- | --- |
+| 2.1.1 | Databricks deployed in a customer-managed VNet | L1 |
 | 2.1.2 | NSGs configured for Databricks subnets | L1 |
-| 2.1.7 | Diagnostic logging configured | L1 |
+| 2.1.3 | Traffic encrypted between cluster worker nodes (manual) | L2 |
+| 2.1.4 | Users/groups synced from Microsoft Entra ID (manual) | L1 |
+| 2.1.5 | Unity Catalog configured (manual) | L1 |
+| 2.1.6 | PAT usage restricted and expiry enforced (manual) | L1 |
+| 2.1.7 | Diagnostic log delivery configured | L1 |
+| 2.1.8 | Critical data encrypted with customer-managed keys (manual) | L2 |
 | 2.1.9 | No Public IP enabled | L1 |
-| 2.1.10 | Public network access disabled | L1 |
+| 2.1.10 | Allow Public Network Access disabled | L1 |
 | 2.1.11 | Private endpoints used to access workspaces | L2 |
-
-> **2.1.1** (Databricks in customer-managed VNet) — pending implementation.
+| 2.1.12 | Databricks groups reviewed periodically (manual) | L1 |
 
 ### Section 3 — Compute Services (1 manual)
 
@@ -449,27 +454,31 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | --- | --- | --- | --- |
 | 3.1.1 | Only MFA-enabled identities can access privileged VMs | L2 | **Manual** — requires correlating role assignments with MFA status |
 
-> **Sections 3 and 4** of the CIS Azure Foundations Benchmark v5.0.0 are largely reference
+> **Sections 3 and 4** of the CIS Azure Foundations Benchmark v6.0.0 are largely reference
 > sections — most Compute and Database controls have been relocated to the
 > *CIS Microsoft Azure Compute Services Benchmark* and *CIS Microsoft Azure Database
 > Services Benchmark* respectively. Only 3.1.1 (Virtual Machines) remains in the
 > Foundations Benchmark as an auditable control.
 
-### Section 5 — Identity Services (9 automated · 2 manual)
+### Section 5 — Identity Services (5 automated · 10 manual)
 
 | Control | Title | Level | Notes |
 | --- | --- | --- | --- |
-| 5.1.1 | Security defaults enabled | L1 | |
-| 5.1.2 | MFA enabled for all users | L1 | |
-| 5.1.3 | Allow users to remember MFA on trusted devices disabled | L1 | **Manual** |
-| 5.28 | Privileged users protected by phishing-resistant MFA | L1 | **Manual** |
-| 5.3.3 | User Access Administrator role restricted | L1 | |
-| 5.4 | Restrict non-admin users from creating tenants | L1 | |
-| 5.14 | Users cannot register applications | L1 | |
-| 5.15 | Guest access restricted to own directory objects | L1 | |
-| 5.16 | Guest invite restrictions set to admins or no one | L2 | |
-| 5.23 | No custom subscription administrator roles | L1 | |
-| 5.27 | Between 2 and 3 subscription owners | L1 | |
+| 5.1.1 | 'security defaults' enabled in Microsoft Entra ID | L1 | |
+| 5.1.2 | Require MFA to register or join devices | L1 | **Manual** |
+| 5.1.3 | 'multifactor authentication' enabled for all users | L1 | |
+| 5.1.4 | Remember MFA on trusted devices disabled | L1 | **Manual** |
+| 5.3.1 | Azure admin accounts not used for daily operations | L1 | **Manual** |
+| 5.3.2 | Guest users reviewed regularly | L1 | **Manual** |
+| 5.3.3 | Use of 'User Access Administrator' role restricted | L1 | |
+| 5.3.4 | Privileged role assignments periodically reviewed | L1 | **Manual** |
+| 5.3.5 | Disabled accounts have no Read/Write/Owner permissions | L1 | **Manual** |
+| 5.3.6 | 'Tenant Creator' role assignments periodically reviewed | L1 | **Manual** |
+| 5.3.7 | Non-privileged role assignments periodically reviewed | L1 | **Manual** |
+| 5.4 | No custom subscription administrator roles | L1 | |
+| 5.5 | Custom role assigned for administering resource locks | L2 | **Manual** |
+| 5.6 | Subscription leaving/entering tenant set to 'Permit no one' | L2 | **Manual** |
+| 5.7 | Between 2 and 3 subscription owners | L1 | |
 
 ### Section 6 — Logging & Monitoring (15 automated · 9 manual)
 

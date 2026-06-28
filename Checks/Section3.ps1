@@ -17,7 +17,7 @@ function Invoke-Check3_1_1 {
     Partial checks would be misleading, so this remains manual.
     #>
     $cid = "3.1.1"
-    $title = "Ensure Only MFA Enabled Identities Can Access Privileged Virtual Machine"
+    $title = "Ensure only MFA Enabled Identities can Access Privileged Virtual Machine"
     $level = 2
     $sec = "3 - Compute Services"
 
