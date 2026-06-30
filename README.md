@@ -9,9 +9,9 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
-**Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
+**Coverage:** 90 automated controls across 7 sections · 37 manual controls noted in output (127 total)
 
 ---
 
@@ -176,7 +176,7 @@ Checks/
   Section8.ps1                Security services checks (38 controls)
   Section9.ps1                Storage checks (21 controls — 127 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (235 tests)
+  Checks.Tests.ps1            Pester unit tests (228 tests)
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
@@ -760,6 +760,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
-**Coverage:** 98 automated controls across 7 sections · 3 manual controls noted in output
+**Coverage:** 90 automated controls across 7 sections · 37 manual controls noted in output (127 total)
