@@ -158,13 +158,14 @@ Invoke-CISAzureAudit.ps1     Main entry point / orchestrator
 Private/
   AzureClient.ps1             PS-based API client: Resource Graph (Search-AzGraph)
                               and ARM REST (Invoke-AzRestMethod)
-  CheckHelpers.ps1            Prefetch data lookups, error formatting
+  CheckHelpers.ps1            Prefetch data lookups, error formatting,
+                              New-ErrorResult / New-InfoResult / New-ManualResult
   Checkpoint.ps1              Save/resume audit state
   Config.ps1                  Timeouts, constants, PASS/FAIL labels
   Helpers.ps1                 Logging, utilities
   History.ps1                 Run history tracking
   Identity.ps1                Subscription enumeration, permission checks
-  Models.ps1                  New-CISResult / New-ErrorResult / New-InfoResult
+  Models.ps1                  New-CISResult (the result object contract)
   ModuleManifest.ps1          Single source of truth for the dot-source load order
   Report.ps1                  HTML report generation
 Checks/
@@ -176,7 +177,7 @@ Checks/
   Section8.ps1                Security services checks (38 controls)
   Section9.ps1                Storage checks (21 controls — 127 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (228 tests)
+  Checks.Tests.ps1            Pester unit tests (256 tests)
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
@@ -302,13 +303,15 @@ For live service configurations and data Resource Graph cannot expose:
 - `Get-AzStorageFileServiceProperty` — file soft delete and SMB settings (9.1.x)
 - `Get-AzStorageAccount` — storage security properties (9.3.x)
 - `Get-AzResourceLock` — CanNotDelete / ReadOnly locks (9.3.9, 9.3.10)
-- `Get-AzRoleDefinition` — custom admin role detection (5.23)
+- `Get-AzRoleDefinition` — custom admin role detection (5.4)
 
 #### 3. ARM / Microsoft Graph REST via `Invoke-AzRestMethod`
 
 For tenant-level identity checks and APIs not exposed by Az module cmdlets:
 
-- `graph.microsoft.com/v1.0/policies/authorizationPolicy` — covers 5.4, 5.14, 5.15, 5.16
+- `graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy` — security defaults (5.1.1)
+- `graph.microsoft.com/v1.0/identity/conditionalAccess/policies` — Conditional Access fallback (5.1.1)
+- `graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails` — per-user MFA registration (5.1.3)
 - `management.azure.com/.../diagnosticSettings` — subscription-level activity log routing (6.1.1.x)
 - ARM REST for security contacts (8.1.12–8.1.15), WDATP integration (8.1.3.3), and attack path notifications (8.1.15)
 
