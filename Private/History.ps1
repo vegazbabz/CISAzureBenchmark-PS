@@ -40,7 +40,7 @@ function Add-AuditHistoryEntry {
         if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ }
     }
 
-    $assessed = $counts.PASS + $counts.FAIL
+    $assessed = $counts.PASS + $counts.FAIL + $counts.ERROR
     $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
 
     $entry = [PSCustomObject]@{
@@ -61,7 +61,8 @@ function Add-AuditHistoryEntry {
     while ($existing.Count -gt $script:MAX_HISTORY) { $existing.RemoveAt(0) }
 
     $tmpPath = "$HistoryPath.tmp"
-    $existing | ConvertTo-Json -Depth 5 | Set-Content -Path $tmpPath -Encoding UTF8
+    # -InputObject keeps a single-entry history serialized as a JSON array
+    ConvertTo-Json -InputObject @($existing) -Depth 5 | Set-Content -Path $tmpPath -Encoding UTF8
     Move-Item -Path $tmpPath -Destination $HistoryPath -Force
 }
 

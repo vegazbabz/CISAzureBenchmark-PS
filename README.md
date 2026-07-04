@@ -345,7 +345,7 @@ throttling, workers are increased back towards the original value.
 
 The generated report is a self-contained HTML file with no external dependencies.
 
-- **Summary cards** — compliance score (PASS / (PASS + FAIL), excluding ERROR, INFO and MANUAL), plus counts for each status.
+- **Summary cards** — compliance score (PASS / (PASS + FAIL + ERROR) — unreadable resources count against the score; INFO, MANUAL and SUPPRESSED are excluded), plus counts for each status.
 - **Compliance donuts** — three ring charts showing PASS/FAIL/ERROR proportions overall, for Level 1, and for Level 2.
 - **Section breakdown** — horizontal stacked bars per CIS section, sorted worst to best.
 - **Per-subscription summary** — stacked-bar table showing pass/fail/error counts per subscription; click a row to filter the results table to that subscription.
