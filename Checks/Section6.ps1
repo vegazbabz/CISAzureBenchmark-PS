@@ -18,6 +18,7 @@ function Invoke-Section6Checks {
     try {
         $subDiagUri = "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/diagnosticSettings?api-version=2021-05-01-preview"
         $r = Invoke-ArmRest -Uri $subDiagUri
+        if (-not $r.Success) { throw ([string]$r.Error) }
 
         $settings = @()
         if ($r.Success -and $r.Data) {
@@ -105,7 +106,7 @@ function Invoke-Section6Checks {
         } else {
             foreach ($kv in $kvs) {
                 $kvName  = [string]$kv.name
-                $diagList = @(Get-AzDiagnosticSetting -ResourceId ([string]$kv.id) -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)
+                $diagList = @(Get-AzDiagnosticSetting -ResourceId ([string]$kv.id) -ErrorAction Stop -WarningAction SilentlyContinue)
 
                 # Accept 'audit' or 'allLogs' category group — both satisfy the requirement
                 $hasAudit = $false
@@ -139,7 +140,13 @@ function Invoke-Section6Checks {
     # 6.1.2.1–10: operationName field matching.
     # 6.1.2.11: category field (ServiceHealth) — different check logic.
     try {
-        $alerts = @(Get-AzActivityLogAlert -ErrorAction SilentlyContinue)
+        # -ErrorAction Stop: a permission failure must land in the catch (ERROR),
+        # not silently produce an empty list that FAILs all 11 alert controls.
+        # Disabled alert rules do not alert — only enabled rules can satisfy the control.
+        $alerts = @(Get-AzActivityLogAlert -ErrorAction Stop | Where-Object {
+            $enabledProp = $_.PSObject.Properties['Enabled']?.Value
+            $null -eq $enabledProp -or [bool]$enabledProp
+        })
 
         $alertChecks = @(
             @{ Id="6.1.2.1";  Op="microsoft.authorization/policyassignments/write";           Title="Ensure that Activity Log Alert Exists for Create Policy Assignment" }
@@ -203,9 +210,10 @@ function Invoke-Section6Checks {
     try {
         $aiUrl = "https://management.azure.com/subscriptions/$sid/providers/microsoft.insights/components?api-version=2020-02-02"
         $r = Invoke-AzRestPaged -Uri $aiUrl
+        if (-not $r.Success) { throw ([string]$r.Error) }
 
-        $hasAppInsights = $r.Success -and $r.Data -and ($r.Data | Measure-Object).Count -gt 0
-        $count = if ($r.Success -and $r.Data) { ($r.Data | Measure-Object).Count } else { 0 }
+        $hasAppInsights = $r.Data -and ($r.Data | Measure-Object).Count -gt 0
+        $count = if ($r.Data) { ($r.Data | Measure-Object).Count } else { 0 }
 
         $results.Add((New-CISResult `
             -ControlId "6.1.3.1" `

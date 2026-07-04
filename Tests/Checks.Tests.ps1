@@ -3146,3 +3146,171 @@ Describe "Prefetch failure propagation" {
         @($r | Where-Object { $_.Details -match "Storage prefetch failed" }) | Should -HaveCount 0
     }
 }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v6 check-logic fixes — security contact notifications, alert Enabled, read failures
+# ══════════════════════════════════════════════════════════════════════════════
+
+Describe "Invoke-Section8Checks — 8.1.13/8.1.14/8.1.15 security contact notifications" {
+    BeforeAll {
+        function New-S8PD2 {
+            Merge-PD @(
+                (New-PD "keyvaults" @()), (New-PD "bastion" @()),
+                (New-PD "vms" @()), (New-PD "vnets" @())
+            )
+        }
+        function New-ContactMock {
+            param([object]$Properties)
+            Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+            $script:__contactProps = $Properties
+            Mock Invoke-ArmRest {
+                param($Uri)
+                if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
+                if ($Uri -match "securityContacts") {
+                    return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{ properties = $script:__contactProps }) } }
+                }
+                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
+            }
+        }
+    }
+
+    It "8.1.13 PASS when an additional email is configured" {
+        New-ContactMock ([PSCustomObject]@{ emails = "secops@contoso.com" })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.13" }).Status | Should -Be "PASS"
+    }
+
+    It "8.1.14 PASS when notificationsSources has Alert with minimalSeverity" {
+        New-ContactMock ([PSCustomObject]@{ notificationsSources = @([PSCustomObject]@{ sourceType = "Alert"; minimalSeverity = "High" }) })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.14" }).Status | Should -Be "PASS"
+    }
+
+    It "8.1.14 FAIL when only role notifications are On (no Alert source)" {
+        New-ContactMock ([PSCustomObject]@{ notificationsByRole = [PSCustomObject]@{ state = "On"; roles = @("Owner") } })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.14" }).Status | Should -Be "FAIL"
+    }
+
+    It "8.1.15 PASS when AttackPath source has minimalRiskLevel" {
+        New-ContactMock ([PSCustomObject]@{ notificationsSources = @([PSCustomObject]@{ sourceType = "AttackPath"; minimalRiskLevel = "High" }) })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.15" }).Status | Should -Be "PASS"
+    }
+
+    It "8.1.15 FAIL when AttackPath source has no minimalRiskLevel" {
+        New-ContactMock ([PSCustomObject]@{ notificationsSources = @([PSCustomObject]@{ sourceType = "AttackPath" }) })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.15" }).Status | Should -Be "FAIL"
+    }
+
+    It "8.1.12 FAIL when Owner configured but role notifications are Off" {
+        New-ContactMock ([PSCustomObject]@{ notificationsByRole = [PSCustomObject]@{ state = "Off"; roles = @("Owner") } })
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        ($r | Where-Object { $_.ControlId -eq "8.1.12" }).Status | Should -Be "FAIL"
+    }
+
+    It "8.1.12-8.1.15 ERROR when the securityContacts read fails" {
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Standard" } }
+        Mock Invoke-ArmRest {
+            param($Uri)
+            if ($Uri -match "WDATP") { return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ properties = [PSCustomObject]@{ enabled = "true" } } } }
+            if ($Uri -match "securityContacts") { return [PSCustomObject]@{ Success = $false; Data = $null; Error = "403 forbidden" } }
+            return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } }
+        }
+        $r = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S8PD2))
+        foreach ($cid in @("8.1.12","8.1.13","8.1.14","8.1.15")) {
+            ($r | Where-Object { $_.ControlId -eq $cid }).Status | Should -Be "ERROR" -Because "control $cid"
+        }
+    }
+}
+
+Describe "Invoke-Section6Checks — disabled alert rules and read failures" {
+    BeforeAll {
+        function New-S6PD2 { Merge-PD @((New-PD "keyvaults" @())) }
+    }
+
+    It "6.1.2.1 FAIL when the only matching alert rule is disabled" {
+        Mock Get-AzActivityLogAlert {
+            [PSCustomObject]@{
+                Enabled   = $false
+                Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) }
+            }
+        }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+        $r = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD2))
+        ($r | Where-Object { $_.ControlId -eq "6.1.2.1" }).Status | Should -Be "FAIL"
+    }
+
+    It "6.1.2.1 PASS when the matching alert rule is enabled" {
+        Mock Get-AzActivityLogAlert {
+            [PSCustomObject]@{
+                Enabled   = $true
+                Condition = [PSCustomObject]@{ AllOf = @([PSCustomObject]@{ Field = "operationName"; Equal = "microsoft.authorization/policyassignments/write" }) }
+            }
+        }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+        $r = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD2))
+        ($r | Where-Object { $_.ControlId -eq "6.1.2.1" }).Status | Should -Be "PASS"
+    }
+
+    It "6.1.2.x ERROR (not FAIL) when the alert list cannot be read" {
+        Mock Get-AzActivityLogAlert { throw "insufficient privileges" }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+        $r = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD2))
+        ($r | Where-Object { $_.ControlId -eq "6.1.2.1" }).Status | Should -Be "ERROR"
+        ($r | Where-Object { $_.ControlId -eq "6.1.2.11" }).Status | Should -Be "ERROR"
+    }
+
+    It "6.1.1.1 ERROR (not FAIL) when the diagnostic settings read fails" {
+        Mock Get-AzActivityLogAlert { @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Data = $null; Error = "429 throttled" } }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @() } }
+        $r = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD2))
+        ($r | Where-Object { $_.ControlId -eq "6.1.1.1" }).Status | Should -Be "ERROR"
+    }
+
+    It "6.1.3.1 ERROR (not FAIL) when the Application Insights read fails" {
+        Mock Get-AzActivityLogAlert { @() }
+        Mock Get-AzLogProfile { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $false; Data = $null; Error = "403 forbidden" } }
+        $r = @(Invoke-Section6Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData (New-S6PD2))
+        ($r | Where-Object { $_.ControlId -eq "6.1.3.1" }).Status | Should -Be "ERROR"
+    }
+}
+
+Describe "Invoke-Section9Checks — lock read failure" {
+    It "9.3.9/9.3.10 ERROR (not FAIL) when Get-AzResourceLock throws" {
+        Mock Get-AzResourceLock { throw "authorization failed" }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        $pd = New-PD "storage" @([PSCustomObject]@{
+            id = "/subscriptions/$($script:T_SID)/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/sa1"
+            name = "sa1"; resourceGroup = "rg"; isHns = "false"; sku = "Standard_LRS"
+        })
+        $r = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($r | Where-Object { $_.ControlId -eq "9.3.9" }).Status | Should -Be "ERROR"
+        ($r | Where-Object { $_.ControlId -eq "9.3.10" }).Status | Should -Be "ERROR"
+    }
+}
+
+Describe "Invoke-Check5_1_1 — Conditional Access read failure" {
+    It "returns ERROR when security defaults off and CA policies cannot be read" {
+        Mock Invoke-ArmRest {
+            param($Uri)
+            if ($Uri -match "identitySecurityDefaultsEnforcementPolicy") {
+                return [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ isEnabled = "false" }; Error = $null }
+            }
+            return [PSCustomObject]@{ Success = $false; Data = $null; Error = "403 insufficient privileges" }
+        }
+        (Invoke-Check5_1_1).Status | Should -Be "ERROR"
+    }
+}
