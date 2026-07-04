@@ -3062,3 +3062,87 @@ Describe "Add-AuditHistoryEntry" {
         (Get-Content $hist -Raw).TrimStart() | Should -Match '^\['
     }
 }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Prefetch failure propagation — unreadable data must become ERROR, never PASS/INFO
+# ══════════════════════════════════════════════════════════════════════════════
+
+Describe "Get-PrefetchError" {
+    It "returns the error message for a failed prefetch key" {
+        $pd = @{ nsgs = @{ __error = "Graph query throttled" } }
+        Get-PrefetchError -PrefetchData $pd -Key "nsgs" | Should -Be "Graph query throttled"
+    }
+    It "returns null for a successful prefetch key" {
+        $pd = New-PD "nsgs" @()
+        Get-PrefetchError -PrefetchData $pd -Key "nsgs" | Should -BeNullOrEmpty
+    }
+    It "returns null for a missing key" {
+        Get-PrefetchError -PrefetchData @{} -Key "nsgs" | Should -BeNullOrEmpty
+    }
+    It "Get-PrefetchData returns empty array for a failed key" {
+        $pd = @{ nsgs = @{ __error = "boom" } }
+        @(Get-PrefetchData -PrefetchData $pd -Key "nsgs" -SubscriptionId $script:T_SID) | Should -HaveCount 0
+    }
+}
+
+Describe "Prefetch failure propagation" {
+    It "Section 2: databricks prefetch failure yields ERROR for all six automated controls" {
+        $pd = @{ databricks = @{ __error = "access denied" } }
+        $r = @(Invoke-Section2Checks -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd)
+        $r | Should -HaveCount 6
+        @($r | Where-Object { $_.Status -ne $script:ERR }) | Should -HaveCount 0
+        (@($r.ControlId) | Sort-Object) -join "," | Should -Be "2.1.1,2.1.10,2.1.11,2.1.2,2.1.7,2.1.9"
+    }
+
+    It "Section 5: 5.3.3 emits ERROR when roles prefetch failed" {
+        $pd = @{ roles = @{ __error = "throttled" } }
+        $r = Invoke-Check5_3_3 -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd
+        $r.Status | Should -Be $script:ERR
+    }
+
+    It "Section 5: 5.7 emits ERROR when roles prefetch failed" {
+        $pd = @{ roles = @{ __error = "throttled" } }
+        $r = Invoke-Check5_7 -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd
+        $r.Status | Should -Be $script:ERR
+    }
+
+    It "Section 7: NSG prefetch failure yields ERROR (not INFO) for 7.1-7.4" {
+        $pd = @{ nsgs = @{ __error = "graph query failed" } }
+        $r = @(Invoke-Section7Checks -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd)
+        foreach ($cid in @("7.1","7.2","7.3","7.4")) {
+            @($r | Where-Object { $_.ControlId -eq $cid -and $_.Status -eq $script:ERR }) | Should -HaveCount 1 -Because "control $cid must be ERROR"
+        }
+    }
+
+    It "Section 8: Key Vault prefetch failure yields ERROR for the 8.3.x block" {
+        $pd = @{ keyvaults = @{ __error = "forbidden" } }
+        $r = @(Invoke-Section8Checks -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd)
+        $kvResults = @($r | Where-Object { $_.ControlId -like "8.3.*" })
+        $kvResults.Count | Should -BeGreaterThan 0
+        @($kvResults | Where-Object { $_.Status -ne $script:ERR }) | Should -HaveCount 0
+    }
+
+    It "Section 9: storage prefetch failure with no direct fallback yields ERROR for all 21 controls" {
+        Mock Get-AzStorageAccount { @() }
+        $pd = @{ storage = @{ __error = "resource graph unavailable" } }
+        $r = @(Invoke-Section9Checks -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd)
+        $r | Should -HaveCount 21
+        @($r | Where-Object { $_.Status -ne $script:ERR }) | Should -HaveCount 0
+    }
+
+    It "Section 9: storage prefetch failure recovers via direct fallback read" {
+        Mock Get-AzStorageAccount {
+            [PSCustomObject]@{
+                Id = "/subscriptions/$($script:T_SID)/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/sa1"
+                StorageAccountName = "sa1"; ResourceGroupName = "rg"
+                EnableHierarchicalNamespace = $false
+                Sku = [PSCustomObject]@{ Name = "Standard_LRS" }
+            }
+        }
+        $pd = @{ storage = @{ __error = "resource graph unavailable" } }
+        $r = @(Invoke-Section9Checks -SubscriptionId $script:T_SID -SubscriptionName $script:T_SNAME -PrefetchData $pd)
+        # Fallback read succeeded — results must be evaluated per-account, not blanket ERROR
+        @($r | Where-Object { $_.Details -match "Storage prefetch failed" }) | Should -HaveCount 0
+    }
+}

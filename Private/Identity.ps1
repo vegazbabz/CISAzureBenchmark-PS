@@ -79,7 +79,7 @@ function Test-AuditPermissions {
             # Note: -SubscriptionId alone is correct here — combining -Context and
             # -SubscriptionId uses conflicting parameter sets and throws.
             $null = Set-AzContext -SubscriptionId $subId `
-                        -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+                        -WarningAction SilentlyContinue -ErrorAction Stop
 
             $roles = @()
             try {

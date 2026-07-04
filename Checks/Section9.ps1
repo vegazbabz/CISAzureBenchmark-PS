@@ -15,11 +15,14 @@ function Invoke-Section9Checks {
     $sname    = $SubscriptionName
 
     $accounts = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "storage" -SubscriptionId $sid)
+    $storErr  = Get-PrefetchError -PrefetchData $PrefetchData -Key "storage"
 
-    # Fallback: only if the "storage" key was never prefetched at all (not just empty)
-    if ($accounts.Count -eq 0 -and (-not $PrefetchData.ContainsKey("storage"))) {
+    # Fallback: if the "storage" key was never prefetched, or the prefetch query
+    # failed, try reading storage accounts directly before giving up.
+    if ($accounts.Count -eq 0 -and ($storErr -or -not $PrefetchData.ContainsKey("storage"))) {
         $rawAccts = @(Get-AzStorageAccount -ErrorAction SilentlyContinue)
         if ($rawAccts.Count -gt 0) {
+            $storErr  = $null   # direct read succeeded — prefetch failure no longer masks data
             $accounts = @($rawAccts | Select-Object `
                 @{N='id';E={$_.Id}},
                 @{N='name';E={$_.StorageAccountName}},
@@ -55,7 +58,11 @@ function Invoke-Section9Checks {
             ,@("9.3.11","Ensure Redundancy is Set to 'geo-redundant storage (GRS)' on Critical Azure Storage Accounts",2)
         )
         foreach ($c in $storageControls) {
-            $results.Add((New-InfoResult $c[0] $c[1] ([int]$c[2]) $sec $noAccountInfo $sid $sname))
+            if ($storErr) {
+                $results.Add((New-ErrorResult $c[0] $c[1] ([int]$c[2]) $sec "Storage prefetch failed and direct read returned no data: $storErr" $sid $sname))
+            } else {
+                $results.Add((New-InfoResult $c[0] $c[1] ([int]$c[2]) $sec $noAccountInfo $sid $sname))
+            }
         }
         return $results.ToArray()
     }

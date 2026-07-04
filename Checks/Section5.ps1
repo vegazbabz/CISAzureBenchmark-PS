@@ -127,6 +127,11 @@ function Invoke-Check5_3_3 {
     $cid = "5.3.3"; $title = "Ensure That Use of the 'User Access Administrator' Role is Restricted"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
+    $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
+    if ($rolesErr) {
+        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+    }
+
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
     $uaaAssignments = @($roles | Where-Object {
         [string]$_.roleDefinitionId -match $script:ROLE_UAA -and
@@ -182,6 +187,11 @@ function Invoke-Check5_7 {
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
     $cid = "5.7"; $title = "Ensure there are between 2 and 3 Subscription Owners"; $level = 1; $sec = "5 - Identity Services"
     $sid = $SubscriptionId; $sname = $SubscriptionName
+
+    $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
+    if ($rolesErr) {
+        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+    }
 
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
     # Only count Owner assignments directly at the subscription scope — not inherited from management groups.

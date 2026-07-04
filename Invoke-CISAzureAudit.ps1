@@ -525,7 +525,8 @@ if ($subIdsToAudit.Count -gt 0) {
 
         if (-not $r.Success) {
             Write-AuditLog ("   {0,-20} {1}  {2}" -f $queryName, [char]0x26A0, $r.Error) -Level WARNING
-            $prefetchData[$queryName] = @{}
+            # Sentinel: consumers must surface this as ERROR results, never a false PASS
+            $prefetchData[$queryName] = @{ __error = [string]$r.Error }
             continue
         }
 
@@ -568,6 +569,7 @@ if (-not $SkipTenantChecks) {
             Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
         } catch {
             Write-AuditLog "Tenant-level check error: $_" -Level WARNING
+            $allResults.Add((New-ErrorResult "TENANT" "Tenant-level checks failed" 1 "0 - Audit Errors" "The tenant-level check run crashed: $($_.Exception.Message). Tenant/Entra controls (Sections 2, 3, 5, 6, 7, 8) were not evaluated." "" ""))
         }
     }
 }
@@ -585,15 +587,25 @@ function Invoke-SubscriptionAudit {
     # the right subscription.
     # 3>$null suppresses the Az SDK "Unable to acquire token for tenant" warning
     # that fires when the account has access to multiple tenants (expected/harmless).
-    $null = Set-AzContext -SubscriptionId $SubId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
+    # Fail fast on context-switch failure: running checks against a stale/wrong
+    # context would silently audit the wrong subscription.
+    try {
+        $null = Set-AzContext -SubscriptionId $SubId -ErrorAction Stop -WarningAction SilentlyContinue 3>$null
+        $ctxSub = [string](Get-AzContext).Subscription.Id
+        if ($ctxSub -ne $SubId) { throw "context switch landed on subscription '$ctxSub' instead of '$SubId'" }
+    } catch {
+        Write-AuditLog "Could not switch Az context to $SubName ($SubId): $_ — skipping subscription." -Level WARNING
+        $subResults.Add((New-ErrorResult "CONTEXT" "Azure context switch failed — subscription skipped" 1 "0 - Audit Errors" "Set-AzContext to '$SubId' failed: $($_.Exception.Message). All checks for this subscription were skipped to avoid auditing the wrong subscription." $SubId $SubName))
+        return $subResults.ToArray()
+    }
 
     $checkGroups = @(
-        @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
-        @{ Name = "Section 5 (Identity)";   Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
-        @{ Name = "Section 6 (Monitoring)"; Fn = { Invoke-Section6Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
-        @{ Name = "Section 7 (Networking)"; Fn = { Invoke-Section7Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
-        @{ Name = "Section 8 (Security)";   Fn = { Invoke-Section8Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
-        @{ Name = "Section 9 (Storage)";    Fn = { Invoke-Section9Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 2 (Databricks)"; Sec = "2 - Azure Databricks";       Fn = { Invoke-Section2Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 5 (Identity)";   Sec = "5 - Identity Services";      Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 6 (Monitoring)"; Sec = "6 - Management & Governance"; Fn = { Invoke-Section6Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 7 (Networking)"; Sec = "7 - Networking Services";    Fn = { Invoke-Section7Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 8 (Security)";   Sec = "8 - Security Services";      Fn = { Invoke-Section8Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
+        @{ Name = "Section 9 (Storage)";    Sec = "9 - Storage Services";       Fn = { Invoke-Section9Checks -SubscriptionId $SubId -SubscriptionName $SubName -PrefetchData $PrefetchData } }
     )
 
     foreach ($group in $checkGroups) {
@@ -613,6 +625,7 @@ function Invoke-SubscriptionAudit {
             Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level INFO
         } catch {
             Write-AuditLog "$($group.Name) error for ${SubName}: $_" -Level WARNING
+            $subResults.Add((New-ErrorResult "GROUP" "$($group.Name) checks failed" 1 $group.Sec "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $SubId $SubName))
         }
     }
 
@@ -652,6 +665,7 @@ if ($subsToProcess.Count -gt 0) {
                 Write-AuditLog "  [$seqIdx/$($subsToProcess.Count)] Completed: $subName — $($subResults.Count) results" -Level INFO
             } catch {
                 Write-AuditLog "Fatal error auditing $subName`: $_" -Level WARNING
+                $allResults.Add((New-ErrorResult "FATAL" "Subscription audit failed" 1 "0 - Audit Errors" "Auditing '$subName' crashed: $($_.Exception.Message)." $subId $subName))
             }
         }
     } else {
@@ -718,20 +732,38 @@ if ($subsToProcess.Count -gt 0) {
                 # Set Az context so PS cmdlets target this subscription.
                 # -Tenant pins the switch to the current tenant so accounts with guest access
                 # to multiple tenants don't silently land on the wrong tenant context.
-                $null = Set-AzContext -SubscriptionId $subId -Tenant $tenantId_ -ErrorAction SilentlyContinue -WarningAction SilentlyContinue 3>$null
+                # Fail fast on context-switch failure: running checks against a stale/wrong
+                # context would silently audit the wrong subscription.
+                $ctxError = $null
+                try {
+                    $null = Set-AzContext -SubscriptionId $subId -Tenant $tenantId_ -ErrorAction Stop -WarningAction SilentlyContinue 3>$null
+                    $ctxSub = [string](Get-AzContext).Subscription.Id
+                    if ($ctxSub -ne $subId) { throw "context switch landed on subscription '$ctxSub' instead of '$subId'" }
+                } catch {
+                    $ctxError = $_.Exception.Message
+                }
 
                 # Wire up shared state for adaptive concurrency and Ctrl+C cleanup
                 $script:_throttleBag  = $tBag
                 $script:_runningProcs = $pReg
 
                 try {
+                    if ($ctxError) {
+                        [Console]::Error.WriteLine("[PARALLEL-CONTEXT-ERROR] ${subName}: $ctxError — skipping subscription.")
+                        $ctxResult = New-ErrorResult "CONTEXT" "Azure context switch failed — subscription skipped" 1 "0 - Audit Errors" "Set-AzContext to '$subId' failed: $ctxError. All checks for this subscription were skipped to avoid auditing the wrong subscription." $subId $subName
+                        $bag.Add($ctxResult)
+                        $cBag.Add(1)
+                        Write-Host "  [$($cBag.Count)/$subTotal] Skipped (context error): $subName" -ForegroundColor Yellow
+                        return
+                    }
+
                     $checkGroups = @(
-                        @{ Name = "Section 2 (Databricks)"; Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                        @{ Name = "Section 5 (Identity)";   Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                        @{ Name = "Section 6 (Monitoring)"; Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                        @{ Name = "Section 7 (Networking)"; Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                        @{ Name = "Section 8 (Security)";   Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
-                        @{ Name = "Section 9 (Storage)";    Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 2 (Databricks)"; Sec = "2 - Azure Databricks";       Fn = { Invoke-Section2Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 5 (Identity)";   Sec = "5 - Identity Services";      Fn = { Invoke-Section5SubscriptionChecks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 6 (Monitoring)"; Sec = "6 - Management & Governance"; Fn = { Invoke-Section6Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 7 (Networking)"; Sec = "7 - Networking Services";    Fn = { Invoke-Section7Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 8 (Security)";   Sec = "8 - Security Services";      Fn = { Invoke-Section8Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
+                        @{ Name = "Section 9 (Storage)";    Sec = "9 - Storage Services";       Fn = { Invoke-Section9Checks -SubscriptionId $subId -SubscriptionName $subName -PrefetchData $pd } }
                     )
 
                     $subResults = [System.Collections.Generic.List[object]]::new()
@@ -743,6 +775,7 @@ if ($subsToProcess.Count -gt 0) {
                             foreach ($r in @(& $g.Fn)) { $subResults.Add($r); $gCount++ }
                         } catch {
                             [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
+                            $subResults.Add((New-ErrorResult "GROUP" "$($g.Name) checks failed" 1 $g.Sec "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $subId $subName))
                         }
                         $gSw.Stop()
                         Write-Host ("    [$subName] $($g.Name) done — $gCount result(s) in $($gSw.Elapsed.TotalSeconds.ToString('F1'))s") -ForegroundColor DarkGray
