@@ -15,6 +15,19 @@ function Invoke-Section2Checks {
     $sid        = $SubscriptionId
     $sname      = $SubscriptionName
 
+    # Prefetch failure — emit ERROR (never a false INFO) for all dependent controls
+    $wsErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "databricks"
+    if ($wsErr) {
+        $msg = "Databricks prefetch failed: $wsErr"
+        $results.Add((New-ErrorResult "2.1.1"  "Ensure that Azure Databricks is deployed in a customer-managed virtual network (VNet)" 1 $sec $msg $sid $sname))
+        $results.Add((New-ErrorResult "2.1.2"  "Ensure that Network Security Groups are Configured for Databricks Subnets" 1 $sec $msg $sid $sname))
+        $results.Add((New-ErrorResult "2.1.7"  "Ensure that Diagnostic Log Delivery is Configured for Azure Databricks" 1 $sec $msg $sid $sname))
+        $results.Add((New-ErrorResult "2.1.9"  "Ensure 'No Public IP' is Set to 'Enabled'" 1 $sec $msg $sid $sname))
+        $results.Add((New-ErrorResult "2.1.10" "Ensure 'Allow Public Network Access' is set to 'Disabled'" 1 $sec $msg $sid $sname))
+        $results.Add((New-ErrorResult "2.1.11" "Ensure Private Endpoints are used to access Azure Databricks workspaces" 2 $sec $msg $sid $sname))
+        return $results.ToArray()
+    }
+
     if ($workspaces.Count -eq 0) {
         $results.Add((New-InfoResult "2.1.1"  "Ensure that Azure Databricks is deployed in a customer-managed virtual network (VNet)" 1 $sec "No Databricks workspaces found." $sid $sname))
         $results.Add((New-InfoResult "2.1.2"  "Ensure that Network Security Groups are Configured for Databricks Subnets" 1 $sec "No Databricks workspaces found." $sid $sname))
@@ -45,6 +58,8 @@ function Invoke-Section2Checks {
 
         if (-not $vnetId) {
             $results.Add((New-InfoResult "2.1.2" "Ensure that Network Security Groups are Configured for Databricks Subnets" 1 $sec "Workspace '$name': no custom VNet (managed VNet in use — Azure manages NSGs)." $sid $sname $name))
+        } elseif (Get-PrefetchError -PrefetchData $PrefetchData -Key "subnets") {
+            $results.Add((New-ErrorResult "2.1.2" "Ensure that Network Security Groups are Configured for Databricks Subnets" 1 $sec "Subnet prefetch failed: $(Get-PrefetchError -PrefetchData $PrefetchData -Key 'subnets')" $sid $sname $name))
         } else {
             $vnetName  = $vnetId.Split('/')[-1]
             $dbSubnets = @($subnets | Where-Object {

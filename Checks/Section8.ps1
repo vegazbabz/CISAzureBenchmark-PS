@@ -19,6 +19,12 @@ function Invoke-Section8Checks {
     $vms       = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "vms"       -SubscriptionId $sid)
     $bastion   = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "bastion"   -SubscriptionId $sid)
 
+    # Prefetch failure sentinels — dependent checks emit ERROR, never a false INFO/PASS
+    $kvErr      = Get-PrefetchError -PrefetchData $PrefetchData -Key "keyvaults"
+    $vnetErr    = Get-PrefetchError -PrefetchData $PrefetchData -Key "vnets"
+    $vmErr      = Get-PrefetchError -PrefetchData $PrefetchData -Key "vms"
+    $bastionErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "bastion"
+
     # ── 8.1.x — Microsoft Defender plans ─────────────────────────────────────
     $defenderPlans = @(
         @{ Id="8.1.1.1"; Plan="CloudPosture";                 Title="Ensure Microsoft Defender CSPM is Set to 'On'" }
@@ -212,7 +218,11 @@ function Invoke-Section8Checks {
     # CIS controls are numbered differently depending on whether the vault uses RBAC
     # authorization (8.3.1/8.3.3) vs. legacy vault access policies (8.3.2/8.3.4).
     # The $rbac flag from prefetch data selects the correct control ID at runtime.
-    if ($keyvaults.Count -eq 0) {
+    if ($kvErr) {
+        foreach ($cid in @("8.3.1","8.3.2","8.3.3","8.3.4","8.3.5","8.3.6","8.3.7","8.3.8","8.3.9","8.3.11")) {
+            $results.Add((New-ErrorResult $cid "Key Vault Check" 2 $sec "Key Vault prefetch failed: $kvErr" $sid $sname))
+        }
+    } elseif ($keyvaults.Count -eq 0) {
         foreach ($cid in @("8.3.1","8.3.2","8.3.3","8.3.4","8.3.5","8.3.6","8.3.7","8.3.8","8.3.9","8.3.11")) {
             $results.Add((New-InfoResult $cid "Key Vault Check" 2 $sec "No Key Vaults found." $sid $sname))
         }
@@ -414,7 +424,10 @@ function Invoke-Section8Checks {
     }
 
     # ── 8.4.1 — Azure Bastion deployed (if VMs exist) ─────────────────────────
-    if ($vms.Count -eq 0) {
+    if ($vmErr -or $bastionErr) {
+        $bastionMsg = if ($vmErr) { "VM prefetch failed: $vmErr" } else { "Bastion prefetch failed: $bastionErr" }
+        $results.Add((New-ErrorResult "8.4.1" "Ensure an Azure Bastion Host Exists" 2 $sec $bastionMsg $sid $sname))
+    } elseif ($vms.Count -eq 0) {
         $results.Add((New-InfoResult "8.4.1" "Ensure an Azure Bastion Host Exists" 2 $sec "No VMs found in subscription." $sid $sname))
     } else {
         $hasBastion = $bastion.Count -gt 0
@@ -427,7 +440,9 @@ function Invoke-Section8Checks {
     }
 
     # ── 8.5 — DDoS Network Protection on VNets ───────────────────────────────
-    if ($vnets.Count -eq 0) {
+    if ($vnetErr) {
+        $results.Add((New-ErrorResult "8.5" "Ensure Azure DDoS Network Protection is Enabled on Virtual Networks" 2 $sec "VNet prefetch failed: $vnetErr" $sid $sname))
+    } elseif ($vnets.Count -eq 0) {
         $results.Add((New-InfoResult "8.5" "Ensure Azure DDoS Network Protection is Enabled on Virtual Networks" 2 $sec "No VNets found." $sid $sname))
     } else {
         foreach ($vnet in $vnets) {

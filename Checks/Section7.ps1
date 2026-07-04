@@ -20,9 +20,18 @@ function Invoke-Section7Checks {
     $locations   = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "locations"    -SubscriptionId $sid)
     $wafPolicies = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "waf_policies" -SubscriptionId $sid)
 
+    # Prefetch failure sentinels — dependent checks must throw so their catch
+    # blocks emit ERROR instead of a false PASS/INFO on unreadable data.
+    $nsgErr   = Get-PrefetchError -PrefetchData $PrefetchData -Key "nsgs"
+    $agwErr   = Get-PrefetchError -PrefetchData $PrefetchData -Key "app_gateways"
+    $watchErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "watchers"
+    $locErr   = Get-PrefetchError -PrefetchData $PrefetchData -Key "locations"
+    $wafErr   = Get-PrefetchError -PrefetchData $PrefetchData -Key "waf_policies"
+
 
     # ── 7.1 — RDP (3389) not open from internet ──────────────────────────────
     try {
+        if ($nsgErr) { throw "NSG prefetch failed: $nsgErr" }
         if ($nsgs.Count -eq 0) {
             $results.Add((New-InfoResult "7.1" "Ensure that RDP Access from the Internet is Evaluated and Restricted" 1 $sec "No NSGs found." $sid $sname))
         } else {
@@ -46,6 +55,7 @@ function Invoke-Section7Checks {
 
     # ── 7.2 — SSH (22) not open from internet ────────────────────────────────
     try {
+        if ($nsgErr) { throw "NSG prefetch failed: $nsgErr" }
         if ($nsgs.Count -eq 0) {
             $results.Add((New-InfoResult "7.2" "Ensure that SSH Access from the Internet is Evaluated and Restricted" 1 $sec "No NSGs found." $sid $sname))
         } else {
@@ -69,6 +79,7 @@ function Invoke-Section7Checks {
 
     # ── 7.3 — UDP not open from internet ─────────────────────────────────────
     try {
+        if ($nsgErr) { throw "NSG prefetch failed: $nsgErr" }
         if ($nsgs.Count -eq 0) {
             $results.Add((New-InfoResult "7.3" "Ensure that UDP Port Access from the Internet is Evaluated and Restricted" 1 $sec "No NSGs found." $sid $sname))
         } else {
@@ -92,6 +103,7 @@ function Invoke-Section7Checks {
 
     # ── 7.4 — HTTP/HTTPS exposure evaluation ─────────────────────────────────
     try {
+        if ($nsgErr) { throw "NSG prefetch failed: $nsgErr" }
         if ($nsgs.Count -eq 0) {
             $results.Add((New-InfoResult "7.4" "Ensure that HTTP(S) Access from the Internet is Evaluated and Restricted" 1 $sec "No NSGs found." $sid $sname))
         } else {
@@ -141,6 +153,7 @@ function Invoke-Section7Checks {
 
     # ── 7.5 — NSG Flow Log retention >= 90 days ────────────────────────
     try {
+        if ($watchErr) { throw "Network Watcher prefetch failed: $watchErr" }
         if ($allFlowLogs.Count -eq 0) {
             $results.Add((New-CISResult `
                 -ControlId "7.5" `
@@ -170,6 +183,8 @@ function Invoke-Section7Checks {
 
     # ── 7.6 — Network Watcher enabled for all regions ────────────────────────
     try {
+        if ($watchErr) { throw "Network Watcher prefetch failed: $watchErr" }
+        if ($locErr)   { throw "Resource locations prefetch failed: $locErr" }
         $missingRegions = @($regionList | Where-Object { $watcherLocs -notcontains $_ })
 
         if ($regionList.Count -eq 0) {
@@ -193,6 +208,7 @@ function Invoke-Section7Checks {
 
     # ── 7.8 — VNet flow log retention >= 90 days ─────────────────────────────
     try {
+        if ($watchErr) { throw "Network Watcher prefetch failed: $watchErr" }
         $allVnetFlowLogs = @($allFlowLogs | Where-Object {
             [string]$_.TargetResourceId -match '(?i)/virtualnetworks/'
         })
@@ -226,6 +242,8 @@ function Invoke-Section7Checks {
 
     # ── 7.11 — Subnets associated with NSGs ──────────────────────────────────
     try {
+        $subnetErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "subnets"
+        if ($subnetErr) { throw "Subnet prefetch failed: $subnetErr" }
         $subnets = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "subnets" -SubscriptionId $sid)
         $applicableSubnets = @($subnets | Where-Object {
             [string]$_.vnetName -and [string]$_.subnetName -and
@@ -261,6 +279,8 @@ function Invoke-Section7Checks {
     # parallel runspaces) may have null-valued properties stripped by CLIXML
     # serialization; accessing them under Set-StrictMode throws without this.
     try {
+    if ($agwErr) { throw "Application Gateway prefetch failed: $agwErr" }
+    if ($wafErr) { throw "WAF policy prefetch failed: $wafErr" }
     if ($appGateways.Count -eq 0) {
         foreach ($cid in @("7.10","7.12","7.13","7.14","7.15")) {
             $titleMap = @{

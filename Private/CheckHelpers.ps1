@@ -29,11 +29,32 @@ function Get-PrefetchData {
 
     if (-not $PrefetchData.ContainsKey($Key)) { return @() }
     $bySubscription = $PrefetchData[$Key]
+    if ($bySubscription.ContainsKey('__error')) { return @() }
     $sidLower = $SubscriptionId.ToLower()
     if (-not $bySubscription.ContainsKey($sidLower)) { return @() }
     $items = $bySubscription[$sidLower]
     if ($null -eq $items) { return @() }
     return @($items)
+}
+
+function Get-PrefetchError {
+    <#
+    .SYNOPSIS
+    Return the prefetch failure message for a key, or $null if the prefetch succeeded.
+    Checks must surface a non-null result as ERROR (never PASS/INFO) so unreadable
+    data is not mistaken for an empty, compliant environment.
+    #>
+    param(
+        [hashtable]$PrefetchData,
+        [string]$Key
+    )
+
+    if (-not $PrefetchData -or -not $PrefetchData.ContainsKey($Key)) { return $null }
+    $bySubscription = $PrefetchData[$Key]
+    if ($bySubscription -is [hashtable] -and $bySubscription.ContainsKey('__error')) {
+        return [string]$bySubscription['__error']
+    }
+    return $null
 }
 
 function Format-AzErrorMessage {

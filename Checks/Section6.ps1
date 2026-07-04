@@ -96,6 +96,8 @@ function Invoke-Section6Checks {
 
     # ── 6.1.1.4 — Key Vault diagnostic logging ───────────────────────────────
     try {
+        $kvErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "keyvaults"
+        if ($kvErr) { throw "Key Vault prefetch failed: $kvErr" }
         $kvs = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "keyvaults" -SubscriptionId $sid)
 
         if ($kvs.Count -eq 0) {
