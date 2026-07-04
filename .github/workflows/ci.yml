@@ -6,6 +6,9 @@ name: CI
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: test (${{ matrix.os }})
@@ -16,11 +19,11 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Install Pester
         shell: pwsh
-        run: Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser
+        run: Install-Module Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
       - name: Run unit tests
         shell: pwsh
@@ -31,11 +34,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Install PSScriptAnalyzer
         shell: pwsh
-        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+        run: Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
