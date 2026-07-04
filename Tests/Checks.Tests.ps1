@@ -3012,3 +3012,53 @@ Describe "Invoke-Suppressions — matching and status updates" {
         ($out | Where-Object { $_.ControlId -eq "9.1" }).Status | Should -Be $script:PASS
     }
 }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Compliance score & history serialization
+# ══════════════════════════════════════════════════════════════════════════════
+
+Describe "Add-AuditHistoryEntry" {
+    BeforeAll {
+        function New-ScoreResult {
+            param([string]$Status)
+            [PSCustomObject]@{
+                ControlId = "1.1"; Title = "t"; Level = 1; Section = "s"
+                Status = $Status; Details = ""; Remediation = ""
+                SubscriptionId = $script:T_SID; SubscriptionName = $script:T_SNAME; Resource = ""
+            }
+        }
+    }
+
+    It "counts ERROR against the compliance score" {
+        $hist = Join-Path $TestDrive "hist1.json"
+        $results = @(
+            (New-ScoreResult $script:PASS),
+            (New-ScoreResult $script:FAIL),
+            (New-ScoreResult $script:ERR),
+            (New-ScoreResult $script:ERR)
+        )
+        Add-AuditHistoryEntry -HistoryPath $hist -Results $results -SubscriptionIds @($script:T_SID)
+        $entry = @(Get-AuditHistory -HistoryPath $hist)[-1]
+        $entry.score | Should -Be 25.0
+    }
+
+    It "excludes INFO, MANUAL and SUPPRESSED from the score" {
+        $hist = Join-Path $TestDrive "hist2.json"
+        $results = @(
+            (New-ScoreResult $script:PASS),
+            (New-ScoreResult $script:INFO),
+            (New-ScoreResult $script:MANUAL),
+            (New-ScoreResult $script:SUPPRESSED)
+        )
+        Add-AuditHistoryEntry -HistoryPath $hist -Results $results -SubscriptionIds @($script:T_SID)
+        $entry = @(Get-AuditHistory -HistoryPath $hist)[-1]
+        $entry.score | Should -Be 100.0
+    }
+
+    It "writes a JSON array even with a single history entry" {
+        $hist = Join-Path $TestDrive "hist3.json"
+        Add-AuditHistoryEntry -HistoryPath $hist -Results @((New-ScoreResult $script:PASS)) -SubscriptionIds @($script:T_SID)
+        (Get-Content $hist -Raw).TrimStart() | Should -Match '^\['
+    }
+}

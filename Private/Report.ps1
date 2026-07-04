@@ -26,7 +26,7 @@ function New-CISHtmlReport {
     # ── Counts & score ────────────────────────────────────────────────────────
     $counts = @{ PASS=0; FAIL=0; ERROR=0; INFO=0; MANUAL=0; SUPPRESSED=0 }
     foreach ($r in $Results) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
-    $overallTotal = $counts.PASS + $counts.FAIL
+    $overallTotal = $counts.PASS + $counts.FAIL + $counts.ERROR
     $score     = if ($overallTotal -gt 0) { [math]::Round(100.0 * $counts.PASS / $overallTotal, 1) } else { 0 }
     $scoreCol  = if ($score -ge 80) { '#16a34a' } elseif ($score -ge 60) { '#d97706' } else { '#dc2626' }
 
@@ -38,8 +38,8 @@ function New-CISHtmlReport {
         if ($r.Level -eq 1 -and $l1.ContainsKey($s)) { $l1[$s]++ }
         if ($r.Level -eq 2 -and $l2.ContainsKey($s)) { $l2[$s]++ }
     }
-    $l1Total  = $l1.PASS + $l1.FAIL
-    $l2Total  = $l2.PASS + $l2.FAIL
+    $l1Total  = $l1.PASS + $l1.FAIL + $l1.ERROR
+    $l2Total  = $l2.PASS + $l2.FAIL + $l2.ERROR
     $l1Score  = if ($l1Total -gt 0) { [math]::Round(100.0 * $l1.PASS / $l1Total, 1) } else { 0 }
     $l2Score  = if ($l2Total -gt 0) { [math]::Round(100.0 * $l2.PASS / $l2Total, 1) } else { 0 }
     $l1Col    = if ($l1Score -ge 80) { '#16a34a' } elseif ($l1Score -ge 60) { '#d97706' } else { '#dc2626' }
@@ -60,7 +60,7 @@ function New-CISHtmlReport {
         $sp  = @($grp | Where-Object { $_.Status -eq 'PASS'  }).Count
         $sf  = @($grp | Where-Object { $_.Status -eq 'FAIL'  }).Count
         $se  = @($grp | Where-Object { $_.Status -eq 'ERROR' }).Count
-        $ss  = if (($sp+$sf) -gt 0) { [math]::Round(100.0*$sp/($sp+$sf),1) } else { 0 }
+        $ss  = if (($sp+$sf+$se) -gt 0) { [math]::Round(100.0*$sp/($sp+$sf+$se),1) } else { 0 }
         $secData[$sec] = [ordered]@{ pass=$sp; fail=$sf; error=$se; score=$ss }
     }
     $secDataJson = $secData | ConvertTo-Json -Compress -Depth 3
@@ -131,13 +131,13 @@ function New-CISHtmlReport {
 
     $subRowsHtml = [System.Text.StringBuilder]::new()
     $sortedSubs  = @($subStats.Keys | Sort-Object {
-        $s = $subStats[$_]; $d = $s.PASS+$s.FAIL
+        $s = $subStats[$_]; $d = $s.PASS+$s.FAIL+$s.ERROR
         if ($d -gt 0) { $s.PASS / $d * 100 } else { 0 }
     })
     foreach ($sn in $sortedSubs) {
         $st      = $subStats[$sn]
         $scored  = [math]::Max($st.PASS+$st.FAIL+$st.ERROR, 1)   # bar-width base (3-segment visual)
-        $pctBase = $st.PASS + $st.FAIL
+        $pctBase = $st.PASS + $st.FAIL + $st.ERROR
         $pct     = if ($pctBase -gt 0) { [math]::Round($st.PASS / $pctBase * 100, 1) } else { 0 }
         $col     = if ($pct -ge 80) { '#16a34a' } elseif ($pct -ge 60) { '#d97706' } else { '#dc2626' }
         $passW   = [math]::Round($st.PASS / $scored * 100)
@@ -531,7 +531,7 @@ $subTable
 <footer>
   CIS Microsoft Azure Foundations Benchmark v$($script:BENCHMARK_VER) &nbsp;&middot;&nbsp;
   Tool v$($script:CIS_VERSION) &nbsp;&middot;&nbsp;
-  Compliance score excludes ERROR, INFO, MANUAL and SUPPRESSED checks.
+  Compliance score = PASS / (PASS + FAIL + ERROR); INFO, MANUAL and SUPPRESSED checks are excluded.
   Manual controls require separate review per the CIS benchmark document.
 </footer>
 
@@ -637,7 +637,7 @@ $subTable
       });
       Object.keys(secs).forEach(function(sn){
         var d=secs[sn];
-        d.score=Math.round(d.pass/Math.max(d.pass+d.fail,1)*1000)/10;
+        d.score=Math.round(d.pass/Math.max(d.pass+d.fail+d.error,1)*1000)/10;
       });
     }
     ['d-overall','d-l1','d-l2'].forEach(function(id){
@@ -649,7 +649,7 @@ $subTable
     drawDonut('d-l2',l2.pass,l2.fail,l2.error);
     renderSectionBreakdown(secs);
     function scoreColor(sc){ return sc>=80?'#16a34a':sc>=60?'#d97706':'#dc2626'; }
-    function pct(p,f,e){ return Math.round(p/Math.max(p+f,1)*1000)/10; }
+    function pct(p,f,e){ return Math.round(p/Math.max(p+f+e,1)*1000)/10; }
     var sc=pct(counts.PASS,counts.FAIL,counts.ERROR);
     var l1s=pct(l1.pass,l1.fail,l1.error);
     var l2s=pct(l2.pass,l2.fail,l2.error);
@@ -775,7 +775,8 @@ $subTable
             details      = $_.Details
         }
     })
-    $jsonText = $jsonData | ConvertTo-Json -Depth 5
+    # -InputObject keeps a single-element result serialized as a JSON array
+    $jsonText = ConvertTo-Json -InputObject $jsonData -Depth 5
     [System.IO.File]::WriteAllText($jsonPath, $jsonText, [System.Text.Encoding]::UTF8)
 
     # ── CSV export ────────────────────────────────────────────────────────────
@@ -787,7 +788,7 @@ $subTable
             $r.ControlId,
             $r.Level,
             ($r.Title -replace '"', '""'),
-            $(if ($r.SubscriptionName) { $r.SubscriptionName } else { '' }),
+            $(if ($r.SubscriptionName) { $r.SubscriptionName -replace '"', '""' } else { '' }),
             $(if ($r.Resource) { $r.Resource -replace '"', '""' } else { '' }),
             $r.Status,
             ($r.Details -replace '"', '""')
