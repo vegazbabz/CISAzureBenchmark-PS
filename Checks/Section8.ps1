@@ -113,18 +113,21 @@ function Invoke-Section8Checks {
     try {
         $previewUrl  = "https://management.azure.com/subscriptions/$sid/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
         $r2          = Invoke-ArmRest -Uri $previewUrl
+        if (-not $r2.Success) { throw ([string]$r2.Error) }
         $contactItems = @()
-        if ($r2.Success -and $r2.Data) {
+        if ($r2.Data) {
             $valProp = $r2.Data.PSObject.Properties['value']
             if ($valProp) { $contactItems = @($valProp.Value) }
         }
 
-        # 8.1.12 — properties.notificationsByRole.roles must contain "Owner"
+        # 8.1.12 — notificationsByRole: state must be "On" and roles must contain "Owner"
         $ownersNotified = @($contactItems | Where-Object {
             $props    = $_.PSObject.Properties['properties']?.Value
             if (-not $props) { return $false }
             $nbr      = $props.PSObject.Properties['notificationsByRole']?.Value
             if (-not $nbr) { return $false }
+            $state    = [string]($nbr.PSObject.Properties['state']?.Value)
+            if ($state -ne "On") { return $false }
             $roleList = $nbr.PSObject.Properties['roles']?.Value
             if (-not $roleList) { return $false }
             ($roleList | ForEach-Object { [string]$_ }) -contains "Owner"
@@ -135,7 +138,7 @@ function Invoke-Section8Checks {
             -Title "Ensure That 'All users with the following roles' is Set to 'Owner'" `
             -Level 1 -Section $sec `
             -Status $(if ($ownersNotified) { $script:PASS } else { $script:FAIL }) `
-            -Details $(if ($ownersNotified) { "Owner role configured for security alert notifications." } else { "Owner role NOT configured for notifications." }) `
+            -Details $(if ($ownersNotified) { "Role notifications On with Owner role configured." } else { "Role notifications are Off or Owner role NOT configured." }) `
             -Remediation $(if (-not $ownersNotified) { "Defender for Cloud > Environment Settings > Email notifications > All users with Owner role." } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname))
 
@@ -156,44 +159,58 @@ function Invoke-Section8Checks {
             -Remediation $(if (-not $hasEmail) { "Defender for Cloud > Environment Settings > Email notifications > Additional email addresses." } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname))
 
-        # 8.1.14 — properties.notificationsByRole.state must be "On"
-        $alertOn = @($contactItems | Where-Object {
-            $props = $_.PSObject.Properties['properties']?.Value
-            $nbr   = if ($props) { $props.PSObject.Properties['notificationsByRole']?.Value } else { $null }
-            $state = if ($nbr)   { [string]($nbr.PSObject.Properties['state']?.Value) } else { "" }
-            $state -eq "On"
-        }).Count -gt 0
+        # 8.1.14 — notificationsSources must contain a sourceType "Alert" entry with a
+        # minimalSeverity set (v6 audit: state On + minimalSeverity at an appropriate level).
+        # notificationsByRole.state governs role notifications (8.1.12), not alert severity.
+        $alertSeverity = $null
+        foreach ($ci in $contactItems) {
+            $props   = $ci.PSObject.Properties['properties']?.Value
+            if (-not $props) { continue }
+            $srcProp = $props.PSObject.Properties['notificationsSources']
+            if (-not $srcProp) { continue }
+            foreach ($src in @($srcProp.Value)) {
+                if ([string]($src.PSObject.Properties['sourceType']?.Value) -eq "Alert") {
+                    $sev = [string]($src.PSObject.Properties['minimalSeverity']?.Value)
+                    if ($sev) { $alertSeverity = $sev; break }
+                }
+            }
+            if ($alertSeverity) { break }
+        }
+        $alertOn = [bool]$alertSeverity
 
         $results.Add((New-CISResult `
             -ControlId "8.1.14" `
             -Title "Ensure that 'Notify about alerts with the following severity (or higher)' is Enabled" `
             -Level 1 -Section $sec `
             -Status $(if ($alertOn) { $script:PASS } else { $script:FAIL }) `
-            -Details $(if ($alertOn) { "Alert notification state: On." } else { "Alert notification state is not 'On'." }) `
+            -Details $(if ($alertOn) { "Alert notifications enabled (minimal severity: $alertSeverity)." } else { "Alert severity notifications are not enabled." }) `
             -Remediation $(if (-not $alertOn) { "Defender for Cloud > Environment Settings > Email notifications > Notify about alerts with severity: High." } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname))
 
-        # 8.1.15 — properties.notificationsSources must have sourceType == "AttackPath"
-        $attackOn = $false
+        # 8.1.15 — notificationsSources must contain sourceType "AttackPath" with a
+        # minimalRiskLevel set (v6 audit: sourceType AttackPath + minimalRiskLevel).
+        $attackRisk = $null
         foreach ($ci in $contactItems) {
             $props   = $ci.PSObject.Properties['properties']?.Value
             if (-not $props) { continue }
             $srcProp = $props.PSObject.Properties['notificationsSources']
             if (-not $srcProp) { continue }
-            $sources = @($srcProp.Value)
-            foreach ($src in $sources) {
-                $sourceType = [string]($src.PSObject.Properties['sourceType']?.Value)
-                if ($sourceType -eq "AttackPath") { $attackOn = $true; break }
+            foreach ($src in @($srcProp.Value)) {
+                if ([string]($src.PSObject.Properties['sourceType']?.Value) -eq "AttackPath") {
+                    $risk = [string]($src.PSObject.Properties['minimalRiskLevel']?.Value)
+                    if ($risk) { $attackRisk = $risk; break }
+                }
             }
-            if ($attackOn) { break }
+            if ($attackRisk) { break }
         }
+        $attackOn = [bool]$attackRisk
 
         $results.Add((New-CISResult `
             -ControlId "8.1.15" `
             -Title "Ensure that 'Notify about attack paths with the following risk level (or higher)' is Enabled" `
             -Level 1 -Section $sec `
             -Status $(if ($attackOn) { $script:PASS } else { $script:FAIL }) `
-            -Details $(if ($attackOn) { "Attack path notifications configured." } else { "Attack path notifications NOT configured." }) `
+            -Details $(if ($attackOn) { "Attack path notifications enabled (minimal risk level: $attackRisk)." } else { "Attack path notifications NOT configured." }) `
             -Remediation $(if (-not $attackOn) { "Defender for Cloud > Environment Settings > Email notifications > Notify about attack paths with risk level: Critical." } else { "" }) `
             -SubscriptionId $sid -SubscriptionName $sname))
 
@@ -218,13 +235,27 @@ function Invoke-Section8Checks {
     # CIS controls are numbered differently depending on whether the vault uses RBAC
     # authorization (8.3.1/8.3.3) vs. legacy vault access policies (8.3.2/8.3.4).
     # The $rbac flag from prefetch data selects the correct control ID at runtime.
+    # v6 titles/levels for the per-vault 8.3.x block (8.3.10 is manual, emitted in tenant checks)
+    $kvControlMap = [ordered]@{
+        "8.3.1"  = @{ Title = "Ensure that the Expiration Date is Set for all Keys in Key Vaults using RBAC"; Level = 1 }
+        "8.3.2"  = @{ Title = "Ensure that the Expiration Date is set for All Keys in Key Vaults using access policies (legacy)"; Level = 1 }
+        "8.3.3"  = @{ Title = "Ensure that the Expiration Date is set for All Secrets in Key Vaults using RBAC"; Level = 1 }
+        "8.3.4"  = @{ Title = "Ensure that the Expiration Date is set for All Secrets in Key Vaults using access policies (legacy)"; Level = 1 }
+        "8.3.5"  = @{ Title = "Ensure 'Purge protection' is Set to 'Enabled'"; Level = 1 }
+        "8.3.6"  = @{ Title = "Ensure that Role Based Access Control for Azure Key Vault is Enabled"; Level = 2 }
+        "8.3.7"  = @{ Title = "Ensure Public Network Access is Disabled"; Level = 1 }
+        "8.3.8"  = @{ Title = "Ensure Private Endpoints are Used to Access Azure Key Vault"; Level = 2 }
+        "8.3.9"  = @{ Title = "Ensure Automatic Key Rotation is Enabled within Azure Key Vault"; Level = 2 }
+        "8.3.11" = @{ Title = "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'"; Level = 1 }
+    }
+
     if ($kvErr) {
-        foreach ($cid in @("8.3.1","8.3.2","8.3.3","8.3.4","8.3.5","8.3.6","8.3.7","8.3.8","8.3.9","8.3.11")) {
-            $results.Add((New-ErrorResult $cid "Key Vault Check" 2 $sec "Key Vault prefetch failed: $kvErr" $sid $sname))
+        foreach ($cid in $kvControlMap.Keys) {
+            $results.Add((New-ErrorResult $cid $kvControlMap[$cid].Title $kvControlMap[$cid].Level $sec "Key Vault prefetch failed: $kvErr" $sid $sname))
         }
     } elseif ($keyvaults.Count -eq 0) {
-        foreach ($cid in @("8.3.1","8.3.2","8.3.3","8.3.4","8.3.5","8.3.6","8.3.7","8.3.8","8.3.9","8.3.11")) {
-            $results.Add((New-InfoResult $cid "Key Vault Check" 2 $sec "No Key Vaults found." $sid $sname))
+        foreach ($cid in $kvControlMap.Keys) {
+            $results.Add((New-InfoResult $cid $kvControlMap[$cid].Title $kvControlMap[$cid].Level $sec "No Key Vaults found." $sid $sname))
         }
     } else {
         foreach ($kv in $keyvaults) {

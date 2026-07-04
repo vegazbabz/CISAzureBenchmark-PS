@@ -386,7 +386,9 @@ function Invoke-Section9Checks {
     # 9.3.9: account is covered by a CanNotDelete OR ReadOnly lock (Level 1)
     # 9.3.10: account is covered by a ReadOnly lock specifically (Level 2)
     try {
-        $locks = @(Get-AzResourceLock -ErrorAction SilentlyContinue)
+        # -ErrorAction Stop: a failed lock read must ERROR 9.3.9/9.3.10 in the catch,
+        # not FAIL every account with 'no locks found'.
+        $locks = @(Get-AzResourceLock -ErrorAction Stop)
         if (-not $locks) { $locks = @() }
 
         foreach ($acct in $accounts) {

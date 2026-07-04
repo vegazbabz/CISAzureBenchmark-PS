@@ -83,7 +83,7 @@ function Invoke-Section2Checks {
 
         # 2.1.7 — Diagnostic logging
         try {
-            $settings = @(Get-AzDiagnosticSetting -ResourceId $ws.id -ErrorAction SilentlyContinue)
+            $settings = @(Get-AzDiagnosticSetting -ResourceId $ws.id -ErrorAction Stop)
             $hasLogs  = $settings.Count -gt 0
             $results.Add((New-CISResult `
                 -ControlId "2.1.7" `

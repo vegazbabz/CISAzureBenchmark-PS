@@ -141,19 +141,26 @@ function Invoke-Section7Checks {
     $watcherLocs = @(@($watchers | Where-Object { [string]$_.state -eq "Succeeded" } | ForEach-Object { [string]$_.location }) | Select-Object -Unique)
 
     # Collect all flow logs ONCE — only from watchers that are actually running.
+    # A failed read is recorded so 7.5/7.8 emit ERROR instead of FAIL ('no flow logs').
+    $flowLogErr  = $null
     $allFlowLogs = [System.Collections.Generic.List[object]]::new()
     foreach ($watcher in @($watchers | Where-Object { [string]$_.state -eq "Succeeded" })) {
         $watcherId   = [string]$watcher.id
         $parts       = $watcherId -split '/'
         $watcherRg   = $parts[4]
         $watcherName = $parts[-1]
-        $fls = @(Get-AzNetworkWatcherFlowLog -NetworkWatcherName $watcherName -ResourceGroupName $watcherRg -ErrorAction SilentlyContinue)
-        foreach ($fl in $fls) { $allFlowLogs.Add($fl) }
+        try {
+            $fls = @(Get-AzNetworkWatcherFlowLog -NetworkWatcherName $watcherName -ResourceGroupName $watcherRg -ErrorAction Stop)
+            foreach ($fl in $fls) { $allFlowLogs.Add($fl) }
+        } catch {
+            $flowLogErr = "Could not read flow logs from watcher '$watcherName': $($_.Exception.Message)"
+        }
     }
 
     # ── 7.5 — NSG Flow Log retention >= 90 days ────────────────────────
     try {
         if ($watchErr) { throw "Network Watcher prefetch failed: $watchErr" }
+        if ($flowLogErr) { throw $flowLogErr }
         if ($allFlowLogs.Count -eq 0) {
             $results.Add((New-CISResult `
                 -ControlId "7.5" `
@@ -209,6 +216,7 @@ function Invoke-Section7Checks {
     # ── 7.8 — VNet flow log retention >= 90 days ─────────────────────────────
     try {
         if ($watchErr) { throw "Network Watcher prefetch failed: $watchErr" }
+        if ($flowLogErr) { throw $flowLogErr }
         $allVnetFlowLogs = @($allFlowLogs | Where-Object {
             [string]$_.TargetResourceId -match '(?i)/virtualnetworks/'
         })
@@ -330,7 +338,7 @@ function Invoke-Section7Checks {
             $results.Add((New-CISResult `
                 -ControlId "7.13" `
                 -Title "Ensure 'HTTP2' is Set to 'Enabled' on Azure Application Gateway" `
-                -Level 2 -Section $sec `
+                -Level 1 -Section $sec `
                 -Status $(if ($h2Ok) { $script:PASS } else { $script:FAIL }) `
                 -Details "HTTP2 enabled: $http2" `
                 -Remediation $(if (-not $h2Ok) { "Application Gateway > $agwName > Configuration > Enable HTTP2" } else { "" }) `

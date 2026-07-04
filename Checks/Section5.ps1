@@ -19,7 +19,11 @@ function Invoke-Check5_1_1 {
     # If security defaults off, check for Conditional Access policies (acceptable alternative)
     if (-not $enabled) {
         $caResult = Invoke-ArmRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
-        $caEnabled = $caResult.Success -and $caResult.Data -and $caResult.Data.value -and ($caResult.Data.value | Measure-Object).Count -gt 0
+        if (-not $caResult.Success) {
+            # Cannot tell whether CA policies exist — don't assert FAIL on unread data
+            return New-ErrorResult $cid $title $level $sec "Security defaults are disabled and Conditional Access policies could not be read: $(New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Security > Conditional Access.')"
+        }
+        $caEnabled = $caResult.Data -and $caResult.Data.value -and ($caResult.Data.value | Measure-Object).Count -gt 0
         if ($caEnabled) {
             return New-CISResult $cid $title $level $sec $script:PASS `
                 -Details "Security defaults off but Conditional Access policies exist ($( ($caResult.Data.value | Measure-Object).Count) policies). Acceptable alternative."
