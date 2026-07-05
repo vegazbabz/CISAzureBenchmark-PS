@@ -1,4 +1,4 @@
-# Section 8 — Security Services
+﻿# Section 8 — Security Services
 # CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section8Checks {

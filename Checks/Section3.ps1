@@ -1,4 +1,4 @@
-# Section 3 — Compute Services checks
+﻿# Section 3 — Compute Services checks
 
 function Invoke-Check3_1_1 {
     <#

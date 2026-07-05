@@ -1,4 +1,4 @@
-# Compliance trend tracking — persists summary of each full audit run
+﻿# Compliance trend tracking — persists summary of each full audit run
 
 $script:MAX_HISTORY = 30
 

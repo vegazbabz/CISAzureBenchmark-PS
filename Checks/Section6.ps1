@@ -1,4 +1,4 @@
-# Section 6 — Monitoring & Management
+﻿# Section 6 — Monitoring & Management
 # CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section6Checks {

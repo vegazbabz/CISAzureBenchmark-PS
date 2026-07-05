@@ -1,4 +1,4 @@
-# Suppressions — accepted risk management for audit findings
+﻿# Suppressions — accepted risk management for audit findings
 #
 # Loads suppressions.json and applies SUPPRESSED status to matching FAIL/ERROR
 # results at report-generation time. Checkpoints are never modified — the raw

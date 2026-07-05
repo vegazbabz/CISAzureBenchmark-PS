@@ -40,7 +40,6 @@ jobs:
             ExcludeRules = @(
               'PSAvoidUsingWriteHost'
               'PSAvoidUsingEmptyCatchBlock'
-              'PSUseBOMForUnicodeEncodedFile'
               'PSUseSingularNouns'
               'PSUseShouldProcessForStateChangingFunctions'
             )

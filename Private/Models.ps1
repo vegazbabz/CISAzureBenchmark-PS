@@ -1,4 +1,4 @@
-# CIS result model — one instance per resource per control
+﻿# CIS result model — one instance per resource per control
 
 function New-CISResult {
     <#
