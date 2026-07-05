@@ -1,4 +1,4 @@
-# CIS Azure Benchmark PS - Configuration
+﻿# CIS Azure Benchmark PS - Configuration
 # CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 Set-StrictMode -Version Latest

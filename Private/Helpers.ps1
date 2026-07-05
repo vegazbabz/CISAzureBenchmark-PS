@@ -1,4 +1,4 @@
-# Logging, console output, and NSG/port helpers
+﻿# Logging, console output, and NSG/port helpers
 
 function Write-AuditLog {
     <#

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Generates a sample CIS Azure Benchmark audit report with synthetic data.
 .DESCRIPTION

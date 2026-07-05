@@ -1,4 +1,4 @@
-# Section 2 — Azure Databricks
+﻿# Section 2 — Azure Databricks
 # CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 function Invoke-Section2Checks {

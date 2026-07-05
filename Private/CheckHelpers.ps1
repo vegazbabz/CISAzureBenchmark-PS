@@ -1,4 +1,4 @@
-# Helper functions used by all check implementations
+﻿# Helper functions used by all check implementations
 
 function New-GraphPermissionMessage {
     <#

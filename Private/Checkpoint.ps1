@@ -1,4 +1,4 @@
-# Per-subscription and tenant checkpoint save/load
+﻿# Per-subscription and tenant checkpoint save/load
 # Enables resume of interrupted audits
 
 $script:TENANT_CHECKPOINT_FILE = "_tenant.json"

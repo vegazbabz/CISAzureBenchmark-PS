@@ -1,4 +1,4 @@
-# Azure API client layer
+﻿# Azure API client layer
 #
 # All data access goes through Az PowerShell cmdlets: Resource Graph
 # (Search-AzGraph) and ARM / Microsoft Graph REST (Invoke-AzRestMethod), wrapped

@@ -1,4 +1,4 @@
-# Section 5 — Identity Services
+﻿# Section 5 — Identity Services
 # CIS Microsoft Azure Foundations Benchmark v6.0.0
 
 # ── Tenant-level checks (run once, not per subscription) ─────────────────────

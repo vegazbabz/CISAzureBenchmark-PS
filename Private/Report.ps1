@@ -1,4 +1,4 @@
-# HTML report generator — self-contained single-file output
+﻿# HTML report generator — self-contained single-file output
 # Matches the layout and style of the Python CIS Azure Audit Tool report.
 Add-Type -AssemblyName System.Web
 

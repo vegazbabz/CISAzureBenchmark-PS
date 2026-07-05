@@ -1,4 +1,4 @@
-# Azure identity and permission helpers
+﻿# Azure identity and permission helpers
 
 function Get-SignedInUserId {
     <#

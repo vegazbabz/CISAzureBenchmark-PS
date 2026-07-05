@@ -1,4 +1,4 @@
-# Single source of truth for the module dot-source order.
+﻿# Single source of truth for the module dot-source order.
 #
 # Consumed by BOTH loaders — the top-level loader in Invoke-CISAzureAudit.ps1 and
 # the per-subscription parallel re-import — so the two can never drift. Previously
