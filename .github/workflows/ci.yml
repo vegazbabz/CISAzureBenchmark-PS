@@ -57,3 +57,11 @@ jobs:
             throw "$($results.Count) PSScriptAnalyzer issue(s) found"
           }
           Write-Host 'PSScriptAnalyzer: no issues found' -ForegroundColor Green
+
+      # The report is a self-contained HTML file whose JavaScript is inline and
+      # never parsed by any tool before a browser opens it. Generate a synthetic
+      # report, extract the <script> blocks, and node --check each one so a JS
+      # syntax error in Private/Report.ps1 fails the build instead of shipping.
+      - name: Validate report inline JavaScript
+        shell: pwsh
+        run: ./scripts/Test-ReportScript.ps1 -RequireJsEngine
