@@ -49,7 +49,8 @@ function Test-AuditPermissions {
     #>
     param(
         [string[]]$SubscriptionIds,
-        [hashtable]$SubNames = @{}   # id -> display name used in warning messages
+        [hashtable]$SubNames = @{},  # id -> display name used in warning messages
+        [switch]$ProbeKeyVaults      # probe each vault's data plane so the 8.3.x access gap surfaces once, upfront
     )
 
     $warnings = [System.Collections.Generic.List[string]]::new()
@@ -67,12 +68,14 @@ function Test-AuditPermissions {
     $azCtxForParallel = Get-AzContext
     $accountTypeLocal = [string]$azCtxForParallel.Account.Type   # 'User' or 'ServicePrincipal'
     $total            = $SubscriptionIds.Count
+    $probeKVLocal     = $ProbeKeyVaults.IsPresent
 
     # Run all role lookups in parallel — up to 8 at once
     $subResults = $SubscriptionIds | ForEach-Object -Parallel {
         $subId       = $_
         $uid         = $using:userId
         $accountType = $using:accountTypeLocal
+        $probeKV     = $using:probeKVLocal
 
         try {
             # Switch context to this subscription in the current runspace.
@@ -99,15 +102,38 @@ function Test-AuditPermissions {
                 }
             }
 
-            [PSCustomObject]@{ SubId = $subId; Success = $true; Roles = $roles; Error = $null }
+            # Data-plane probe: list one key per vault. Raw error messages are
+            # classified in the caller (Test-AuthzError etc. are not visible here —
+            # parallel runspaces don't inherit module functions).
+            $vaultFailures = @()
+            if ($probeKV) {
+                $vaults = @()
+                try { $vaults = @(Get-AzKeyVault -WarningAction SilentlyContinue -ErrorAction Stop) } catch {}
+                foreach ($v in $vaults) {
+                    $vn = [string]$v.VaultName
+                    try {
+                        $null = Get-AzKeyVaultKey -VaultName $vn -WarningAction SilentlyContinue -ErrorAction Stop |
+                                    Select-Object -First 1
+                    } catch {
+                        $vaultFailures += [PSCustomObject]@{
+                            Vault = $vn
+                            SubId = $subId
+                            Error = ($_.Exception.Message -replace '\r?\n', ' ').Trim()
+                        }
+                    }
+                }
+            }
+
+            [PSCustomObject]@{ SubId = $subId; Success = $true; Roles = $roles; Error = $null; VaultFailures = $vaultFailures }
         } catch {
             $errMsg = ($_.Exception.Message -replace '\r?\n', ' ').Trim()
-            [PSCustomObject]@{ SubId = $subId; Success = $false; Roles = @(); Error = $errMsg }
+            [PSCustomObject]@{ SubId = $subId; Success = $false; Roles = @(); Error = $errMsg; VaultFailures = @() }
         }
     } -ThrottleLimit 8
 
     # Aggregate: collect unique roles and count how many subscriptions each appears in
-    $roleSubCount = @{}
+    $roleSubCount  = @{}
+    $vaultFailures = [System.Collections.Generic.List[object]]::new()
     foreach ($sr in $subResults) {
         $label = if ($SubNames.ContainsKey($sr.SubId) -and $SubNames[$sr.SubId]) { $SubNames[$sr.SubId] } else { $sr.SubId }
         if (-not $sr.Success) {
@@ -117,6 +143,11 @@ function Test-AuditPermissions {
         foreach ($role in ($sr.Roles | Select-Object -Unique)) {
             $roleSubCount[$role] = ($roleSubCount[$role] ?? 0) + 1
         }
+        foreach ($vf in @($sr.VaultFailures)) { $vaultFailures.Add($vf) }
+    }
+
+    foreach ($w in (New-KeyVaultProbeWarning -Failures $vaultFailures.ToArray())) {
+        $warnings.Add($w)
     }
 
     $allRoles    = @($roleSubCount.Keys | Sort-Object)
@@ -139,6 +170,45 @@ function Test-AuditPermissions {
         RoleSubCount = $roleSubCount
         TotalSubs    = $total
     }
+}
+
+function New-KeyVaultProbeWarning {
+    <#
+    .SYNOPSIS
+    Turn per-vault data-plane probe failures into consolidated preflight warnings —
+    one per cause (authorization / firewall / other) instead of one ERROR per control
+    per vault later. Returns string[]; empty when there are no failures.
+    #>
+    param([object[]]$Failures = @())
+
+    if ($Failures.Count -eq 0) { return @() }
+
+    $authz    = [System.Collections.Generic.List[string]]::new()
+    $firewall = [System.Collections.Generic.List[string]]::new()
+    $other    = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($f in $Failures) {
+        $name = [string]$f.Vault
+        if (Test-AuthzError ([string]$f.Error))        { $authz.Add($name) }
+        elseif (Test-FirewallError ([string]$f.Error)) { $firewall.Add($name) }
+        else                                           { $other.Add("$name ($([string]$f.Error))") }
+    }
+
+    $out = [System.Collections.Generic.List[string]]::new()
+    if ($authz.Count -gt 0) {
+        $out.Add("Key Vault data-plane access is missing for $($authz.Count) vault(s): $($authz -join ', '). " +
+            "Dependent checks (8.3.x) will show ERROR for these vaults. Grant the 'Key Vault Reader' role " +
+            "(RBAC vaults) or an access policy with List permissions, e.g. " +
+            "az role assignment create --role 'Key Vault Reader' --assignee <upn-or-app-id> --scope <vault-resource-id>")
+    }
+    if ($firewall.Count -gt 0) {
+        $out.Add("Key Vault firewall blocks this machine for $($firewall.Count) vault(s): $($firewall -join ', '). " +
+            "Dependent checks (8.3.x) will show ERROR for these vaults. Add the audit machine's IP to each vault's firewall allowlist.")
+    }
+    if ($other.Count -gt 0) {
+        $out.Add("Key Vault data-plane probe failed for $($other.Count) vault(s): $($other -join '; ')")
+    }
+    return $out.ToArray()
 }
 
 function Get-DisabledUserPrefetch {
