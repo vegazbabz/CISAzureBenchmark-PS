@@ -8,6 +8,11 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **Control 5.3.5 is now automated** (previously MANUAL): disabled user accounts are fetched
+  once from Microsoft Graph (`accountEnabled eq false`) and cross-referenced against each
+  subscription's role assignments — FAIL names the offending accounts and scopes, ERROR (with
+  permission guidance) when Graph users cannot be read. Section 5 is now 8 automated · 7 manual
+  (93 automated / 34 manual overall).
 - **Controls 5.5 and 5.6 are now automated** (previously MANUAL): 5.5 checks each
   subscription for a custom role granting `Microsoft.Authorization/locks` actions
   (PASS/FAIL/ERROR); 5.6 reads the tenant subscription-transfer policy via ARM and fails

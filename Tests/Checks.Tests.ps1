@@ -644,9 +644,6 @@ Describe "Section 5 manual controls" {
     It "5.3.4 privileged role review returns MANUAL" {
         $r = Invoke-Check5_3_4; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.4"
     }
-    It "5.3.5 disabled accounts returns MANUAL" {
-        $r = Invoke-Check5_3_5; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.5"
-    }
     It "5.3.6 tenant creator review returns MANUAL" {
         $r = Invoke-Check5_3_6; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.6"
     }
@@ -683,6 +680,85 @@ Describe "Invoke-Check5_3_2 — Guest Users Reviewed" {
         $r = Invoke-Check5_3_2
         $r.Status  | Should -Be "ERROR"
         $r.Details | Should -Match "User.Read.All"
+    }
+}
+
+Describe "Invoke-Check5_3_5 — Disabled Accounts Role Assignments" {
+    BeforeAll {
+        function New-DisabledUsersPD {
+            param([object[]]$Users)
+            @{ disabledUsers = @{ users = $Users } }
+        }
+        function New-RoleRecord {
+            param([string]$PrincipalId, [string]$PrincipalName = "")
+            [PSCustomObject]@{
+                principalId      = $PrincipalId
+                principalName    = $PrincipalName
+                roleDefinitionId = "/subscriptions/$($script:T_SID)/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7"
+                scope            = "/subscriptions/$($script:T_SID)"
+            }
+        }
+    }
+
+    It "returns PASS when the tenant has no disabled users" {
+        $pd = Merge-PD @((New-PD "roles" @((New-RoleRecord "id-1" "alice"))), (New-DisabledUsersPD @()))
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status    | Should -Be "PASS"
+        $r.ControlId | Should -Be "5.3.5"
+    }
+
+    It "returns PASS when disabled users hold no assignments in the subscription" {
+        $disabled = @([PSCustomObject]@{ id = "id-dis"; userPrincipalName = "gone@test.com" })
+        $pd = Merge-PD @((New-PD "roles" @((New-RoleRecord "id-1" "alice"))), (New-DisabledUsersPD $disabled))
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL naming the account when a disabled user holds an assignment" {
+        $disabled = @([PSCustomObject]@{ id = "id-dis"; userPrincipalName = "gone@test.com" })
+        $pd = Merge-PD @((New-PD "roles" @((New-RoleRecord "id-1" "alice"), (New-RoleRecord "id-dis" "gone"))), (New-DisabledUsersPD $disabled))
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "gone@test.com"
+        $r.Details | Should -Match "1 role assignment"
+    }
+
+    It "returns ERROR when the roles prefetch failed" {
+        $pd = Merge-PD @(@{ roles = @{ __error = "Graph query failed" } }, (New-DisabledUsersPD @()))
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status  | Should -Be "ERROR"
+        $r.Details | Should -Match "Graph query failed"
+    }
+
+    It "returns ERROR with Graph guidance when disabled users could not be read" {
+        $pd = Merge-PD @((New-PD "roles" @()), @{ disabledUsers = @{ __error = "Forbidden" } })
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status  | Should -Be "ERROR"
+        $r.Details | Should -Match "User.Read.All"
+    }
+
+    It "returns ERROR when the disabledUsers prefetch key is absent" {
+        $pd = New-PD "roles" @()
+        $r = Invoke-Check5_3_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd
+        $r.Status  | Should -Be "ERROR"
+        $r.Details | Should -Match "User.Read.All"
+    }
+}
+
+Describe "Get-DisabledUserPrefetch" {
+    It "returns a users array on success" {
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @(
+            [PSCustomObject]@{ id = "id-1"; userPrincipalName = "gone@test.com" }
+        ) } }
+        $pd = Get-DisabledUserPrefetch
+        $pd.ContainsKey('users') | Should -BeTrue
+        @($pd['users']).Count    | Should -Be 1
+    }
+
+    It "returns the __error sentinel on failure" {
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $false; Error = "Forbidden"; Data = @() } }
+        $pd = Get-DisabledUserPrefetch
+        $pd['__error'] | Should -Be "Forbidden"
     }
 }
 

@@ -140,3 +140,19 @@ function Test-AuditPermissions {
         TotalSubs    = $total
     }
 }
+
+function Get-DisabledUserPrefetch {
+    <#
+    .SYNOPSIS
+    Fetch all disabled Entra ID user accounts (tenant-wide) via Microsoft Graph.
+    Returns @{ users = [array of {id, userPrincipalName}] } on success or
+    @{ __error = <message> } on failure — same sentinel convention as the
+    Resource Graph prefetch entries, so Get-PrefetchError works unchanged.
+    #>
+    $uri = 'https://graph.microsoft.com/v1.0/users?$filter=accountEnabled eq false&$select=id,userPrincipalName'
+    $r = Invoke-AzRestPaged -Uri $uri
+    if (-not $r.Success) {
+        return @{ __error = [string]$r.Error }
+    }
+    return @{ users = @($r.Data) }
+}
