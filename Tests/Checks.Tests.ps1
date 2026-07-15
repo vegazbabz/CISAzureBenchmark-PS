@@ -641,9 +641,6 @@ Describe "Section 5 manual controls" {
     It "5.3.1 admin accounts daily ops returns MANUAL" {
         $r = Invoke-Check5_3_1; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.1"
     }
-    It "5.3.2 guest users reviewed returns MANUAL" {
-        $r = Invoke-Check5_3_2; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.2"
-    }
     It "5.3.4 privileged role review returns MANUAL" {
         $r = Invoke-Check5_3_4; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.4"
     }
@@ -656,11 +653,112 @@ Describe "Section 5 manual controls" {
     It "5.3.7 non-privileged review returns MANUAL" {
         $r = Invoke-Check5_3_7; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.3.7"
     }
-    It "5.5 resource-lock custom role returns MANUAL (L2)" {
-        $r = Invoke-Check5_5; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.5"; $r.Level | Should -Be 2
+}
+
+Describe "Invoke-Check5_3_2 — Guest Users Reviewed" {
+    It "returns PASS when the tenant has no guest users" {
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @(
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com"; userType = "Member" }
+            [PSCustomObject]@{ userPrincipalName = "bob@test.com";   userType = "Member" }
+        ) } }
+        $r = Invoke-Check5_3_2
+        $r.Status    | Should -Be "PASS"
+        $r.ControlId | Should -Be "5.3.2"
     }
-    It "5.6 subscription leaving/entering returns MANUAL (L2)" {
-        $r = Invoke-Check5_6; $r.Status | Should -Be "MANUAL"; $r.ControlId | Should -Be "5.6"; $r.Level | Should -Be 2
+
+    It "returns MANUAL with the guest inventory when guests exist" {
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @(
+            [PSCustomObject]@{ userPrincipalName = "alice@test.com";              userType = "Member" }
+            [PSCustomObject]@{ userPrincipalName = "ext_x_corp.com#EXT#@t.com";   userType = "Guest" }
+            [PSCustomObject]@{ userPrincipalName = "ext_y_corp.com#EXT#@t.com";   userType = "Guest" }
+        ) } }
+        $r = Invoke-Check5_3_2
+        $r.Status  | Should -Be "MANUAL"
+        $r.Details | Should -Match "2 guest user"
+        $r.Details | Should -Match "ext_x_corp"
+    }
+
+    It "returns ERROR when Graph users cannot be read" {
+        Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $false; Error = "Forbidden"; Data = @() } }
+        $r = Invoke-Check5_3_2
+        $r.Status  | Should -Be "ERROR"
+        $r.Details | Should -Match "User.Read.All"
+    }
+}
+
+Describe "Invoke-Check5_5 — Custom Role for Resource Locks" {
+    It "returns PASS when a custom role grants locks actions (flattened shape)" {
+        Mock Get-AzRoleDefinition { @([PSCustomObject]@{ Name = "Lock Admin"; IsCustom = $true; Actions = @('Microsoft.Authorization/locks/*') }) }
+        $r = Invoke-Check5_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status    | Should -Be "PASS"
+        $r.ControlId | Should -Be "5.5"
+        $r.Level     | Should -Be 2
+        $r.Details   | Should -Match "Lock Admin"
+    }
+
+    It "returns PASS when a custom role grants locks actions (Permissions[n].Actions shape)" {
+        Mock Get-AzRoleDefinition { @([PSCustomObject]@{
+            Name = "Lock Admin v2"; IsCustom = $true
+            Permissions = @([PSCustomObject]@{ Actions = @('Microsoft.Authorization/locks/read', 'Microsoft.Authorization/locks/write') })
+        }) }
+        $r = Invoke-Check5_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status | Should -Be "PASS"
+    }
+
+    It "returns FAIL when no custom role grants locks actions" {
+        Mock Get-AzRoleDefinition { @([PSCustomObject]@{ Name = "Reader Plus"; IsCustom = $true; Actions = @('Microsoft.Storage/read') }) }
+        $r = Invoke-Check5_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status | Should -Be "FAIL"
+    }
+
+    It "returns FAIL when no custom roles exist at all" {
+        Mock Get-AzRoleDefinition { @() }
+        $r = Invoke-Check5_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status | Should -Be "FAIL"
+    }
+
+    It "returns ERROR when role definitions cannot be read" {
+        Mock Get-AzRoleDefinition { throw "AuthorizationFailed" }
+        $r = Invoke-Check5_5 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status | Should -Be "ERROR"
+    }
+}
+
+Describe "Invoke-Check5_6 — Subscription Tenant-Transfer Policy" {
+    It "returns PASS when both leaving and entering are blocked" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{
+            properties = [PSCustomObject]@{ blockSubscriptionsLeavingTenant = $true; blockSubscriptionsIntoTenant = $true }
+        } } }
+        $r = Invoke-Check5_6
+        $r.Status    | Should -Be "PASS"
+        $r.ControlId | Should -Be "5.6"
+        $r.Level     | Should -Be 2
+    }
+
+    It "returns FAIL naming the gap when only leaving is blocked" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{
+            properties = [PSCustomObject]@{ blockSubscriptionsLeavingTenant = $true; blockSubscriptionsIntoTenant = $false }
+        } } }
+        $r = Invoke-Check5_6
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "entering"
+        $r.Details | Should -Not -Match "leaving Microsoft Entra tenant' is not blocked"
+    }
+
+    It "returns FAIL when neither is blocked" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{
+            properties = [PSCustomObject]@{ blockSubscriptionsLeavingTenant = $false; blockSubscriptionsIntoTenant = $false }
+        } } }
+        $r = Invoke-Check5_6
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "leaving"
+        $r.Details | Should -Match "entering"
+    }
+
+    It "returns ERROR when the tenant policy cannot be read" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Error = "HTTP 403"; Data = $null } }
+        $r = Invoke-Check5_6
+        $r.Status | Should -Be "ERROR"
     }
 }
 

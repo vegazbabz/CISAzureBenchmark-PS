@@ -7,6 +7,14 @@ For compliance users the key question is *which controls changed* — every entr
 ## [Unreleased]
 
 ### Added
+- **Controls 5.5 and 5.6 are now automated** (previously MANUAL): 5.5 checks each
+  subscription for a custom role granting `Microsoft.Authorization/locks` actions
+  (PASS/FAIL/ERROR); 5.6 reads the tenant subscription-transfer policy via ARM and fails
+  unless both leaving and entering are set to 'Permit no one'. Section 5 is now
+  7 automated · 8 manual (92 automated / 35 manual overall).
+- **Control 5.3.2** (guest users reviewed) now pulls the guest inventory via Microsoft
+  Graph: PASS when the tenant has no guests, MANUAL with guest count + sample UPNs when
+  guests exist, ERROR (with permission guidance) when Graph users cannot be read.
 - **PowerShell module packaging** (#59): `CISAzureBenchmark.psd1`/`.psm1` with an exported
   `Invoke-CISAzureAudit` that returns a typed summary object (`ExitCode`, `Counts`, `Score`,
   `Results`, `ReportPath`). The root `Invoke-CISAzureAudit.ps1` script is now a thin
