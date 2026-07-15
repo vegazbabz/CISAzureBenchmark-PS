@@ -43,15 +43,7 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          $settings = @{
-            ExcludeRules = @(
-              'PSAvoidUsingWriteHost'
-              'PSAvoidUsingEmptyCatchBlock'
-              'PSUseSingularNouns'
-              'PSUseShouldProcessForStateChangingFunctions'
-            )
-          }
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings $settings -Severity Error,Warning
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1 -Severity Error,Warning
           if ($results) {
             $results | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize
             throw "$($results.Count) PSScriptAnalyzer issue(s) found"
