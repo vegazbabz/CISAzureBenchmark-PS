@@ -175,9 +175,13 @@ function Invoke-AzRestPaged {
         if ($result.Data -and $result.Data.PSObject.Properties['value']) {
             foreach ($item in $result.Data.value) { $all.Add($item) }
         }
+        # ARM uses 'nextLink'; Microsoft Graph uses '@odata.nextLink'
         $nextUri = $null
-        if ($result.Data -and $result.Data.PSObject.Properties['nextLink']) {
-            $nextUri = $result.Data.nextLink
+        foreach ($linkProp in 'nextLink', '@odata.nextLink') {
+            if ($result.Data -and $result.Data.PSObject.Properties[$linkProp] -and $result.Data.$linkProp) {
+                $nextUri = [string]$result.Data.$linkProp
+                break
+            }
         }
     }
 
@@ -192,7 +196,8 @@ function Invoke-AzRestPaged {
 function Test-FirewallError {
     param([string]$Message)
     foreach ($t in @("firewall", "network acl", "network access", "vnet rule", "public network access is disabled",
-                     "failed to resolve", "getaddrinfo failed")) {
+                     "failed to resolve", "getaddrinfo failed",
+                     "client address is not authorized", "is not a trusted service")) {
         if ($Message -imatch [regex]::Escape($t)) { return $true }
     }
     return $false
@@ -200,6 +205,9 @@ function Test-FirewallError {
 
 function Test-AuthzError {
     param([string]$Message)
+    # Firewall messages can contain authz phrasing (Key Vault: "Client address is
+    # not authorized and caller is not a trusted service") — firewall wins.
+    if (Test-FirewallError $Message) { return $false }
     foreach ($t in @("authorizationfailed", "does not have authorization", "is not authorized", "forbidden", "access denied")) {
         if ($Message -imatch $t) { return $true }
     }

@@ -219,7 +219,7 @@ function Get-DisabledUserPrefetch {
     @{ __error = <message> } on failure — same sentinel convention as the
     Resource Graph prefetch entries, so Get-PrefetchError works unchanged.
     #>
-    $uri = 'https://graph.microsoft.com/v1.0/users?$filter=accountEnabled eq false&$select=id,userPrincipalName'
+    $uri = 'https://graph.microsoft.com/v1.0/users?$filter=accountEnabled eq false&$select=id,userPrincipalName&$top=999'
     $r = Invoke-AzRestPaged -Uri $uri
     if (-not $r.Success) {
         return @{ __error = [string]$r.Error }
