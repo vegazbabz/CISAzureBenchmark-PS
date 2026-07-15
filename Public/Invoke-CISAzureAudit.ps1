@@ -460,7 +460,7 @@ function Invoke-CISAzureAudit {
 
     if (-not $NoPermissionCheck) {
         Write-Host "`u{1F510} Checking permissions…" -ForegroundColor DarkGray
-        $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames
+        $permCheck = Test-AuditPermissions -SubscriptionIds $subIds -SubNames $subNames -ProbeKeyVaults
 
         # Show aggregated role summary (mirrors Python output)
         if ($permCheck.UserId) {

@@ -65,7 +65,8 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 > **Key Vault data plane:** Controls 8.3.1–8.3.4, 8.3.9, and 8.3.11 enumerate individual keys,
 > secrets, and certificates. This requires data plane access in addition to Reader.
 > For RBAC-enabled vaults assign **Key Vault Reader**; for access-policy vaults, add the
-> runner account to the vault's access policy. Without this, affected checks return ERROR with a
+> runner account to the vault's access policy. The permission preflight probes each vault and
+> warns upfront which ones are inaccessible; affected checks still return ERROR with a
 > clear explanation and remediation hint in the report — compliance is unknown, not assumed clean.
 
 ---
