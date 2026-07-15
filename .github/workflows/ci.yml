@@ -65,3 +65,14 @@ jobs:
       - name: Validate report inline JavaScript
         shell: pwsh
         run: ./scripts/Test-ReportScript.ps1 -RequireJsEngine
+
+      # Az modules are deliberately not RequiredModules (runtime preflight handles
+      # them), so the manifest validates and the module imports on a bare runner.
+      - name: Validate module manifest
+        shell: pwsh
+        run: |
+          $m = Test-ModuleManifest ./CISAzureBenchmark.psd1 -ErrorAction Stop
+          Write-Host "Manifest OK: $($m.Name) v$($m.Version)"
+          Import-Module ./CISAzureBenchmark.psd1 -Force -ErrorAction Stop
+          $cmd = Get-Command Invoke-CISAzureAudit -Module CISAzureBenchmark -ErrorAction Stop
+          Write-Host "Module imports and exports $($cmd.Name)."

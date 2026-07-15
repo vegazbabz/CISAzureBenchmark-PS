@@ -78,12 +78,33 @@ Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage
 # 2. Log in to Azure
 Connect-AzAccount
 
-# 3. Run the audit (audits all enabled subscriptions)
-.\Invoke-CISAzureAudit.ps1
+# 3. Run the audit (audits all enabled subscriptions in your tenant)
+.\Invoke-CISAzureAudit.ps1 -TenantId (Get-AzContext).Tenant.Id
 ```
 
 The report opens automatically in your browser when the audit finishes. The script will
-automatically enumerate all enabled subscriptions, run all checks, and save the report.
+enumerate all enabled subscriptions in the tenant, run all checks, and save the report.
+(An explicit `-TenantId` or `-Subscriptions` scope is required — the tool never assumes one.)
+
+### Use as a PowerShell module
+
+The tool is also a proper module — import it and work with the returned summary object
+instead of parsing console output:
+
+```powershell
+Import-Module .\CISAzureBenchmark.psd1
+
+$audit = Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id -NoOpen
+
+$audit.Score          # e.g. 62.1
+$audit.Counts.FAIL    # failed control count
+$audit.Results        # every per-resource result object
+$audit.ReportPath     # path to the generated HTML report
+$audit.ExitCode       # 0 | 1 (setup error) | 2 (failures found, with -ExitCode)
+```
+
+The `.\Invoke-CISAzureAudit.ps1` script remains a thin shim around this function, so
+existing command lines and CI pipelines keep working unchanged.
 
 ---
 
@@ -154,7 +175,11 @@ in your browser automatically when done.
 ## Project Structure
 
 ```text
-Invoke-CISAzureAudit.ps1     Main entry point / orchestrator
+CISAzureBenchmark.psd1       Module manifest (version, exports, Gallery metadata)
+CISAzureBenchmark.psm1       Module loader — dot-sources Private/, Checks/, Public/
+Invoke-CISAzureAudit.ps1     Script entry point (thin shim around the module function)
+Public/
+  Invoke-CISAzureAudit.ps1    The audit orchestrator — the module's exported command
 Private/
   AzureClient.ps1             PS-based API client: Resource Graph (Search-AzGraph)
                               and ARM REST (Invoke-AzRestMethod)
