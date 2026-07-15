@@ -777,7 +777,8 @@ $subTable
     })
     # -InputObject keeps a single-element result serialized as a JSON array
     $jsonText = ConvertTo-Json -InputObject $jsonData -Depth 5
-    [System.IO.File]::WriteAllText($jsonPath, $jsonText, [System.Text.Encoding]::UTF8)
+    # BOM-less UTF-8 — RFC 8259 forbids a BOM and strict JSON parsers reject it
+    [System.IO.File]::WriteAllText($jsonPath, $jsonText, [System.Text.UTF8Encoding]::new($false))
 
     # ── CSV export ────────────────────────────────────────────────────────────
     $csvPath = [System.IO.Path]::ChangeExtension($OutputPath, '.csv')

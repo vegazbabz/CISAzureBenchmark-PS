@@ -49,6 +49,22 @@ For compliance users the key question is *which controls changed* — every entr
   `Permissions[n].Actions` with a fallback to the flattened `Actions` property (#58) — forward
   compatible with the Az.Resources 10 / Az 16 breaking change. Check semantics unchanged.
 
+### Fixed
+
+- **Microsoft Graph pagination**: paged Graph calls only followed ARM's `nextLink` and ignored
+  Graph's `@odata.nextLink`, silently truncating results to the first page. In large tenants
+  this could produce a **false PASS** on controls 5.3.5 (disabled users beyond the first 100
+  were invisible), 5.1.3 (MFA registration report truncated), and 5.3.2 (guest inventory
+  truncated past 999 users). Both link conventions are now followed, and the disabled-user
+  query requests the maximum page size.
+- **Key Vault firewall errors misclassified as missing RBAC**: Key Vault's firewall-block
+  message ("Client address is not authorized and caller is not a trusted service") matched the
+  authorization classifier, so the preflight and 8.3.x/9.x error paths recommended granting
+  'Key Vault Reader' when the actual fix is the vault firewall allowlist. Firewall patterns now
+  take precedence.
+- **JSON report encoding**: `<report>.json` is now written without a UTF-8 BOM (RFC 8259
+  forbids it; strict JSON parsers rejected the file). CSV keeps its BOM for Excel.
+
 ## [2.0.0] — 2026-07-15
 
 Major release: full port to **CIS Microsoft Azure Foundations Benchmark v6.0.0** (April 2026).

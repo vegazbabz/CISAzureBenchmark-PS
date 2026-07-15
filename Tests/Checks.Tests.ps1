@@ -89,7 +89,8 @@ BeforeAll {
     Mock Get-AzKeyVaultCertificate      { @() }
     Mock Get-AzKeyVaultKeyRotationPolicy { $null }
     Mock Invoke-ArmRest                 { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
-    Mock Invoke-AzRestPaged             { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
+    # Invoke-AzRestPaged is deliberately NOT mocked here: it runs for real on top of
+    # the mocked Invoke-ArmRest (same empty result), so its paging logic stays testable.
     Mock Invoke-AzGraphQuery            { [PSCustomObject]@{ Success = $true; Data = @(); Error = $null } }
 }
 
@@ -832,6 +833,67 @@ Describe "Invoke-Check5_3_5 — Disabled Accounts Role Assignments" {
     }
 }
 
+Describe "Invoke-AzRestPaged" {
+    It "follows ARM 'nextLink' continuation and accumulates all pages" {
+        Mock Invoke-ArmRest {
+            if ($Uri -eq 'https://management/page2') {
+                [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @(3) }; Error = $null }
+            } else {
+                [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @(1, 2); nextLink = 'https://management/page2' }; Error = $null }
+            }
+        }
+        $r = Invoke-AzRestPaged -Uri 'https://management/page1'
+        $r.Success       | Should -BeTrue
+        @($r.Data).Count | Should -Be 3
+        Should -Invoke Invoke-ArmRest -Times 2 -Exactly
+    }
+
+    It "follows Microsoft Graph '@odata.nextLink' continuation" {
+        Mock Invoke-ArmRest {
+            if ($Uri -eq 'https://graph/page2') {
+                [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @([PSCustomObject]@{ id = 'u3' }) }; Error = $null }
+            } else {
+                [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{
+                    value = @([PSCustomObject]@{ id = 'u1' }, [PSCustomObject]@{ id = 'u2' })
+                    '@odata.nextLink' = 'https://graph/page2'
+                }; Error = $null }
+            }
+        }
+        $r = Invoke-AzRestPaged -Uri 'https://graph/page1'
+        $r.Success       | Should -BeTrue
+        @($r.Data).Count | Should -Be 3
+        Should -Invoke Invoke-ArmRest -Times 2 -Exactly
+    }
+
+    It "stops when the continuation link is present but empty" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @(1); nextLink = '' }; Error = $null } }
+        $r = Invoke-AzRestPaged -Uri 'https://management/only'
+        @($r.Data).Count | Should -Be 1
+        Should -Invoke Invoke-ArmRest -Times 1 -Exactly
+    }
+
+    It "propagates a failed page as failure" {
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $false; Data = $null; Error = 'boom' } }
+        $r = Invoke-AzRestPaged -Uri 'https://management/x'
+        $r.Success | Should -BeFalse
+        $r.Error   | Should -Be 'boom'
+    }
+}
+
+Describe "Error classifiers — firewall vs authorization" {
+    It "classifies the Key Vault firewall-block message as firewall, not authorization" {
+        $msg = "Client address is not authorized and caller is not a trusted service. Client address: 1.2.3.4"
+        Test-FirewallError $msg | Should -BeTrue
+        Test-AuthzError $msg    | Should -BeFalse
+    }
+
+    It "still classifies plain authorization failures as authorization" {
+        $msg = "The client does not have authorization to perform action"
+        Test-AuthzError $msg    | Should -BeTrue
+        Test-FirewallError $msg | Should -BeFalse
+    }
+}
+
 Describe "New-KeyVaultProbeWarning" {
     It "returns nothing when there are no failures" {
         @(New-KeyVaultProbeWarning -Failures @()).Count | Should -Be 0
@@ -857,6 +919,16 @@ Describe "New-KeyVaultProbeWarning" {
         $w.Count | Should -Be 1
         $w[0]    | Should -Match "kv-fw"
         $w[0]    | Should -Match "allowlist"
+    }
+
+    It "classifies the real Key Vault firewall-block message as firewall, not missing RBAC" {
+        $failures = @(
+            [PSCustomObject]@{ Vault = "kv-fw2"; SubId = "s1"; Error = "Client address is not authorized and caller is not a trusted service" }
+        )
+        $w = @(New-KeyVaultProbeWarning -Failures $failures)
+        $w.Count | Should -Be 1
+        $w[0]    | Should -Match "allowlist"
+        $w[0]    | Should -Not -Match "Key Vault Reader"
     }
 
     It "separates authorization and firewall causes into distinct warnings" {
