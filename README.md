@@ -11,7 +11,7 @@
 
 **Version:** 2.0.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
-**Coverage:** 90 automated controls across 7 sections · 37 manual controls noted in output (127 total)
+**Coverage:** 92 automated controls across 7 sections · 35 manual controls noted in output (127 total)
 
 ---
 
@@ -489,7 +489,7 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 > Services Benchmark* respectively. Only 3.1.1 (Virtual Machines) remains in the
 > Foundations Benchmark as an auditable control.
 
-### Section 5 — Identity Services (5 automated · 10 manual)
+### Section 5 — Identity Services (7 automated · 8 manual)
 
 | Control | Title | Level | Notes |
 | --- | --- | --- | --- |
@@ -498,15 +498,15 @@ Expired entries are silently ignored. The summary banner shows active suppressio
 | 5.1.3 | 'multifactor authentication' enabled for all users | L1 | |
 | 5.1.4 | Remember MFA on trusted devices disabled | L1 | **Manual** |
 | 5.3.1 | Azure admin accounts not used for daily operations | L1 | **Manual** |
-| 5.3.2 | Guest users reviewed regularly | L1 | **Manual** |
+| 5.3.2 | Guest users reviewed regularly | L1 | **Manual** — passes when no guests exist; guest inventory pulled via Graph |
 | 5.3.3 | Use of 'User Access Administrator' role restricted | L1 | |
 | 5.3.4 | Privileged role assignments periodically reviewed | L1 | **Manual** |
 | 5.3.5 | Disabled accounts have no Read/Write/Owner permissions | L1 | **Manual** |
 | 5.3.6 | 'Tenant Creator' role assignments periodically reviewed | L1 | **Manual** |
 | 5.3.7 | Non-privileged role assignments periodically reviewed | L1 | **Manual** |
 | 5.4 | No custom subscription administrator roles | L1 | |
-| 5.5 | Custom role assigned for administering resource locks | L2 | **Manual** |
-| 5.6 | Subscription leaving/entering tenant set to 'Permit no one' | L2 | **Manual** |
+| 5.5 | Custom role assigned for administering resource locks | L2 | |
+| 5.6 | Subscription leaving/entering tenant set to 'Permit no one' | L2 | |
 | 5.7 | Between 2 and 3 subscription owners | L1 | |
 
 ### Section 6 — Logging & Monitoring (15 automated · 9 manual)
@@ -734,9 +734,11 @@ the runner account to the vault's access policy (non-RBAC vaults). Without this,
 return ERROR with an explanatory message. The report clearly distinguishes this from a clean
 result — compliance is unknown, not assumed clean.
 
-**Graph API for identity checks** — controls 5.1.1 and 5.1.3 call the Microsoft Graph
+**Graph API for identity checks** — controls 5.1.1, 5.1.3 and 5.3.2 call the Microsoft Graph
 API via `Invoke-AzRestMethod`. If the required Graph permissions have not been consented for the
-identity running the audit, these will return ERROR. Test with:
+identity running the audit, these will return ERROR. Control 5.6 reads the tenant-level
+subscription policy via ARM and returns ERROR when the caller lacks tenant-scope read access.
+Test with:
 
 ```powershell
 Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
@@ -791,4 +793,4 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 **Version:** 2.0.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
-**Coverage:** 90 automated controls across 7 sections · 37 manual controls noted in output (127 total)
+**Coverage:** 92 automated controls across 7 sections · 35 manual controls noted in output (127 total)
