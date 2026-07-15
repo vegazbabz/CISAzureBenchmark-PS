@@ -8,6 +8,13 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **SARIF 2.1.0 export**: every run now writes `<report>.sarif` alongside the JSON/CSV
+  outputs, ready for `github/codeql-action/upload-sarif` (GitHub code scanning) and
+  Defender for DevOps. FAIL maps to `error`, ERROR to `warning` (an unauditable control is
+  a finding, mirroring the score), SUPPRESSED results carry a SARIF suppression object;
+  alerts are fingerprinted by control + subscription + resource so they track across runs.
+  Output validates against the official SARIF 2.1.0 schema. README documents the upload
+  workflow.
 - **Key Vault data-plane preflight**: the permission preflight now probes each vault (lists one
   key) and prints one consolidated warning naming every inaccessible vault with the grant
   command — instead of the gap only surfacing as repeated per-control ERRORs (8.3.x) at the end

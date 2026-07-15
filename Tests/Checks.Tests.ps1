@@ -279,6 +279,93 @@ Describe "New-InfoResult" {
     }
 }
 
+Describe "New-CISSarifReport" {
+    BeforeAll {
+        function New-SarifTestResults {
+            @(
+                New-CISResult -ControlId "8.3.1" -Title "Key Vault RBAC" -Level 1 -Section "8 Key Vault" `
+                    -Status "FAIL" -Details "Vault kv1 uses access policies." -Remediation "Migrate to RBAC." `
+                    -SubscriptionId "sub-1" -SubscriptionName "Prod" -Resource "kv1"
+                New-CISResult -ControlId "8.3.1" -Title "Key Vault RBAC" -Level 1 -Section "8 Key Vault" `
+                    -Status "FAIL" -Details "Vault kv2 uses access policies." -Remediation "Migrate to RBAC." `
+                    -SubscriptionId "sub-1" -SubscriptionName "Prod" -Resource "kv2"
+                New-CISResult -ControlId "5.6" -Title "Transfer policy" -Level 2 -Section "5 Identity" `
+                    -Status "ERROR" -Details "Could not read policy." -SubscriptionId "sub-1" -SubscriptionName "Prod"
+                New-CISResult -ControlId "9.3.4" -Title "Secure transfer" -Level 1 -Section "9 Storage" `
+                    -Status "PASS" -SubscriptionId "sub-1" -SubscriptionName "Prod" -Resource "sa1"
+                New-CISResult -ControlId "5.1.4" -Title "Remember MFA" -Level 1 -Section "5 Identity" -Status "MANUAL"
+                New-CISResult -ControlId "7.1" -Title "RDP restricted" -Level 1 -Section "7 Network" `
+                    -Status "SUPPRESSED" -Details "Open RDP. [Accepted risk: jumpbox — expires 2026-12-01]" `
+                    -SubscriptionId "sub-1" -SubscriptionName "Prod" -Resource "nsg1"
+            )
+        }
+        function Get-SarifLog([object[]]$Results) {
+            $path = Join-Path $TestDrive "out.sarif"
+            $null = New-CISSarifReport -Results $Results -OutputPath $path
+            Get-Content $path -Raw | ConvertFrom-Json
+        }
+    }
+
+    It "emits a valid SARIF 2.1.0 envelope with tool metadata" {
+        $log = Get-SarifLog (New-SarifTestResults)
+        $log.version | Should -Be "2.1.0"
+        $log.'$schema' | Should -Match 'sarif-2\.1\.0'
+        $log.runs.Count | Should -Be 1
+        $log.runs[0].tool.driver.name    | Should -Be "CISAzureBenchmark"
+        $log.runs[0].tool.driver.version | Should -Be $script:CIS_VERSION
+        $log.runs[0].tool.driver.properties.benchmarkVersion | Should -Be $script:BENCHMARK_VER
+    }
+
+    It "maps FAIL to error and ERROR to warning; excludes PASS and MANUAL" {
+        $log = Get-SarifLog (New-SarifTestResults)
+        $results = @($log.runs[0].results)
+        $results.Count | Should -Be 4
+        @($results | Where-Object ruleId -eq "8.3.1").level | Should -Be @("error", "error")
+        @($results | Where-Object ruleId -eq "5.6").level   | Should -Be "warning"
+        @($results | Where-Object ruleId -eq "9.3.4").Count | Should -Be 0
+        @($results | Where-Object ruleId -eq "5.1.4").Count | Should -Be 0
+    }
+
+    It "emits one rule per control with title and remediation, referenced by ruleIndex" {
+        $log   = Get-SarifLog (New-SarifTestResults)
+        $rules = @($log.runs[0].tool.driver.rules)
+        @($rules | Where-Object id -eq "8.3.1").Count | Should -Be 1
+        $kvRule = $rules | Where-Object id -eq "8.3.1"
+        $kvRule.shortDescription.text | Should -Be "Key Vault RBAC"
+        $kvRule.help.text             | Should -Be "Migrate to RBAC."
+        $kvRule.properties.section    | Should -Be "8 Key Vault"
+        foreach ($r in @($log.runs[0].results)) {
+            $rules[$r.ruleIndex].id | Should -Be $r.ruleId
+        }
+    }
+
+    It "marks SUPPRESSED results as note-level with a SARIF suppression" {
+        $log = Get-SarifLog (New-SarifTestResults)
+        $sup = @($log.runs[0].results) | Where-Object ruleId -eq "7.1"
+        $sup.level | Should -Be "note"
+        $sup.suppressions[0].kind | Should -Be "external"
+        $sup.suppressions[0].justification | Should -Match "Accepted risk"
+    }
+
+    It "gives every result a physical location and a stable fingerprint" {
+        $log = Get-SarifLog (New-SarifTestResults)
+        foreach ($r in @($log.runs[0].results)) {
+            $r.locations[0].physicalLocation.artifactLocation.uri | Should -Not -BeNullOrEmpty
+            $r.locations[0].physicalLocation.region.startLine     | Should -Be 1
+            $r.partialFingerprints.cisResultKey | Should -Match "^$([regex]::Escape($r.ruleId))\|"
+        }
+        $tenantLevel = @($log.runs[0].results) | Where-Object ruleId -eq "5.6"
+        $tenantLevel.locations[0].physicalLocation.artifactLocation.uri | Should -Be "azure/sub-1"
+    }
+
+    It "writes an empty results array when there are no findings" {
+        $pass = @(New-CISResult -ControlId "1.1" -Title "T" -Level 1 -Section "S" -Status "PASS")
+        $log = Get-SarifLog $pass
+        @($log.runs[0].results).Count | Should -Be 0
+        @($log.runs[0].tool.driver.rules).Count | Should -Be 0
+    }
+}
+
 # =============================================================================
 # RETRY / THROTTLE (AzureClient)
 # =============================================================================

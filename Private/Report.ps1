@@ -796,4 +796,7 @@ $subTable
         $csvLines.Add('"' + ($fields -join '","') + '"')
     }
     [System.IO.File]::WriteAllText($csvPath, ($csvLines -join "`n"), [System.Text.Encoding]::UTF8)
+
+    # ── SARIF export ──────────────────────────────────────────────────────────
+    $null = New-CISSarifReport -Results $Results -OutputPath ([System.IO.Path]::ChangeExtension($OutputPath, '.sarif'))
 }
