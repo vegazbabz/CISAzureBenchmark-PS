@@ -195,6 +195,7 @@ Private/
   Models.ps1                  New-CISResult (the result object contract)
   ModuleManifest.ps1          Single source of truth for the dot-source load order
   Report.ps1                  HTML report generation
+  Sarif.ps1                   SARIF 2.1.0 export for code scanning
 Checks/
   Section2.ps1                Databricks checks (12 controls)
   Section3.ps1                Compute checks (1 manual control)
@@ -413,15 +414,20 @@ Useful after upgrading the tool or changing the `-Level` filter.
 
 ### Output files
 
-Every run writes three files alongside the HTML report:
+Every run writes four files alongside the HTML report:
 
 | File | Format | Purpose |
 | --- | --- | --- |
 | `cis_audit_report.html` | HTML | Interactive visual report (auto-opened unless `-NoOpen`) |
 | `cis_audit_report.json` | JSON | Machine-readable results for downstream tooling |
 | `cis_audit_report.csv` | CSV | Spreadsheet-friendly format for compliance teams |
+| `cis_audit_report.sarif` | SARIF 2.1.0 | Findings for GitHub code scanning / Defender for DevOps (see *CI/CD pipeline*) |
 
-Use `-Output report.html` to change the base path — `.json` and `.csv` extensions are derived automatically.
+Use `-Output report.html` to change the base path — `.json`, `.csv` and `.sarif` extensions are derived automatically.
+
+The SARIF log contains findings only: FAIL maps to `error`, ERROR to `warning` (an unauditable
+control is a finding, mirroring the score), and SUPPRESSED results carry a SARIF suppression
+object so code-scanning UIs show them as dismissed. PASS/INFO/MANUAL are omitted.
 
 ---
 
@@ -698,6 +704,33 @@ This lets Azure DevOps, GitHub Actions, and similar systems fail the build on co
       .\Invoke-CISAzureAudit.ps1 -Subscriptions $(SUB_NAME) -NoOpen -ExitCode
   # Marks the pipeline stage as failed when FAIL/ERROR results are found
 ```
+
+#### Uploading findings to GitHub code scanning
+
+Every run also writes a SARIF 2.1.0 log next to the report. Upload it to surface findings
+in the repository's **Security → Code scanning** tab (requires GitHub Advanced Security on
+private repos; free for public repos):
+
+```yaml
+- name: Azure foundations audit
+  shell: pwsh
+  run: |
+    .\Invoke-CISAzureAudit.ps1 `
+      -Subscriptions "Production" `
+      -Output reports/cis.html `
+      -NoOpen
+  # No -ExitCode: let the upload step run even when there are findings
+
+- name: Upload SARIF to code scanning
+  if: always()
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: reports/cis.sarif
+    category: cis-azure-benchmark
+```
+
+Alerts are keyed by control + subscription + resource, so a finding that persists across
+runs stays a single alert, and one that disappears is closed automatically.
 
 Exit code summary:
 
