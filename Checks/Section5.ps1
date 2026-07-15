@@ -117,9 +117,55 @@ function Invoke-Check5_3_4 {
 }
 
 function Invoke-Check5_3_5 {
+    # Disabled accounts are tenant-wide (Graph) but role assignments live in the
+    # per-subscription 'roles' prefetch, so this cross-references the two per subscription.
+    param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
     $cid = "5.3.5"; $title = "Ensure Disabled User Accounts do not Have Read, Write, or Owner Permissions"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
-        "Manual verification required — identify disabled (blocked sign-in) accounts and ensure they hold no Read, Write, or Owner role assignments on Azure resources."
+    $sid = $SubscriptionId; $sname = $SubscriptionName
+
+    $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
+    if ($rolesErr) {
+        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+    }
+
+    $duErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "disabledUsers"
+    if ($duErr -or -not ($PrefetchData -and $PrefetchData.ContainsKey('disabledUsers'))) {
+        $reason = if ($duErr) { $duErr } else { "disabled-user data not available" }
+        $msg = New-GraphPermissionMessage -Permission 'User.Read.All (or Directory.Read.All)'
+        return New-ErrorResult $cid $title $level $sec "Could not list disabled users: $reason. $msg" $sid $sname
+    }
+
+    $disabledUsers = @($PrefetchData['disabledUsers']['users'])
+    if ($disabledUsers.Count -eq 0) {
+        return New-CISResult $cid $title $level $sec $script:PASS `
+            -Details "No disabled user accounts exist in the tenant." `
+            -SubscriptionId $sid -SubscriptionName $sname
+    }
+
+    $disabledById = @{}
+    foreach ($u in $disabledUsers) {
+        $uid = [string]$u.id
+        if ($uid) { $disabledById[$uid] = [string]$u.userPrincipalName }
+    }
+
+    $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
+    $offending = @($roles | Where-Object { $disabledById.ContainsKey([string]$_.principalId) })
+
+    if ($offending.Count -eq 0) {
+        return New-CISResult $cid $title $level $sec $script:PASS `
+            -Details "None of the $($disabledUsers.Count) disabled user account(s) hold role assignments in this subscription." `
+            -SubscriptionId $sid -SubscriptionName $sname
+    }
+
+    $sample = ($offending | Select-Object -First 5 | ForEach-Object {
+        $upn = $disabledById[[string]$_.principalId]
+        $who = if ($upn) { $upn } else { [string]$_.principalId }
+        "$who at $([string]$_.scope)"
+    }) -join "; "
+    New-CISResult $cid $title $level $sec $script:FAIL `
+        -Details "$($offending.Count) role assignment(s) held by disabled user accounts: $sample" `
+        -Remediation "Remove role assignments from disabled accounts (IAM > Role assignments), or delete the accounts if no longer needed." `
+        -SubscriptionId $sid -SubscriptionName $sname
 }
 
 function Invoke-Check5_3_6 {
@@ -314,7 +360,6 @@ function Invoke-Section5TenantChecks {
         @{ Id = '5.3.1'; Fn = { Invoke-Check5_3_1 } }
         @{ Id = '5.3.2'; Fn = { Invoke-Check5_3_2 } }
         @{ Id = '5.3.4'; Fn = { Invoke-Check5_3_4 } }
-        @{ Id = '5.3.5'; Fn = { Invoke-Check5_3_5 } }
         @{ Id = '5.3.6'; Fn = { Invoke-Check5_3_6 } }
         @{ Id = '5.3.7'; Fn = { Invoke-Check5_3_7 } }
         @{ Id = '5.6';   Fn = { Invoke-Check5_6   } }
@@ -350,6 +395,7 @@ function Invoke-Section5SubscriptionChecks {
     $results = [System.Collections.Generic.List[object]]::new()
 
     try { $results.Add((Invoke-Check5_3_3 -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.3.3 error: $_" -Level WARNING }
+    try { $results.Add((Invoke-Check5_3_5 -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.3.5 error: $_" -Level WARNING }
     try { $results.Add((Invoke-Check5_4   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.4 error: $_" -Level WARNING }
     try { $results.Add((Invoke-Check5_5   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.5 error: $_" -Level WARNING }
     try { $results.Add((Invoke-Check5_7   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.7 error: $_" -Level WARNING }

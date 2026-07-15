@@ -570,6 +570,16 @@ function Invoke-CISAzureAudit {
             $totalRecords = ($final.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
             Write-AuditLog ("   {0,-20} {1}  {2} record(s)" -f $queryName, [char]0x2705, $totalRecords) -Level INFO
         }
+
+        # Tenant-wide Graph data used by per-subscription checks (5.3.5)
+        $disabledUsersPrefetch = Get-DisabledUserPrefetch
+        $prefetchData['disabledUsers'] = $disabledUsersPrefetch
+        if ($disabledUsersPrefetch.ContainsKey('__error')) {
+            Write-AuditLog ("   {0,-20} {1}  {2}" -f 'disabledUsers', [char]0x26A0, $disabledUsersPrefetch['__error']) -Level WARNING
+        } else {
+            Write-AuditLog ("   {0,-20} {1}  {2} record(s)" -f 'disabledUsers', [char]0x2705, @($disabledUsersPrefetch['users']).Count) -Level INFO
+        }
+
         Write-AuditLog "Prefetch complete. $($prefetchData.Count) resource type(s) cached." -Level INFO
     }
     Write-Host ""
