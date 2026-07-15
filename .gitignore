@@ -5,6 +5,10 @@ cis_audit_*.html
 cis_audit.csv
 cis_audit.json
 
+# Live suppression config (may contain real resource IDs / accepted risks)
+# — use suppressions.json.example as the template
+suppressions.json
+
 # Checkpoints and history
 cis_checkpoints/
 cis_run_history.json
