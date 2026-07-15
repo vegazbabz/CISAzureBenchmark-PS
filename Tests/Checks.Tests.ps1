@@ -705,11 +705,32 @@ Describe "Invoke-Check5_4 — No Custom Subscription Administrator Roles" {
         $r.ControlId | Should -Be "5.4"
     }
 
-    It "returns FAIL when a custom role has wildcard (*) actions" {
+    It "returns FAIL when a custom role has wildcard (*) actions (flattened pre-Az.Resources-10 shape)" {
         Mock Get-AzRoleDefinition { @([PSCustomObject]@{ Name = "MyAdminRole"; IsCustom = $true; Actions = @('*') }) }
         $r = Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
         $r.Status  | Should -Be "FAIL"
         $r.Details | Should -Match "MyAdminRole"
+    }
+
+    It "returns FAIL when a custom role has wildcard (*) actions (Permissions[n].Actions Az.Resources 10 shape)" {
+        Mock Get-AzRoleDefinition { @([PSCustomObject]@{
+            Name = "MyNewShapeRole"; IsCustom = $true
+            Permissions = @(
+                [PSCustomObject]@{ Actions = @('Microsoft.Compute/read') }
+                [PSCustomObject]@{ Actions = @('*') }
+            )
+        }) }
+        $r = Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME
+        $r.Status  | Should -Be "FAIL"
+        $r.Details | Should -Match "MyNewShapeRole"
+    }
+
+    It "returns PASS when custom roles exist but none has wildcard actions (both shapes)" {
+        Mock Get-AzRoleDefinition { @(
+            [PSCustomObject]@{ Name = "ScopedOld"; IsCustom = $true; Actions = @('Microsoft.Storage/read') }
+            [PSCustomObject]@{ Name = "ScopedNew"; IsCustom = $true; Permissions = @([PSCustomObject]@{ Actions = @('Microsoft.Network/read') }) }
+        ) }
+        (Invoke-Check5_4 -SubscriptionId $T_SID -SubscriptionName $T_SNAME).Status | Should -Be "PASS"
     }
 
     It "returns ERROR on API failure" {

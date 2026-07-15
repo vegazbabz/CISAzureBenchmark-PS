@@ -165,9 +165,20 @@ function Invoke-Check5_4 {
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     try {
+        # Az.Resources 10.0.0 removes the flattened .Actions property in favour of
+        # .Permissions[n].Actions — read Permissions first and fall back to the
+        # flattened shape so the check works on both sides of that breaking change.
         $customOwners = @(
-            Get-AzRoleDefinition -Custom -Scope "/subscriptions/$sid" -ErrorAction Stop |
-            Where-Object { $_.Actions -contains '*' } |
+            Get-AzRoleDefinition -Custom -Scope "/subscriptions/$sid" -ErrorAction Stop -WarningAction SilentlyContinue |
+            Where-Object {
+                $def = $_
+                $actions = if ($def.PSObject.Properties['Permissions'] -and $def.Permissions) {
+                    @($def.Permissions | ForEach-Object { $_.Actions })
+                } elseif ($def.PSObject.Properties['Actions']) {
+                    @($def.Actions)
+                } else { @() }
+                $actions -contains '*'
+            } |
             ForEach-Object { [PSCustomObject]@{ name = $_.Name } }
         )
     } catch {
