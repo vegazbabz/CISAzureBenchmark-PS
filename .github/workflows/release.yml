@@ -50,6 +50,36 @@ jobs:
             throw "$($results.Count) PSScriptAnalyzer issue(s) found"
           }
 
+  # Publishes to the PowerShell Gallery when the PSGALLERY_API_KEY secret is
+  # configured; otherwise skips with a notice so tag pushes never fail on a
+  # missing key. The staged-folder build keeps tests/docs/reports out of the
+  # package (Publish-PSResource ships the entire target folder).
+  publish-gallery:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    env:
+      PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Publish to PowerShell Gallery
+        if: env.PSGALLERY_API_KEY != ''
+        shell: pwsh
+        run: |
+          $tagVer = '${{ github.ref_name }}'.TrimStart('v')
+          $m = Test-ModuleManifest ./CISAzureBenchmark.psd1
+          if ($m.Version.ToString() -ne $tagVer) {
+            throw "Manifest version $($m.Version) does not match tag $tagVer — bump ModuleVersion in CISAzureBenchmark.psd1 before tagging."
+          }
+          $staged = ./scripts/Build-ModulePackage.ps1 -OutputPath $env:RUNNER_TEMP | Select-Object -Last 1
+          Publish-PSResource -Path $staged -Repository PSGallery -ApiKey $env:PSGALLERY_API_KEY
+          Write-Host "Published CISAzureBenchmark v$tagVer to the PowerShell Gallery."
+
+      - name: Gallery publish skipped
+        if: env.PSGALLERY_API_KEY == ''
+        run: echo "PSGALLERY_API_KEY secret not configured — skipping PowerShell Gallery publish."
+
   release:
     needs: [test, lint]
     runs-on: ubuntu-latest
