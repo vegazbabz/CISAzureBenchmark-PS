@@ -29,6 +29,8 @@ For compliance users the key question is *which controls changed* — every entr
   when the `PSGALLERY_API_KEY` repo secret is configured (`scripts/Build-ModulePackage.ps1`
   stages runtime files only). Skips with a notice when the secret is absent.
 - CI: module manifest validation step (Test-ModuleManifest + import smoke test).
+- `PSScriptAnalyzerSettings.psd1` — shared rule exclusions, auto-discovered by the VS Code
+  PowerShell extension and referenced by CI, so editor warnings match what CI enforces.
 
 ### Changed
 
