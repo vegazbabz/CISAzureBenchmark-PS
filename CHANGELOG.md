@@ -8,6 +8,10 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **Key Vault data-plane preflight**: the permission preflight now probes each vault (lists one
+  key) and prints one consolidated warning naming every inaccessible vault with the grant
+  command — instead of the gap only surfacing as repeated per-control ERRORs (8.3.x) at the end
+  of the run. Result statuses and the score are unchanged.
 - **Control 5.3.5 is now automated** (previously MANUAL): disabled user accounts are fetched
   once from Microsoft Graph (`accountEnabled eq false`) and cross-referenced against each
   subscription's role assignments — FAIL names the offending accounts and scopes, ERROR (with

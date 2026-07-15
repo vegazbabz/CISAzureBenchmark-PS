@@ -745,6 +745,52 @@ Describe "Invoke-Check5_3_5 — Disabled Accounts Role Assignments" {
     }
 }
 
+Describe "New-KeyVaultProbeWarning" {
+    It "returns nothing when there are no failures" {
+        @(New-KeyVaultProbeWarning -Failures @()).Count | Should -Be 0
+    }
+
+    It "consolidates authorization failures into one warning naming each vault" {
+        $failures = @(
+            [PSCustomObject]@{ Vault = "kv-one"; SubId = "s1"; Error = "Operation returned Forbidden" }
+            [PSCustomObject]@{ Vault = "kv-two"; SubId = "s1"; Error = "The user is not authorized to perform action" }
+        )
+        $w = @(New-KeyVaultProbeWarning -Failures $failures)
+        $w.Count | Should -Be 1
+        $w[0]    | Should -Match "kv-one"
+        $w[0]    | Should -Match "kv-two"
+        $w[0]    | Should -Match "Key Vault Reader"
+    }
+
+    It "reports firewall-blocked vaults separately with allowlist guidance" {
+        $failures = @(
+            [PSCustomObject]@{ Vault = "kv-fw"; SubId = "s1"; Error = "Request was blocked by the vault firewall" }
+        )
+        $w = @(New-KeyVaultProbeWarning -Failures $failures)
+        $w.Count | Should -Be 1
+        $w[0]    | Should -Match "kv-fw"
+        $w[0]    | Should -Match "allowlist"
+    }
+
+    It "separates authorization and firewall causes into distinct warnings" {
+        $failures = @(
+            [PSCustomObject]@{ Vault = "kv-authz"; SubId = "s1"; Error = "Access denied" }
+            [PSCustomObject]@{ Vault = "kv-fw";    SubId = "s2"; Error = "blocked by firewall" }
+        )
+        $w = @(New-KeyVaultProbeWarning -Failures $failures)
+        $w.Count | Should -Be 2
+    }
+
+    It "surfaces unclassified errors with the raw message" {
+        $failures = @(
+            [PSCustomObject]@{ Vault = "kv-odd"; SubId = "s1"; Error = "Connection reset by peer" }
+        )
+        $w = @(New-KeyVaultProbeWarning -Failures $failures)
+        $w.Count | Should -Be 1
+        $w[0]    | Should -Match "Connection reset by peer"
+    }
+}
+
 Describe "Get-DisabledUserPrefetch" {
     It "returns a users array on success" {
         Mock Invoke-AzRestPaged { [PSCustomObject]@{ Success = $true; Data = @(
