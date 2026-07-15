@@ -83,9 +83,31 @@ function Invoke-Check5_3_1 {
 }
 
 function Invoke-Check5_3_2 {
+    # "Reviewed on a regular basis" is human judgement, so this stays MANUAL when
+    # guests exist — but the guest inventory is pulled via Graph so the reviewer
+    # gets the actual list. A tenant with no guest users passes outright.
     $cid = "5.3.2"; $title = "Ensure that Guest Users are Reviewed on a Regular Basis"; $level = 1; $sec = "5 - Identity Services"
+
+    # Server-side $filter on userType needs advanced-query headers (ConsistencyLevel:
+    # eventual) that Invoke-AzRestMethod does not send — select and filter client-side.
+    $url = "https://graph.microsoft.com/v1.0/users?`$select=userPrincipalName,userType&`$top=999"
+    $r   = Invoke-AzRestPaged -Uri $url
+
+    if (-not $r.Success) {
+        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'User.Read.All (or Directory.Read.All)' -ManualCheck 'Entra ID > Users > filter User type = Guest; review guest accounts and remove those no longer required.')
+    }
+
+    $users  = @($r.Data)
+    $guests = @($users | Where-Object { [string]$_.userType -eq 'Guest' })
+
+    if ($guests.Count -eq 0) {
+        return New-CISResult $cid $title $level $sec $script:PASS `
+            -Details "No guest users exist in the tenant ($($users.Count) member user(s))."
+    }
+
+    $sample = ($guests | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
     New-ManualResult $cid $title $level $sec `
-        "Manual verification required — Entra ID > Users > filter User type = Guest; review guest accounts regularly and remove those no longer required (or use Access Reviews)."
+        "$($guests.Count) guest user(s) found (of $($users.Count) total). Sample: $sample. Review each guest and remove those no longer required (Entra ID > Users > User type = Guest, or use Access Reviews)."
 }
 
 function Invoke-Check5_3_4 {
@@ -113,15 +135,69 @@ function Invoke-Check5_3_7 {
 }
 
 function Invoke-Check5_5 {
+    # Custom roles are defined per subscription scope, so this runs in the
+    # per-subscription loop (it was previously a tenant-level MANUAL check).
+    param([string]$SubscriptionId, [string]$SubscriptionName)
     $cid = "5.5"; $title = "Ensure that a Custom Role is Assigned Permissions for Administering Resource Locks"; $level = 2; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
-        "Manual verification required — confirm a custom role exists granting Microsoft.Authorization/locks/* and is assigned to the appropriate principals for managing resource locks."
+    $sid = $SubscriptionId; $sname = $SubscriptionName
+
+    try {
+        # Same shape-agnostic Actions read as 5.4 (Az.Resources 10 breaking change).
+        $lockRoles = @(
+            Get-AzRoleDefinition -Custom -Scope "/subscriptions/$sid" -ErrorAction Stop -WarningAction SilentlyContinue |
+            Where-Object {
+                $def = $_
+                $actions = if ($def.PSObject.Properties['Permissions'] -and $def.Permissions) {
+                    @($def.Permissions | ForEach-Object { $_.Actions })
+                } elseif ($def.PSObject.Properties['Actions']) {
+                    @($def.Actions)
+                } else { @() }
+                @($actions | Where-Object { $_ -like 'Microsoft.Authorization/locks*' }).Count -gt 0
+            } |
+            ForEach-Object { [PSCustomObject]@{ name = $_.Name } }
+        )
+    } catch {
+        return New-ErrorResult $cid $title $level $sec $_.Exception.Message $sid $sname
+    }
+
+    if ($lockRoles.Count -gt 0) {
+        $names = ($lockRoles | ForEach-Object { $_.name }) -join ", "
+        return New-CISResult $cid $title $level $sec $script:PASS `
+            -Details "Custom role(s) granting resource-lock administration: $names" `
+            -SubscriptionId $sid -SubscriptionName $sname
+    }
+
+    New-CISResult $cid $title $level $sec $script:FAIL `
+        -Details "No custom role grants Microsoft.Authorization/locks permissions in this subscription." `
+        -Remediation "IAM > Roles > Add custom role with 'Microsoft.Authorization/locks/*' actions and assign it to the principals responsible for managing resource locks." `
+        -SubscriptionId $sid -SubscriptionName $sname
 }
 
 function Invoke-Check5_6 {
     $cid = "5.6"; $title = "Ensure that 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' is set to 'Permit no one'"; $level = 2; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
-        "Manual verification required — Entra ID > Manage Tenants (Subscription policies) > set 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' to 'Permit no one'."
+
+    $url = "https://management.azure.com/providers/Microsoft.Subscription/policies/default?api-version=2021-10-01"
+    $r   = Invoke-ArmRest -Uri $url
+
+    if (-not $r.Success) {
+        return New-ErrorResult $cid $title $level $sec "Tenant subscription policy could not be read (requires tenant-level read access): $($r.Error). Manual check: Azure portal > Subscriptions > Advanced options > Manage Policies."
+    }
+
+    $props = if ($r.Data -and $r.Data.PSObject.Properties['properties']) { $r.Data.properties } else { $null }
+    $blockLeaving  = $props -and $props.PSObject.Properties['blockSubscriptionsLeavingTenant'] -and ([string]$props.blockSubscriptionsLeavingTenant -eq 'True')
+    $blockEntering = $props -and $props.PSObject.Properties['blockSubscriptionsIntoTenant']    -and ([string]$props.blockSubscriptionsIntoTenant -eq 'True')
+
+    if ($blockLeaving -and $blockEntering) {
+        return New-CISResult $cid $title $level $sec $script:PASS `
+            -Details "Subscription tenant-transfer policy blocks both leaving and entering (Permit no one)."
+    }
+
+    $gaps = @()
+    if (-not $blockLeaving)  { $gaps += "'Subscription leaving Microsoft Entra tenant' is not blocked" }
+    if (-not $blockEntering) { $gaps += "'Subscription entering Microsoft Entra tenant' is not blocked" }
+    New-CISResult $cid $title $level $sec $script:FAIL `
+        -Details ($gaps -join '; ') `
+        -Remediation "Azure portal > Subscriptions > Advanced options > Manage Policies > set both 'Subscription leaving...' and 'Subscription entering...' to 'Permit no one'."
 }
 
 # ── Per-subscription checks ──────────────────────────────────────────────────
@@ -241,7 +317,6 @@ function Invoke-Section5TenantChecks {
         @{ Id = '5.3.5'; Fn = { Invoke-Check5_3_5 } }
         @{ Id = '5.3.6'; Fn = { Invoke-Check5_3_6 } }
         @{ Id = '5.3.7'; Fn = { Invoke-Check5_3_7 } }
-        @{ Id = '5.5';   Fn = { Invoke-Check5_5   } }
         @{ Id = '5.6';   Fn = { Invoke-Check5_6   } }
     )
     foreach ($check in $checks) {
@@ -276,6 +351,7 @@ function Invoke-Section5SubscriptionChecks {
 
     try { $results.Add((Invoke-Check5_3_3 -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.3.3 error: $_" -Level WARNING }
     try { $results.Add((Invoke-Check5_4   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.4 error: $_" -Level WARNING }
+    try { $results.Add((Invoke-Check5_5   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName)) } catch { Write-AuditLog "5.5 error: $_" -Level WARNING }
     try { $results.Add((Invoke-Check5_7   -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -PrefetchData $PrefetchData)) } catch { Write-AuditLog "5.7 error: $_" -Level WARNING }
 
     return $results.ToArray()
