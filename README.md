@@ -48,6 +48,7 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 | Azure login | `Connect-AzAccount` completed before running |
 
 > **Install Az modules all at once:**
+>
 > ```powershell
 > Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
 > ```

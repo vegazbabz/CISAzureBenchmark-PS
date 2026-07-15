@@ -7,6 +7,7 @@ For compliance users the key question is *which controls changed* — every entr
 ## [Unreleased]
 
 ### Added
+
 - **Controls 5.5 and 5.6 are now automated** (previously MANUAL): 5.5 checks each
   subscription for a custom role granting `Microsoft.Authorization/locks` actions
   (PASS/FAIL/ERROR); 5.6 reads the tenant subscription-transfer policy via ARM and fails
@@ -25,6 +26,7 @@ For compliance users the key question is *which controls changed* — every entr
 - CI: module manifest validation step (Test-ModuleManifest + import smoke test).
 
 ### Changed
+
 - **Control 5.4** (no custom subscription administrator roles) now reads role definitions via
   `Permissions[n].Actions` with a fallback to the flattened `Actions` property (#58) — forward
   compatible with the Az.Resources 10 / Az 16 breaking change. Check semantics unchanged.
@@ -36,6 +38,7 @@ Control IDs, titles, and audit procedures follow the v6 numbering — scores are
 comparable with v1.x runs against the v5 benchmark.
 
 ### Added
+
 - CIS v6.0.0 control set across Sections 2, 3, 5, 6, 7, 8, 9 (127 controls; automated + manual
   surfaced) — including the reorganised Section 5 Identity controls (5.1.x, 5.3.x) and
   tenant-level checks for Sections 2, 3, 6, 7 and 8.
@@ -50,6 +53,7 @@ comparable with v1.x runs against the v5 benchmark.
   action SHAs (#53).
 
 ### Changed
+
 - **Compliance score now counts ERROR against the score** — `PASS / (PASS+FAIL+ERROR)`.
   An unauditable control is treated as failing rather than silently excluded; scores are
   therefore lower (more honest) than v1.x for the same tenant.
@@ -61,6 +65,7 @@ comparable with v1.x runs against the v5 benchmark.
   template (#57).
 
 ### Fixed
+
 - Control 5.4 wildcard detection across all error paths; Section 9 blob-service error handling
   emits all six 9.2.x controls on unexpected errors; security-contact error rows use proper
   control titles; report score consistency across console, HTML, and history (#27–#34, #52).
@@ -70,6 +75,7 @@ comparable with v1.x runs against the v5 benchmark.
 Initial public release.
 
 ### Added
+
 - Audit of **CIS Microsoft Azure Foundations Benchmark v5.0.0** (September 2025): 98 automated
   controls across 7 sections, 3 manual controls surfaced in output.
 - Self-contained HTML report (filtering, compliance donuts, per-section breakdown,
