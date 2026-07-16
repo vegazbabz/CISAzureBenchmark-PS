@@ -11,6 +11,7 @@
 $script:ModuleFiles = @(
     "Private\Config.ps1",
     "Private\Models.ps1",
+    "Private\Scoring.ps1",
     "Private\AzureClient.ps1",
     "Private\Helpers.ps1",
     "Private\CheckHelpers.ps1",

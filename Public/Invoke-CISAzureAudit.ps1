@@ -294,10 +294,9 @@ function Invoke-CISAzureAudit {
         if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
 
         # Summary
-        $counts = @{ PASS = 0; FAIL = 0; ERROR = 0; INFO = 0; MANUAL = 0; SUPPRESSED = 0 }
-        foreach ($r in $finalResults) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
-        $assessed = $counts.PASS + $counts.FAIL + $counts.ERROR
-        $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
+        $counts   = Get-AuditCounts -Results $finalResults
+        $assessed = Get-AssessedCount -Counts $counts
+        $score    = Get-AuditScore -Counts $counts
 
         Write-Host ""
         Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
@@ -878,11 +877,9 @@ function Invoke-CISAzureAudit {
 
     # ── Summary to console ────────────────────────────────────────────────────
 
-    $counts = @{ PASS = 0; FAIL = 0; ERROR = 0; INFO = 0; MANUAL = 0; SUPPRESSED = 0 }
-    foreach ($r in $finalResults) { if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ } }
-
-    $assessed  = $counts.PASS + $counts.FAIL + $counts.ERROR
-    $score     = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
+    $counts    = Get-AuditCounts -Results $finalResults
+    $assessed  = Get-AssessedCount -Counts $counts
+    $score     = Get-AuditScore -Counts $counts
 
     Write-Host ""
     Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray

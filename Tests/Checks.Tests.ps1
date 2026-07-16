@@ -444,6 +444,52 @@ Describe "Invoke-WithRetry" {
     }
 }
 
+Describe "Scoring — Get-AuditCounts / Get-AssessedCount / Get-AuditScore" {
+    BeforeAll {
+        function New-StatusResult { param([string]$Status, [int]$Level = 1)
+            [PSCustomObject]@{ Status = $Status; Level = $Level }
+        }
+    }
+
+    It "counts every status and ignores unknown ones" {
+        $results = @(
+            (New-StatusResult PASS), (New-StatusResult PASS), (New-StatusResult FAIL),
+            (New-StatusResult ERROR), (New-StatusResult INFO), (New-StatusResult MANUAL),
+            (New-StatusResult SUPPRESSED), (New-StatusResult BOGUS)
+        )
+        $counts = Get-AuditCounts -Results $results
+        $counts.PASS       | Should -Be 2
+        $counts.FAIL       | Should -Be 1
+        $counts.ERROR      | Should -Be 1
+        $counts.INFO       | Should -Be 1
+        $counts.MANUAL     | Should -Be 1
+        $counts.SUPPRESSED | Should -Be 1
+    }
+
+    It "returns all-zero counts for an empty result set" {
+        $counts = Get-AuditCounts -Results @()
+        ($counts.Values | Measure-Object -Sum).Sum | Should -Be 0
+    }
+
+    It "assessed = PASS + FAIL + ERROR, excluding INFO/MANUAL/SUPPRESSED" {
+        $counts = @{ PASS = 3; FAIL = 2; ERROR = 1; INFO = 9; MANUAL = 9; SUPPRESSED = 9 }
+        Get-AssessedCount -Counts $counts | Should -Be 6
+    }
+
+    It "score treats ERROR as failing" {
+        # 8 PASS / (8+1+1) assessed = 80.0 — ERROR pulls the score down like FAIL
+        Get-AuditScore -Counts @{ PASS = 8; FAIL = 1; ERROR = 1 } | Should -Be 80.0
+    }
+
+    It "score rounds to one decimal" {
+        Get-AuditScore -Counts @{ PASS = 1; FAIL = 2; ERROR = 0 } | Should -Be 33.3
+    }
+
+    It "score is 0 when nothing was assessed" {
+        Get-AuditScore -Counts @{ PASS = 0; FAIL = 0; ERROR = 0; INFO = 5; MANUAL = 3 } | Should -Be 0
+    }
+}
+
 # =============================================================================
 # MODULE MANIFEST CONSISTENCY
 # =============================================================================
@@ -1425,6 +1471,34 @@ Describe "Invoke-Section9Checks — 9.3.4 Secure Transfer" {
         Mock Get-AzResourceLock                { @() }
         $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "9.3.4" }).Status | Should -Be "FAIL"
+    }
+
+    It "9.2.1 — retries a throttled blob-properties read instead of reporting ERROR" {
+        $acct = [PSCustomObject]@{
+            id = "/sub/x/sa/sa1"; name = "sa1"; resourceGroup = "rg"; kind = "StorageV2"
+            httpsOnly = "true"; publicAccess = "Disabled"; crossTenant = "false"
+            blobAnon = "false"; defaultAction = "Deny"; bypass = "AzureServices"
+            minTls = "TLS1_2"; keyAccess = "false"; oauthDefault = "true"
+            sku = "Standard_GRS"; privateEps = 1
+        }
+        $pd = New-PD "storage" @($acct)
+        Mock Start-Sleep {}
+        $script:blobPropCalls = 0
+        Mock Get-AzStorageBlobServiceProperty {
+            $script:blobPropCalls++
+            if ($script:blobPropCalls -eq 1) { throw "request was throttled" }
+            [PSCustomObject]@{
+                DeleteRetentionPolicy          = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+                ContainerDeleteRetentionPolicy = [PSCustomObject]@{ Enabled = $true; Days = 7 }
+                IsVersioningEnabled            = $true
+            }
+        }
+        Mock Get-AzStorageFileServiceProperty  { throw "not available" }
+        Mock Get-AzStorageAccount              { throw "not available" }
+        Mock Get-AzResourceLock                { @() }
+        $results = @(Invoke-Section9Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "9.2.1" }).Status | Should -Be "PASS"
+        $script:blobPropCalls | Should -Be 2
     }
 }
 
@@ -2454,6 +2528,25 @@ Describe "Invoke-Section8Checks — 8.3.x Key Vault checks" {
         Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
         $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
         ($results | Where-Object { $_.ControlId -eq "8.3.1" }).Status | Should -Be "PASS"
+    }
+
+    It "8.3.1 — retries a throttled key listing instead of reporting ERROR" {
+        $kv = New-KV -Rbac $true
+        $pd = Merge-PD @((New-PD "keyvaults" @($kv)), (New-PD "bastion" @()), (New-PD "vms" @()), (New-PD "vnets" @()))
+        Mock Get-AzSecurityPricing { [PSCustomObject]@{ PricingTier = "Free" } }
+        Mock Start-Sleep {}
+        $script:kvKeyCalls = 0
+        Mock Get-AzKeyVaultKey {
+            $script:kvKeyCalls++
+            if ($script:kvKeyCalls -eq 1) { throw "Response status code does not indicate success: 429 (Too Many Requests)" }
+            @([PSCustomObject]@{ Name = "k1"; Attributes = [PSCustomObject]@{ Expires = [datetime]"2025-12-31" } })
+        }
+        Mock Get-AzKeyVaultSecret     { @() }
+        Mock Get-AzKeyVaultCertificate { @() }
+        Mock Invoke-ArmRest { [PSCustomObject]@{ Success = $true; Data = [PSCustomObject]@{ value = @() } } }
+        $results = @(Invoke-Section8Checks -SubscriptionId $T_SID -SubscriptionName $T_SNAME -PrefetchData $pd)
+        ($results | Where-Object { $_.ControlId -eq "8.3.1" }).Status | Should -Be "PASS"
+        $script:kvKeyCalls | Should -Be 2
     }
 
     It "8.3.1 — FAIL when key has no expiration (RBAC vault)" {

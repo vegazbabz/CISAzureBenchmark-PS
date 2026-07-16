@@ -35,13 +35,8 @@ function Add-AuditHistoryEntry {
     $existing = [System.Collections.Generic.List[object]]::new()
     foreach ($e in (Get-AuditHistory -HistoryPath $HistoryPath)) { $existing.Add($e) }
 
-    $counts = @{ PASS = 0; FAIL = 0; ERROR = 0; INFO = 0; MANUAL = 0; SUPPRESSED = 0 }
-    foreach ($r in $Results) {
-        if ($counts.ContainsKey($r.Status)) { $counts[$r.Status]++ }
-    }
-
-    $assessed = $counts.PASS + $counts.FAIL + $counts.ERROR
-    $score    = if ($assessed -gt 0) { [math]::Round(100.0 * $counts.PASS / $assessed, 1) } else { 0 }
+    $counts = Get-AuditCounts -Results $Results
+    $score  = Get-AuditScore -Counts $counts
 
     $entry = [PSCustomObject]@{
         timestamp     = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
