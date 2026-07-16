@@ -105,30 +105,8 @@ function Invoke-CISAzureAudit {
     Set-StrictMode -Version Latest
     $ErrorActionPreference = "Stop"
 
-    # Uniform result contract for every code path (setup failure, ReportOnly, full run).
-    function New-AuditRunSummary {
-        param(
-            [int]$Code,
-            [string]$Reason = "",
-            [hashtable]$Counts = $null,
-            $Score = $null,
-            [string]$ReportPath = "",
-            [object[]]$Results = @(),
-            [int]$SubscriptionCount = 0,
-            [string]$Elapsed = ""
-        )
-        [PSCustomObject]@{
-            PSTypeName        = 'CISAzureBenchmark.AuditSummary'
-            ExitCode          = $Code
-            Reason            = $Reason
-            Counts            = $Counts
-            Score             = $Score
-            ReportPath        = $ReportPath
-            Results           = $Results
-            SubscriptionCount = $SubscriptionCount
-            Elapsed           = $Elapsed
-        }
-    }
+    # New-AuditRunSummary (the uniform result contract) and Complete-AuditRun (the
+    # shared report/summary tail) live in Private\AuditPipeline.ps1.
 
     # Merge space-separated overflow subscription names into $Subscriptions.
     if ($_ExtraSubscriptions.Count -gt 0) {
@@ -282,62 +260,16 @@ function Invoke-CISAzureAudit {
             Write-Host "   `u{1F50D} No tenant checkpoint found — tenant checks will be missing from report." -ForegroundColor DarkYellow
         }
 
-        # Deduplicate
-        $finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
-
-        # Apply suppressions
-        $suppressions = @(Get-Suppressions -Path $SuppressionsFile)
-        $finalResults = @(Invoke-Suppressions -Results $finalResults -Suppressions $suppressions)
-
-        # Apply level filter
-        if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
-        if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
-
-        # Summary
-        $counts   = Get-AuditCounts -Results $finalResults
-        $assessed = Get-AssessedCount -Counts $counts
-        $score    = Get-AuditScore -Counts $counts
-
-        Write-Host ""
-        Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
-        Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)" -f $finalResults.Count, $subIds.Count) -ForegroundColor White
-        Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls; ERROR counts as failing, excludes INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-        Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
-        Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
-        Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
-        Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
-        Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
-        Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-        Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
-        Write-Host ""
-
-        $scopeLabel = "All subscriptions (from checkpoint data)"
-        $scopeInfo  = @{
-            tenant        = $tenantId
-            user          = $callerName
-            caller_type   = $callerType
-            scope_label   = $scopeLabel
-            subscriptions = @($subNames.Values)
-            level_filter  = $Level
-        }
         $subTimestamps = @{}
         foreach ($sid in $subIds) { $subTimestamps[$subNames[$sid]] = $checkpoints[$sid].Timestamp }
 
-        $historyPath = Get-HistoryPathFor -OutputPath $Output
-        $history     = @(Get-AuditHistory -HistoryPath $historyPath)
-
-        New-CISHtmlReport -Results $finalResults -OutputPath $Output -ScopeLabel $scopeLabel -History $history -ScopeInfo $scopeInfo -SubTimestamps $subTimestamps
-
-        Write-Host "  Report: $([System.IO.Path]::GetFullPath($Output))" -ForegroundColor Cyan
-        Write-Host ""
-        if (-not $NoOpen) {
-            try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
-        }
-
-        $roCode = if ($ExitCode -and ($counts.FAIL + $counts.ERROR) -gt 0) { 2 } else { 0 }
-        return New-AuditRunSummary -Code $roCode -Counts $counts -Score $score `
-            -ReportPath ([System.IO.Path]::GetFullPath($Output)) -Results $finalResults `
-            -SubscriptionCount $subIds.Count
+        return Complete-AuditRun -Results $allResults.ToArray() -OutputPath $Output `
+            -SuppressionsFile $SuppressionsFile -Level $Level `
+            -ScopeLabel "All subscriptions (from checkpoint data)" `
+            -Tenant $tenantId -CallerName $callerName -CallerType $callerType `
+            -SubscriptionNames @($subNames.Values) -SubTimestamps $subTimestamps `
+            -SubscriptionCount $subIds.Count `
+            -SetExitCode:$ExitCode -NoOpen:$NoOpen
     }
 
     # ── Ensure Az.ResourceGraph module is available ───────────────────────────
@@ -863,54 +795,12 @@ function Invoke-CISAzureAudit {
     $elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "{0}m {1}s" -f [int][math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds } else { "{0}s" -f $elapsed.TotalSeconds.ToString('F1') }
     Write-AuditLog "Audit complete. $($allResults.Count) total results in $elapsedStr." -Level INFO
 
-    # ── Apply suppressions ────────────────────────────────────────────────────
-
-    $suppressions = @(Get-Suppressions -Path $SuppressionsFile)
-
-    $finalResults = Remove-DuplicateResults -Results $allResults.ToArray()
-    $finalResults = @(Invoke-Suppressions -Results $finalResults -Suppressions $suppressions)
-
-    # ── Apply level filter ────────────────────────────────────────────────────
-
-    if ($Level -eq "1") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 1 }) }
-    if ($Level -eq "2") { $finalResults = @($finalResults | Where-Object { $_.Level -eq 2 }) }
-
-    # ── Summary to console ────────────────────────────────────────────────────
-
-    $counts    = Get-AuditCounts -Results $finalResults
-    $assessed  = Get-AssessedCount -Counts $counts
-    $score     = Get-AuditScore -Counts $counts
-
-    Write-Host ""
-    Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
-    Write-Host ("  COMPLETE — {0} checks  |  {1} subscription(s)  |  `u{23F1} {2}" -f $finalResults.Count, $subIds.Count, $elapsedStr) -ForegroundColor White
-    Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls; ERROR counts as failing, excludes INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
-    Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
-    Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
-    Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
-    Write-Host ("`u{2139}`u{FE0F}  INFO         {0,4}" -f $counts.INFO)       -ForegroundColor Blue
-    Write-Host ("`u{1F4CB} MANUAL       {0,4}" -f $counts.MANUAL)     -ForegroundColor DarkMagenta
-    Write-Host ("`u{1F507} SUPPRESSED   {0,4}" -f $counts.SUPPRESSED) -ForegroundColor DarkGray
-    Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
-    Write-Host ""
-
-    # ── Generate HTML report ──────────────────────────────────────────────────
+    # ── Report, history, exit code (shared tail) ─────────────────────────────
 
     $scopeLabel = if ($Subscriptions.Count -eq 0) {
         "All subscriptions (tenant-wide)"
     } else {
         "Selected: $(($subObjects | ForEach-Object { $_.name }) -join ', ')"
-    }
-
-    # ── Collect identity context for report scope block ──────────────────────
-    # Use the Az context variables already captured at startup ($callerName, $tenantId, $callerType)
-    $scopeInfo   = @{
-        tenant        = $tenantId
-        user          = $callerName
-        caller_type   = $callerType
-        scope_label   = $scopeLabel
-        subscriptions = @($subObjects | ForEach-Object { [string]$_.name })
-        level_filter  = $Level
     }
 
     # Subscription → audit timestamp (prefer checkpoint timestamp for resumed subs)
@@ -921,28 +811,15 @@ function Invoke-CISAzureAudit {
         $subTimestamps[$sname_] = if ($checkpoints.ContainsKey($subId_)) { $checkpoints[$subId_].Timestamp } else { $nowIso }
     }
 
-    # Load history and append current run
-    $historyPath = Get-HistoryPathFor -OutputPath $Output
-    $history     = @(Get-AuditHistory -HistoryPath $historyPath)
+    # History is only appended for full-tenant runs
+    $appendHistory = $subIds.Count -gt 1 -or $Subscriptions.Count -eq 0
 
-    New-CISHtmlReport -Results $finalResults -OutputPath $Output -ScopeLabel $scopeLabel -History $history -ScopeInfo $scopeInfo -SubTimestamps $subTimestamps
-
-    # Append current run to history (only full-tenant runs)
-    if ($subIds.Count -gt 1 -or $Subscriptions.Count -eq 0) {
-        Add-AuditHistoryEntry -HistoryPath $historyPath -Results $finalResults -SubscriptionIds $subIds
-    }
-
-    Write-Host "  Report: $([System.IO.Path]::GetFullPath($Output))" -ForegroundColor Cyan
-    Write-Host ""
-
-    # ── Open report in default browser ────────────────────────────────────────
-    if (-not $NoOpen) {
-        try { Invoke-Item ([System.IO.Path]::GetFullPath($Output)) } catch { $null = $_ }
-    }
-
-    # ── Exit code for CI/CD ───────────────────────────────────────────────────
-    $finalCode = if ($ExitCode -and ($counts.FAIL + $counts.ERROR) -gt 0) { 2 } else { 0 }
-    return New-AuditRunSummary -Code $finalCode -Counts $counts -Score $score `
-        -ReportPath ([System.IO.Path]::GetFullPath($Output)) -Results $finalResults `
-        -SubscriptionCount $subIds.Count -Elapsed $elapsedStr
+    return Complete-AuditRun -Results $allResults.ToArray() -OutputPath $Output `
+        -SuppressionsFile $SuppressionsFile -Level $Level `
+        -ScopeLabel $scopeLabel `
+        -Tenant $tenantId -CallerName $callerName -CallerType $callerType `
+        -SubscriptionNames @($subObjects | ForEach-Object { [string]$_.name }) `
+        -SubTimestamps $subTimestamps -SubscriptionCount $subIds.Count `
+        -AppendHistory:$appendHistory -HistorySubscriptionIds $subIds `
+        -ElapsedLabel $elapsedStr -SetExitCode:$ExitCode -NoOpen:$NoOpen
 }

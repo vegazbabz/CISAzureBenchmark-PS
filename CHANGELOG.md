@@ -66,6 +66,11 @@ For compliance users the key question is *which controls changed* — every entr
   not-applicable/authorization/firewall/fallback catch block in Sections 8 and 9 are collapsed
   into one `Add-ClassifiedErrorSet` helper. Statuses are unchanged; a few per-control message
   variants within the same failed read are consolidated to the most specific wording.
+- **The orchestrator's report/summary tail exists once** (`Complete-AuditRun` in
+  `Private/AuditPipeline.ps1`): the full-run and `-ReportOnly` paths used to carry two
+  hand-copied versions of the dedupe → suppressions → level filter → score → console summary →
+  report → history → exit-code sequence; both now call the same function. Output and exit-code
+  behavior are unchanged.
 
 ### Fixed
 

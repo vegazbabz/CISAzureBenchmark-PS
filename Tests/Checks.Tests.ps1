@@ -583,6 +583,73 @@ Describe "Scoring — Get-AuditCounts / Get-AssessedCount / Get-AuditScore" {
     }
 }
 
+Describe "Complete-AuditRun (shared report/summary tail)" {
+    BeforeAll {
+        function New-TailFixtureResults {
+            @(
+                (New-CISResult -ControlId "8.3.5" -Status "PASS" -Details "ok"   -SubscriptionId "sub1" -SubscriptionName "Sub One" -Resource "kv1"),
+                (New-CISResult -ControlId "8.3.6" -Status "FAIL" -Details "bad"  -SubscriptionId "sub1" -SubscriptionName "Sub One" -Resource "kv1"),
+                (New-CISResult -ControlId "8.3.6" -Status "FAIL" -Details "bad"  -SubscriptionId "sub1" -SubscriptionName "Sub One" -Resource "kv1"),  # duplicate
+                (New-CISResult -ControlId "8.3.8" -Status "MANUAL" -Details "l2" -SubscriptionId "sub1" -SubscriptionName "Sub One" -Resource "kv1")   # Level 2 from catalog
+            )
+        }
+        function Invoke-TailFixture {
+            param([hashtable]$ExtraArgs = @{})
+            $outPath = Join-Path $TestDrive ("report_{0}.html" -f ([guid]::NewGuid().ToString('N')))
+            $tailParams = @{
+                Results          = New-TailFixtureResults
+                OutputPath       = $outPath
+                SuppressionsFile = (Join-Path $TestDrive "no-suppressions.json")
+                Level            = "both"
+                ScopeLabel       = "Test scope"
+                Tenant           = "tenant-id"
+                CallerName       = "tester@example.com"
+                CallerType       = "User"
+                SubscriptionNames = @("Sub One")
+                SubscriptionCount = 1
+                NoOpen           = $true
+            }
+            foreach ($k in $ExtraArgs.Keys) { $tailParams[$k] = $ExtraArgs[$k] }
+            Complete-AuditRun @tailParams
+        }
+    }
+
+    It "writes the report, dedupes, and returns a typed summary" {
+        $summary = Invoke-TailFixture
+        $summary.PSObject.TypeNames | Should -Contain 'CISAzureBenchmark.AuditSummary'
+        Test-Path $summary.ReportPath | Should -BeTrue
+        # 4 raw results, 1 exact duplicate removed
+        $summary.Results.Count | Should -Be 3
+        $summary.Counts.PASS   | Should -Be 1
+        $summary.Counts.FAIL   | Should -Be 1
+        $summary.Score         | Should -Be 50.0
+        $summary.SubscriptionCount | Should -Be 1
+    }
+
+    It "sets exit code 2 only when -SetExitCode is passed and FAIL/ERROR exist" {
+        (Invoke-TailFixture).ExitCode | Should -Be 0
+        (Invoke-TailFixture -ExtraArgs @{ SetExitCode = $true }).ExitCode | Should -Be 2
+    }
+
+    It "applies the level filter" {
+        $summary = Invoke-TailFixture -ExtraArgs @{ Level = "1" }
+        # 8.3.6 and 8.3.8 are Level 2 in the catalog — only 8.3.5 (L1) survives
+        @($summary.Results | Where-Object { $_.Level -eq 2 }).Count | Should -Be 0
+        $summary.Results.Count | Should -Be 1
+    }
+
+    It "appends a history entry only when -AppendHistory is passed" {
+        $s1 = Invoke-TailFixture
+        Test-Path (Get-HistoryPathFor -OutputPath $s1.ReportPath) | Should -BeFalse
+        $s2 = Invoke-TailFixture -ExtraArgs @{ AppendHistory = $true; HistorySubscriptionIds = @("sub1") }
+        $historyPath = Get-HistoryPathFor -OutputPath $s2.ReportPath
+        Test-Path $historyPath | Should -BeTrue
+        $entries = @(Get-Content $historyPath -Raw | ConvertFrom-Json)
+        $entries.Count | Should -BeGreaterOrEqual 1
+        $entries[-1].fail | Should -Be 1
+    }
+}
+
 # =============================================================================
 # MODULE MANIFEST CONSISTENCY
 # =============================================================================
