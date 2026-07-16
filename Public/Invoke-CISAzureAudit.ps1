@@ -79,7 +79,7 @@ function Invoke-CISAzureAudit {
         Invoke-CISAzureAudit -Subscriptions "sub-id-1","sub-id-2" -Output report.html -Parallel 5
 
     .OUTPUTS
-        PSCustomObject (CISAzureBenchmark.AuditSummary) with ExitCode, Reason, Counts,
+        PSCustomObject (CISAzureFoundationsBenchmark.AuditSummary) with ExitCode, Reason, Counts,
         Score, ReportPath, Results, SubscriptionCount and Elapsed.
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are consumed inside nested scriptblocks/closures')]
@@ -120,7 +120,7 @@ function Invoke-CISAzureAudit {
         $Subscriptions = @(@($Subscriptions) + @($_ExtraSubscriptions)) | Where-Object { $_ }
     }
 
-    # Module files are already loaded by CISAzureBenchmark.psm1; resolve the root
+    # Module files are already loaded by CISAzureFoundationsBenchmark.psm1; resolve the root
     # for path defaults and for the parallel workers' dot-source re-import.
     $moduleRoot = if ($script:ModuleRoot) { $script:ModuleRoot } else { Split-Path $PSScriptRoot -Parent }
 

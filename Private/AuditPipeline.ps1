@@ -23,7 +23,7 @@ function New-AuditRunSummary {
         [string]$Elapsed = ""
     )
     [PSCustomObject]@{
-        PSTypeName        = 'CISAzureBenchmark.AuditSummary'
+        PSTypeName        = 'CISAzureFoundationsBenchmark.AuditSummary'
         ExitCode          = $Code
         Reason            = $Reason
         Counts            = $Counts

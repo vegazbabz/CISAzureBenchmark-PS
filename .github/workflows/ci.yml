@@ -66,8 +66,8 @@ jobs:
       - name: Validate module manifest
         shell: pwsh
         run: |
-          $m = Test-ModuleManifest ./CISAzureBenchmark.psd1 -ErrorAction Stop
+          $m = Test-ModuleManifest ./CISAzureFoundationsBenchmark.psd1 -ErrorAction Stop
           Write-Host "Manifest OK: $($m.Name) v$($m.Version)"
-          Import-Module ./CISAzureBenchmark.psd1 -Force -ErrorAction Stop
-          $cmd = Get-Command Invoke-CISAzureAudit -Module CISAzureBenchmark -ErrorAction Stop
+          Import-Module ./CISAzureFoundationsBenchmark.psd1 -Force -ErrorAction Stop
+          $cmd = Get-Command Invoke-CISAzureAudit -Module CISAzureFoundationsBenchmark -ErrorAction Stop
           Write-Host "Module imports and exports $($cmd.Name)."
