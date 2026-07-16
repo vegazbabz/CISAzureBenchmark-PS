@@ -8,6 +8,12 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **Scheduled-audit recipe with OIDC** (docs): the README's CI/CD section now includes a
+  complete GitHub Actions example for recurring audits — weekly cron, `azure/login` with
+  federated credentials (no stored secrets), `-ExitCode` to fail the job on findings, and
+  artifact upload of all report files — plus the one-time Azure setup commands (app
+  registration, federated credential, role assignments). No code changes; no control
+  results change.
 - **Run-to-run diff report** (`-CompareWith`): pass a previous run's `<report>.json` (or
   `auto` to pick the most recent report JSON in the output directory) and the HTML report
   gains a "Changes vs previous run" section — regressions (was passing, now FAIL/ERROR),
