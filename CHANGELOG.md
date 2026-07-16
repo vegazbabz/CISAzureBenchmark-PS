@@ -4,7 +4,12 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
-## [Unreleased]
+## [2.1.0] — 2026-07-16
+
+Feature release: run-to-run diff, SARIF export, three newly automated identity controls
+(5.5, 5.6, 5.3.5), Key Vault preflight probing, CI hardening — plus internal restructuring
+with no behavior change (live-validated E2E against a real tenant). Scores remain
+comparable with 2.0.0.
 
 ### Added
 
@@ -160,6 +165,6 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
-[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.0.0...HEAD
+[2.1.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/releases/tag/v1.0.0
