@@ -8,6 +8,10 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **Coverage gate in CI**: `Run-Tests.ps1` gained `-MinCoverage <percent>` (implies
+  `-Coverage`) — prints the coverage percentage, publishes it to the GitHub Actions job
+  summary, and exits non-zero below the floor. CI's Ubuntu test leg now enforces a 75%
+  floor (baseline 82.7% at introduction). No control results change.
 - **Scheduled-audit recipe with OIDC** (docs): the README's CI/CD section now includes a
   complete GitHub Actions example for recurring audits — weekly cron, `azure/login` with
   federated credentials (no stored secrets), `-ExitCode` to fail the job on findings, and

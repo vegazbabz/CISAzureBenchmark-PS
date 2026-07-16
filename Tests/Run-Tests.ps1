@@ -7,15 +7,21 @@
 .EXAMPLE
     .\Tests\Run-Tests.ps1
     .\Tests\Run-Tests.ps1 -Coverage
+    .\Tests\Run-Tests.ps1 -Coverage -MinCoverage 70
     .\Tests\Run-Tests.ps1 -Test "5_27"
 #>
 [CmdletBinding()]
 param(
     [switch]$Coverage,
+    # Fail (exit 1) when coverage falls below this percentage; implies -Coverage.
+    [ValidateRange(0, 100)]
+    [double]$MinCoverage = 0,
     [string]$Test
 )
 
 Set-StrictMode -Version Latest
+
+if ($MinCoverage -gt 0) { $Coverage = $true }
 
 $minVer = [Version]"5.0"
 $pester = Get-Module Pester -ListAvailable |
@@ -54,4 +60,27 @@ $result = Invoke-Pester -Configuration $config
 if (-not $result -or $result.Result -ne "Passed") {
     exit 1
 }
+
+if ($Coverage) {
+    $cc = $result.CodeCoverage
+    $pct = [math]::Round($cc.CoveragePercent, 2)
+    Write-Host ("Code coverage: {0}% ({1} of {2} analyzed commands executed)" -f $pct, $cc.CommandsExecutedCount, $cc.CommandsAnalyzedCount)
+
+    if ($env:GITHUB_STEP_SUMMARY) {
+        $gate = if ($MinCoverage -gt 0) { "floor $MinCoverage%" } else { "no floor" }
+        @(
+            "### Code coverage"
+            ""
+            "| Coverage | Commands executed | Commands analyzed | Gate |"
+            "| --- | --- | --- | --- |"
+            "| **$pct%** | $($cc.CommandsExecutedCount) | $($cc.CommandsAnalyzedCount) | $gate |"
+        ) | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+    }
+
+    if ($MinCoverage -gt 0 -and $pct -lt $MinCoverage) {
+        Write-Error "Code coverage $pct% is below the required minimum of $MinCoverage%."
+        exit 1
+    }
+}
+
 exit 0
