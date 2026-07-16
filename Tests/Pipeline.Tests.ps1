@@ -164,6 +164,136 @@ Describe "Complete-AuditRun (shared report/summary tail)" {
         $entries.Count | Should -BeGreaterOrEqual 1
         $entries[-1].fail | Should -Be 1
     }
+
+    It "writes a .diff.json and renders the diff section when -CompareWith is passed" {
+        # Baseline: 8.3.5 was FAIL (now PASS = improvement), 8.3.6 was PASS (now FAIL =
+        # regression), plus a control that no longer exists (removed). 8.3.8 is new.
+        $baseline = Join-Path $TestDrive "baseline.json"
+        ConvertTo-Json -InputObject @(
+            [ordered]@{ control = "8.3.5"; title = "t"; level = 1; subscription = "Sub One"; resource = "kv1"; status = "FAIL"; details = "was bad" }
+            [ordered]@{ control = "8.3.6"; title = "t"; level = 2; subscription = "Sub One"; resource = "kv1"; status = "PASS"; details = "was ok" }
+            [ordered]@{ control = "6.4";   title = "t"; level = 1; subscription = "Sub One"; resource = "";    status = "PASS"; details = "retired" }
+        ) | Set-Content (Join-Path $TestDrive "baseline.json") -Encoding UTF8
+
+        $summary  = Invoke-TailFixture -ExtraArgs @{ CompareWith = $baseline }
+        $diffPath = [System.IO.Path]::ChangeExtension($summary.ReportPath, '.diff.json')
+        Test-Path $diffPath | Should -BeTrue
+
+        $diff = Get-Content $diffPath -Raw | ConvertFrom-Json
+        $diff.counts.regressions  | Should -Be 1
+        $diff.counts.improvements | Should -Be 1
+        $diff.counts.new          | Should -Be 1
+        $diff.counts.removed      | Should -Be 1
+        $diff.regressions[0].control        | Should -Be "8.3.6"
+        $diff.regressions[0].previousStatus | Should -Be "PASS"
+        $diff.improvements[0].control       | Should -Be "8.3.5"
+        $diff.new[0].control                | Should -Be "8.3.8"
+        $diff.removed[0].control            | Should -Be "6.4"
+
+        (Get-Content $summary.ReportPath -Raw) | Should -Match "Changes vs previous run"
+    }
+
+    It "skips the diff without failing when the -CompareWith baseline does not exist" {
+        $summary  = Invoke-TailFixture -ExtraArgs @{ CompareWith = (Join-Path $TestDrive "missing.json") }
+        $diffPath = [System.IO.Path]::ChangeExtension($summary.ReportPath, '.diff.json')
+        Test-Path $diffPath | Should -BeFalse
+        $summary.ExitCode | Should -Be 0
+        (Get-Content $summary.ReportPath -Raw) | Should -Not -Match "Changes vs previous run"
+    }
+}
+
+Describe "Get-RunDiff — run-to-run classification" {
+    BeforeAll {
+        function New-DiffCurrent {
+            param([string]$Cid, [string]$Status, [string]$Resource = "r1", [string]$Sub = "Prod")
+            New-CISResult -ControlId $Cid -Title "T $Cid" -Level 1 -Section "S" -Status $Status `
+                -Details "d" -SubscriptionId "sub-1" -SubscriptionName $Sub -Resource $Resource
+        }
+        function New-DiffPrevious {
+            param([string]$Cid, [string]$Status, [string]$Resource = "r1", [string]$Sub = "Prod")
+            [PSCustomObject]@{ control = $Cid; title = "T $Cid"; level = 1; subscription = $Sub; resource = $Resource; status = $Status; details = "d" }
+        }
+    }
+
+    It "classifies PASS-to-FAIL as a regression and FAIL-to-PASS as an improvement" {
+        $diff = Get-RunDiff `
+            -CurrentResults @((New-DiffCurrent "1.1" "FAIL"), (New-DiffCurrent "1.2" "PASS")) `
+            -PreviousResults @((New-DiffPrevious "1.1" "PASS"), (New-DiffPrevious "1.2" "FAIL"))
+        $diff.Regressions.Count  | Should -Be 1
+        $diff.Regressions[0].control | Should -Be "1.1"
+        $diff.Regressions[0].previousStatus | Should -Be "PASS"
+        $diff.Improvements.Count | Should -Be 1
+        $diff.Improvements[0].control | Should -Be "1.2"
+    }
+
+    It "treats a new ERROR as a regression (ERROR counts as failing)" {
+        $diff = Get-RunDiff `
+            -CurrentResults @((New-DiffCurrent "1.1" "ERROR")) `
+            -PreviousResults @((New-DiffPrevious "1.1" "MANUAL"))
+        $diff.Regressions.Count | Should -Be 1
+    }
+
+    It "does not report unchanged results or FAIL/ERROR swaps" {
+        $diff = Get-RunDiff `
+            -CurrentResults @((New-DiffCurrent "1.1" "FAIL"), (New-DiffCurrent "1.2" "PASS")) `
+            -PreviousResults @((New-DiffPrevious "1.1" "ERROR"), (New-DiffPrevious "1.2" "PASS"))
+        $diff.Regressions.Count  | Should -Be 0
+        $diff.Improvements.Count | Should -Be 0
+        $diff.New.Count          | Should -Be 0
+        $diff.Removed.Count      | Should -Be 0
+    }
+
+    It "reports results only in the current run as new and only in the previous run as removed" {
+        $diff = Get-RunDiff `
+            -CurrentResults @((New-DiffCurrent "1.1" "PASS" -Resource "r-new")) `
+            -PreviousResults @((New-DiffPrevious "1.1" "PASS" -Resource "r-old"))
+        $diff.New.Count     | Should -Be 1
+        $diff.New[0].resource | Should -Be "r-new"
+        $diff.Removed.Count | Should -Be 1
+        $diff.Removed[0].resource | Should -Be "r-old"
+        $diff.Removed[0].previousStatus | Should -Be "PASS"
+    }
+
+    It "keys on control, subscription and resource — same control in another subscription is distinct" {
+        $diff = Get-RunDiff `
+            -CurrentResults @((New-DiffCurrent "1.1" "FAIL" -Sub "Staging")) `
+            -PreviousResults @((New-DiffPrevious "1.1" "PASS" -Sub "Prod"))
+        $diff.Regressions.Count | Should -Be 0
+        $diff.New.Count     | Should -Be 1
+        $diff.Removed.Count | Should -Be 1
+    }
+
+    It "handles empty runs on either side" {
+        $diff = Get-RunDiff -CurrentResults @() -PreviousResults @((New-DiffPrevious "1.1" "PASS"))
+        $diff.Removed.Count | Should -Be 1
+        $diff = Get-RunDiff -CurrentResults @((New-DiffCurrent "1.1" "PASS")) -PreviousResults @()
+        $diff.New.Count | Should -Be 1
+    }
+}
+
+Describe "Find-PreviousReportJson — 'auto' baseline discovery" {
+    It "picks the newest report JSON, ignoring history, diff and suppressions files" {
+        $dir = Join-Path $TestDrive "autodiff"
+        $null = New-Item -ItemType Directory -Path $dir
+        Set-Content (Join-Path $dir "cis_audit_report_old.json")  -Value "[]" -Encoding UTF8
+        Set-Content (Join-Path $dir "cis_audit_report_new.json")  -Value "[]" -Encoding UTF8
+        Set-Content (Join-Path $dir "cis_run_history.json")       -Value "[]" -Encoding UTF8
+        Set-Content (Join-Path $dir "cis_audit_report_old.diff.json") -Value "{}" -Encoding UTF8
+        Set-Content (Join-Path $dir "suppressions.json")          -Value "[]" -Encoding UTF8
+        # Ensure a strict ordering regardless of filesystem timestamp resolution
+        (Get-Item (Join-Path $dir "cis_audit_report_new.json")).LastWriteTimeUtc = [DateTime]::UtcNow
+        (Get-Item (Join-Path $dir "cis_audit_report_old.json")).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-5)
+
+        $found = Find-PreviousReportJson -OutputPath (Join-Path $dir "cis_audit_report_current.html")
+        Split-Path $found -Leaf | Should -Be "cis_audit_report_new.json"
+    }
+
+    It "excludes the current run's own JSON and returns null when nothing remains" {
+        $dir = Join-Path $TestDrive "autodiff2"
+        $null = New-Item -ItemType Directory -Path $dir
+        Set-Content (Join-Path $dir "report.json") -Value "[]" -Encoding UTF8
+        Find-PreviousReportJson -OutputPath (Join-Path $dir "report.html") | Should -BeNullOrEmpty
+    }
 }
 
 # =============================================================================

@@ -61,6 +61,7 @@ function Complete-AuditRun {
         [switch]$AppendHistory,
         [AllowEmptyCollection()][string[]]$HistorySubscriptionIds = @(),
         [string]$ElapsedLabel = "",
+        [string]$CompareWith = "",
         [switch]$SetExitCode,
         [switch]$NoOpen
     )
@@ -94,6 +95,28 @@ function Complete-AuditRun {
     Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
     Write-Host ""
 
+    # ── Run-to-run diff (optional) ────────────────────────────────────────────
+    $diff = $null
+    if ($CompareWith) {
+        $baselinePath = if ($CompareWith -eq 'auto') { Find-PreviousReportJson -OutputPath $OutputPath } else { $CompareWith }
+        if ($baselinePath -and (Test-Path $baselinePath)) {
+            try {
+                $prev = @(Get-Content $baselinePath -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 5)
+                $diff = Get-RunDiff -CurrentResults $finalResults -PreviousResults $prev
+                $diffPath = [System.IO.Path]::ChangeExtension($OutputPath, '.diff.json')
+                Write-RunDiffJson -Diff $diff -BaselinePath $baselinePath -OutputPath $diffPath
+                Write-Host ("  Diff vs {0}: {1} regression(s), {2} improvement(s), {3} new, {4} removed  `u{2192} {5}" -f `
+                    (Split-Path $baselinePath -Leaf), $diff.Regressions.Count, $diff.Improvements.Count, `
+                    $diff.New.Count, $diff.Removed.Count, (Split-Path $diffPath -Leaf)) -ForegroundColor Cyan
+            } catch {
+                Write-AuditLog "Could not diff against '$baselinePath': $_" -Level WARNING
+                $diff = $null
+            }
+        } else {
+            Write-AuditLog "CompareWith baseline not found ($CompareWith) — skipping run diff." -Level WARNING
+        }
+    }
+
     # ── Report + history ──────────────────────────────────────────────────────
     $scopeInfo = @{
         tenant        = $Tenant
@@ -107,7 +130,7 @@ function Complete-AuditRun {
     $historyPath = Get-HistoryPathFor -OutputPath $OutputPath
     $history     = @(Get-AuditHistory -HistoryPath $historyPath)
 
-    New-CISHtmlReport -Results $finalResults -OutputPath $OutputPath -ScopeLabel $ScopeLabel -History $history -ScopeInfo $scopeInfo -SubTimestamps $SubTimestamps
+    New-CISHtmlReport -Results $finalResults -OutputPath $OutputPath -ScopeLabel $ScopeLabel -History $history -ScopeInfo $scopeInfo -SubTimestamps $SubTimestamps -Diff $diff
 
     if ($AppendHistory) {
         Add-AuditHistoryEntry -HistoryPath $historyPath -Results $finalResults -SubscriptionIds $HistorySubscriptionIds

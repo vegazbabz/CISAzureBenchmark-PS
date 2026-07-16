@@ -4,13 +4,15 @@ Add-Type -AssemblyName System.Web
 
 function New-CISHtmlReport {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Factory function that constructs and returns an object; does not modify system state.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Diff', Justification='False positive - Diff is consumed when building the run-diff block.')]
     param(
         [Parameter(Mandatory)][object[]]$Results,
         [Parameter(Mandatory)][string]$OutputPath,
         [string]$ScopeLabel       = "",
         [object[]]$History        = @(),
         [hashtable]$ScopeInfo     = @{},
-        [hashtable]$SubTimestamps = @{}
+        [hashtable]$SubTimestamps = @{},
+        [object]$Diff             = $null
     )
 
     # ── Status styles: bg, text color, HTML entity icon ──────────────────────
@@ -276,6 +278,75 @@ function New-CISHtmlReport {
         }
     }
 
+    # ── Run-diff block (changes vs a previous run, when -Diff is supplied) ───
+    $diffBlock = ""
+    if ($null -ne $Diff) {
+        $dCats = @(
+            @{ Key = 'Regressions';  Label = 'Regression';  Noun = 'regression(s)';  Col = '#dc2626'; Bg = '#fef2f2' },
+            @{ Key = 'Improvements'; Label = 'Improvement'; Noun = 'improvement(s)'; Col = '#16a34a'; Bg = '#f0fdf4' },
+            @{ Key = 'New';          Label = 'New';         Noun = 'new';            Col = '#2563eb'; Bg = '#eff6ff' },
+            @{ Key = 'Removed';      Label = 'Removed';     Noun = 'removed';        Col = '#64748b'; Bg = '#f1f5f9' }
+        )
+        $diffTotal  = 0
+        $diffCounts = foreach ($cat in $dCats) {
+            $n = @($Diff.($cat.Key)).Count
+            $diffTotal += $n
+            "$n $($cat.Noun)"
+        }
+        $diffSummary = $diffCounts -join ' &middot; '
+
+        $maxPerCat = 50
+        $dRows = [System.Text.StringBuilder]::new()
+        foreach ($cat in $dCats) {
+            $items = @($Diff.($cat.Key))
+            foreach ($e in @($items | Select-Object -First $maxPerCat)) {
+                $target = if ($e.subscription) {
+                    "<div class=`"sub-name`">&#x1F4CB; $([System.Web.HttpUtility]::HtmlEncode($e.subscription))</div>"
+                } else {
+                    "<div class=`"sub-name`" style=`"color:#94a3b8`">Tenant-wide</div>"
+                }
+                if ($e.resource) {
+                    $target += "<div class=`"res-name`">&#x1F539; <code>$([System.Web.HttpUtility]::HtmlEncode($e.resource))</code></div>"
+                }
+                $statusCell = switch ($cat.Key) {
+                    'New'     { [System.Web.HttpUtility]::HtmlEncode($e.status) }
+                    'Removed' { "was $([System.Web.HttpUtility]::HtmlEncode($e.previousStatus))" }
+                    default   { "$([System.Web.HttpUtility]::HtmlEncode($e.previousStatus)) &rarr; $([System.Web.HttpUtility]::HtmlEncode($e.status))" }
+                }
+                [void]$dRows.Append(
+                    "<tr style=`"background:$($cat.Bg)`">" +
+                    "<td><span class=`"diff-badge`" style=`"color:$($cat.Col)`">$($cat.Label)</span></td>" +
+                    "<td><code>$([System.Web.HttpUtility]::HtmlEncode($e.control))</code></td>" +
+                    "<td>$([System.Web.HttpUtility]::HtmlEncode($e.title))</td>" +
+                    "<td class=`"sub-col`">$target</td>" +
+                    "<td style=`"white-space:nowrap`">$statusCell</td>" +
+                    "<td>$([System.Web.HttpUtility]::HtmlEncode($e.details))</td>" +
+                    "</tr>`n")
+            }
+            if ($items.Count -gt $maxPerCat) {
+                [void]$dRows.Append(
+                    "<tr class=`"diff-more`"><td colspan=`"6`">&#8230;and $($items.Count - $maxPerCat) more " +
+                    "$($cat.Label.ToLower()) entries &#8212; see the full list in the .diff.json export.</td></tr>`n")
+            }
+        }
+
+        $diffBody = if ($diffTotal -eq 0) {
+            "<p style=`"font-size:.85rem;color:#64748b`">No changes compared to the baseline run.</p>"
+        } else {
+            "<table><colgroup><col style=`"width:9%`"><col style=`"width:6%`"><col style=`"width:24%`">" +
+            "<col style=`"width:17%`"><col style=`"width:12%`"><col style=`"width:32%`"></colgroup>" +
+            "<thead><tr><th>Change</th><th>Control</th><th>Title</th><th>Subscription / Resource</th>" +
+            "<th>Status</th><th>Details</th></tr></thead><tbody>$($dRows.ToString())</tbody></table>"
+        }
+        $openAttr  = if ($diffTotal -gt 0) { " open" } else { "" }
+        $diffBlock = @"
+<details class="trend-box"$openAttr>
+  <summary>&#x1F504; Changes vs previous run &#8212; $diffSummary</summary>
+  <div class="trend-inner">$diffBody</div>
+</details>
+"@
+    }
+
     # ── JS data ───────────────────────────────────────────────────────────────
     $jsCountsJson = [PSCustomObject]@{ PASS=$counts.PASS; FAIL=$counts.FAIL; ERROR=$counts.ERROR } | ConvertTo-Json -Compress
     $jsL1Json     = [PSCustomObject]@{ pass=$l1.PASS; fail=$l1.FAIL; error=$l1.ERROR } | ConvertTo-Json -Compress
@@ -357,6 +428,8 @@ tr.sh:hover td { background: #e2e8f0; }
 .ss { float: right; color: #94a3b8; font-weight: normal; }
 
 .badge { font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.diff-badge { font-size: .74rem; font-weight: 700; white-space: nowrap; }
+.diff-more td { color: #94a3b8; font-style: italic; font-size: .8rem; }
 .lv    { font-size: .7rem; background: #e2e8f0; border-radius: 4px;
          padding: 1px 5px; font-weight: 600; color: #475569; }
 
@@ -495,6 +568,7 @@ footer { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: .8rem; 
 </div>
 
 $trendBlock
+$diffBlock
 $subTable
 
 <div class="filters">

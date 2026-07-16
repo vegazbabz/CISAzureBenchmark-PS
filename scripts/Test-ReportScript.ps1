@@ -73,6 +73,14 @@ $scopeInfo = @{
     level_filter  = 'both'
 }
 
+# Synthetic run diff so the "Changes vs previous run" block renders
+$previous = @(
+    [PSCustomObject]@{ control = '9.3.4'; title = 'Secure transfer required'; level = 1; subscription = 'Production'; resource = 'stprod01'; status = 'FAIL'; details = 'HTTPS-only: False' }
+    [PSCustomObject]@{ control = '7.2'; title = 'SSH not open to internet'; level = 1; subscription = 'Staging'; resource = 'nsg-app'; status = 'PASS'; details = '' }
+    [PSCustomObject]@{ control = '6.4'; title = 'Retired control'; level = 1; subscription = 'Production'; resource = ''; status = 'PASS'; details = 'gone in current run' }
+)
+$diff = Get-RunDiff -CurrentResults $results -PreviousResults $previous
+
 # ── Generate to a temp path ───────────────────────────────────────────────────
 $tmpDir  = Join-Path ([System.IO.Path]::GetTempPath()) ("cis_report_js_" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tmpDir | Out-Null
@@ -81,10 +89,15 @@ $outPath = Join-Path $tmpDir 'report.html'
 try {
     New-CISHtmlReport -Results $results -OutputPath $outPath -ScopeLabel 'JS validation run' `
         -History $history -ScopeInfo $scopeInfo `
-        -SubTimestamps @{ Production = '2026-07-01T00:00:00Z'; Staging = '2026-07-01T00:00:00Z' }
+        -SubTimestamps @{ Production = '2026-07-01T00:00:00Z'; Staging = '2026-07-01T00:00:00Z' } `
+        -Diff $diff
 
     if (-not (Test-Path $outPath)) { throw "Report was not generated at $outPath" }
     $html = Get-Content $outPath -Raw
+
+    if ($html -notmatch 'Changes vs previous run') {
+        throw 'Diff section did not render — expected "Changes vs previous run" in the report.'
+    }
 
     # ── Extract every inline <script> block ───────────────────────────────────
     $blocks = [regex]::Matches($html, '(?s)<script>(.*?)</script>')
