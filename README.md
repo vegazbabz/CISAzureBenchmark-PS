@@ -739,6 +739,103 @@ private repos; free for public repos):
 Alerts are keyed by control + subscription + resource, so a finding that persists across
 runs stays a single alert, and one that disappears is closed automatically.
 
+#### Scheduled audits with OIDC (no stored secrets)
+
+For recurring audits, use GitHub's OIDC federation: the workflow exchanges a short-lived
+GitHub token for an Azure token at run time, so no client secret or certificate is ever
+stored in the repository.
+
+One-time Azure setup — an app registration with a federated credential:
+
+```bash
+# 1. App registration + service principal
+az ad app create --display-name "cis-azure-audit"        # note the appId in the output
+az ad sp create --id <appId>
+
+# 2. Trust GitHub's OIDC issuer for this repository's default branch
+#    (scheduled workflows always run on the default branch, so the subject must match it)
+az ad app federated-credential create --id <appId> --parameters '{
+  "name": "github-scheduled-audit",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:<owner>/<repo>:ref:refs/heads/main",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+
+# 3. Grant read access on each subscription to audit
+az role assignment create --assignee <appId> --role "Reader" --scope /subscriptions/<subId>
+az role assignment create --assignee <appId> --role "Security Reader" --scope /subscriptions/<subId>
+```
+
+For the identity checks (section 5.x, Microsoft Graph) also assign the service principal
+the **Global Reader** Entra role; without it those controls return ERROR with the missing
+permission named — compliance is unknown, not assumed clean.
+
+Store `AZURE_CLIENT_ID` (the appId), `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` as
+repository **variables** (Settings → Secrets and variables → Actions → Variables) — none
+of them is a secret.
+
+Then the workflow:
+
+```yaml
+name: Weekly CIS Azure audit
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'   # Mondays 06:17 UTC
+  workflow_dispatch: {}    # allow manual runs too
+
+permissions:
+  id-token: write   # required for the OIDC token exchange
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the audit tool
+        uses: actions/checkout@v4
+        with:
+          repository: vegazbabz/CISAzureBenchmark-PS   # omit if this workflow lives in the tool repo
+
+      - name: Install Az modules
+        shell: pwsh
+        run: |
+          Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, `
+            Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser -Force
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true   # the tool uses Az PowerShell, not az CLI
+
+      - name: Run audit
+        shell: pwsh
+        run: |
+          ./Invoke-CISAzureAudit.ps1 `
+            -Subscriptions "${{ vars.AZURE_SUBSCRIPTION_ID }}" `
+            -Output reports/cis.html `
+            -NoOpen `
+            -ExitCode
+
+      - name: Upload report artifacts
+        if: always()   # keep the reports even when -ExitCode fails the job
+        uses: actions/upload-artifact@v4
+        with:
+          name: cis-audit-report
+          path: reports/
+```
+
+The artifact contains all four report files (`cis.html`, `cis.json`, `cis.csv`,
+`cis.sarif`). To also surface findings in the Security tab, append the
+`upload-sarif` step from the previous section (add `security-events: write` to the
+workflow's `permissions` block).
+
+> **Note:** GitHub disables scheduled workflows in repositories with no activity for
+> 60 days — a manual `workflow_dispatch` run re-enables them.
+
 Exit code summary:
 
 | Code | Meaning |
