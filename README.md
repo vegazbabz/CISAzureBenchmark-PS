@@ -74,19 +74,23 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 ## Quick Start
 
 ```powershell
-# 1. Install required Az PowerShell modules (one-time)
+# 1. Install the module and the required Az PowerShell modules (one-time)
+Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
 Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
 
 # 2. Log in to Azure
 Connect-AzAccount
 
 # 3. Run the audit (audits all enabled subscriptions in your tenant)
-.\Invoke-CISAzureAudit.ps1 -TenantId (Get-AzContext).Tenant.Id
+Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id
 ```
 
-The report opens automatically in your browser when the audit finishes. The script will
+The report opens automatically in your browser when the audit finishes. The tool will
 enumerate all enabled subscriptions in the tenant, run all checks, and save the report.
 (An explicit `-TenantId` or `-Subscriptions` scope is required — the tool never assumes one.)
+
+Running from a cloned repo instead? Use the script entry point, which behaves identically:
+`.\Invoke-CISAzureAudit.ps1 -TenantId (Get-AzContext).Tenant.Id`
 
 ### Use as a PowerShell module
 
@@ -94,7 +98,7 @@ The tool is also a proper module — import it and work with the returned summar
 instead of parsing console output:
 
 ```powershell
-Import-Module .\CISAzureFoundationsBenchmark.psd1
+Import-Module CISAzureFoundationsBenchmark   # from a clone: Import-Module .\CISAzureFoundationsBenchmark.psd1
 
 $audit = Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id -NoOpen
 
@@ -135,14 +139,20 @@ If prompted to install from an untrusted repository, type `Y` and press Enter.
 
 ### Step 3 — Get the tool
 
-**Option A — Clone with Git** (recommended — makes updating easy):
+**Option A — Install from the PowerShell Gallery** (recommended):
+
+```powershell
+Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
+```
+
+**Option B — Clone with Git**:
 
 ```powershell
 git clone https://github.com/vegazbabz/CISAzureBenchmark-PS.git
 cd CISAzureBenchmark-PS
 ```
 
-**Option B — Download as ZIP** (no Git required):
+**Option C — Download as ZIP** (no Git required):
 
 1. On the [GitHub repository page](https://github.com/vegazbabz/CISAzureBenchmark-PS),
    click the green **Code** button → **Download ZIP**.
@@ -160,16 +170,17 @@ and **Security Reader** on the subscriptions you want to audit.
 ### Step 5 — Run the audit
 
 ```powershell
-.\Invoke-CISAzureAudit.ps1
+Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id
 ```
 
-The tool will enumerate all your enabled subscriptions, run all checks, and open the HTML report
-in your browser automatically when done.
+(From a cloned repo, `.\Invoke-CISAzureAudit.ps1 -TenantId (Get-AzContext).Tenant.Id` works
+identically.) The tool will enumerate all your enabled subscriptions, run all checks, and open
+the HTML report in your browser automatically when done.
 
 > **Tip:** To audit specific subscriptions, use the `-Subscriptions` parameter:
 >
 > ```powershell
-> .\Invoke-CISAzureAudit.ps1 -Subscriptions "subscription-id-1","subscription-id-2"
+> Invoke-CISAzureAudit -Subscriptions "subscription-id-1","subscription-id-2"
 > ```
 
 ---
