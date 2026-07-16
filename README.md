@@ -205,7 +205,10 @@ Checks/
   Section8.ps1                Security services checks (38 controls)
   Section9.ps1                Storage checks (21 controls — 127 total)
 Tests/
-  Checks.Tests.ps1            Pester unit tests (256 tests)
+  Section*.Tests.ps1          Pester tests per benchmark section (314 tests total)
+  Helpers.Tests.ps1           Pure-helper tests (factories, catalog, scoring, classifiers)
+  Pipeline.Tests.ps1          Report/summary pipeline tests (SARIF, suppressions, history)
+  TestHelpers.ps1             Shared bootstrap: fixtures + hermetic default mocks
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
