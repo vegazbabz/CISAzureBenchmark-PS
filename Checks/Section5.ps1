@@ -5,13 +5,13 @@
 
 function Invoke-Check5_1_1 {
     # Security defaults enabled OR Conditional Access in use
-    $cid = "5.1.1"; $title = "Ensure that 'security defaults' is Enabled in Microsoft Entra ID"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.1.1"
 
     $url = "https://graph.microsoft.com/v1.0/policies/identitySecurityDefaultsEnforcementPolicy"
     $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Properties > Manage Security Defaults.')
+        return New-ErrorResult $cid (New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Properties > Manage Security Defaults.')
     }
 
     $enabled = [string]$r.Data.isEnabled -eq "True" -or [string]$r.Data.isEnabled -eq "true"
@@ -21,16 +21,16 @@ function Invoke-Check5_1_1 {
         $caResult = Invoke-ArmRest -Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
         if (-not $caResult.Success) {
             # Cannot tell whether CA policies exist — don't assert FAIL on unread data
-            return New-ErrorResult $cid $title $level $sec "Security defaults are disabled and Conditional Access policies could not be read: $(New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Security > Conditional Access.')"
+            return New-ErrorResult $cid "Security defaults are disabled and Conditional Access policies could not be read: $(New-GraphPermissionMessage -Permission 'Policy.Read.All' -ManualCheck 'Entra ID > Security > Conditional Access.')"
         }
         $caEnabled = $caResult.Data -and $caResult.Data.value -and ($caResult.Data.value | Measure-Object).Count -gt 0
         if ($caEnabled) {
-            return New-CISResult $cid $title $level $sec $script:PASS `
+            return New-CISResult -ControlId $cid -Status $script:PASS `
                 -Details "Security defaults off but Conditional Access policies exist ($( ($caResult.Data.value | Measure-Object).Count) policies). Acceptable alternative."
         }
     }
 
-    New-CISResult $cid $title $level $sec `
+    New-CISResult -ControlId $cid `
         -Status $(if ($enabled) { $script:PASS } else { $script:FAIL }) `
         -Details $(if ($enabled) { "Security defaults are enabled." } else { "Security defaults are disabled and no Conditional Access policies found." }) `
         -Remediation $(if (-not $enabled) { "Entra ID > Properties > Manage Security Defaults > Enable security defaults" } else { "" })
@@ -39,21 +39,21 @@ function Invoke-Check5_1_1 {
 function Invoke-Check5_1_2 {
     # Manual — device registration MFA setting lives in the Entra portal and has no
     # stable Graph endpoint for read.
-    $cid = "5.1.2"; $title = "Ensure that 'Require Multifactor Authentication to register or join devices with Microsoft Entra' is set to 'Yes'"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.1.2"
+    New-ManualResult $cid `
         "Manual verification required — Microsoft Entra ID > Devices > Device settings > ensure 'Require Multifactor Authentication to register or join devices with Microsoft Entra' is set to 'Yes'."
 }
 
 function Invoke-Check5_1_3 {
     # MFA registered for ALL users — uses the current userRegistrationDetails endpoint.
     # The older credentialUserRegistrationDetails endpoint is deprecated and does not paginate.
-    $cid = "5.1.3"; $title = "Ensure that 'multifactor authentication' is 'enabled' For All Users"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.1.3"
 
     $url = "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails"
     $r   = Invoke-AzRestPaged -Uri $url
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'UserAuthenticationMethod.Read.All (or Reports.Read.All)')
+        return New-ErrorResult $cid (New-GraphPermissionMessage -Permission 'UserAuthenticationMethod.Read.All (or Reports.Read.All)')
     }
 
     $users = @($r.Data)
@@ -61,24 +61,24 @@ function Invoke-Check5_1_3 {
     $noMfaCount = $noMfa.Count
 
     if ($noMfaCount -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS -Details "All $($users.Count) user(s) have MFA registered."
+        return New-CISResult -ControlId $cid -Status $script:PASS -Details "All $($users.Count) user(s) have MFA registered."
     }
 
     $sample = ($noMfa | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details "$noMfaCount user(s) without MFA registered (of $($users.Count) total). Sample: $sample" `
         -Remediation "Entra ID > Security > Conditional Access (or per-user MFA) > Require MFA for all users."
 }
 
 function Invoke-Check5_1_4 {
-    $cid = "5.1.4"; $title = "Ensure that 'Allow users to remember multifactor authentication on devices they trust' is Disabled"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.1.4"
+    New-ManualResult $cid `
         "Manual verification required — setting is in the deprecated Per-user MFA portal. Disable 'Allow users to remember MFA on trusted devices', or migrate to Conditional Access sign-in frequency policies."
 }
 
 function Invoke-Check5_3_1 {
-    $cid = "5.3.1"; $title = "Ensure that Azure Admin Accounts Are Not Used for Daily Operations"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.3.1"
+    New-ManualResult $cid `
         "Manual verification required — confirm that privileged (admin) accounts are dedicated to administration and are not used for daily/non-privileged activities (email, web browsing, etc.)."
 }
 
@@ -86,7 +86,7 @@ function Invoke-Check5_3_2 {
     # "Reviewed on a regular basis" is human judgement, so this stays MANUAL when
     # guests exist — but the guest inventory is pulled via Graph so the reviewer
     # gets the actual list. A tenant with no guest users passes outright.
-    $cid = "5.3.2"; $title = "Ensure that Guest Users are Reviewed on a Regular Basis"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.3.2"
 
     # Server-side $filter on userType needs advanced-query headers (ConsistencyLevel:
     # eventual) that Invoke-AzRestMethod does not send — select and filter client-side.
@@ -94,25 +94,25 @@ function Invoke-Check5_3_2 {
     $r   = Invoke-AzRestPaged -Uri $url
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec (New-GraphPermissionMessage -Permission 'User.Read.All (or Directory.Read.All)' -ManualCheck 'Entra ID > Users > filter User type = Guest; review guest accounts and remove those no longer required.')
+        return New-ErrorResult $cid (New-GraphPermissionMessage -Permission 'User.Read.All (or Directory.Read.All)' -ManualCheck 'Entra ID > Users > filter User type = Guest; review guest accounts and remove those no longer required.')
     }
 
     $users  = @($r.Data)
     $guests = @($users | Where-Object { [string]$_.userType -eq 'Guest' })
 
     if ($guests.Count -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "No guest users exist in the tenant ($($users.Count) member user(s))."
     }
 
     $sample = ($guests | Select-Object -First 5 | ForEach-Object { [string]$_.userPrincipalName }) -join ', '
-    New-ManualResult $cid $title $level $sec `
+    New-ManualResult $cid `
         "$($guests.Count) guest user(s) found (of $($users.Count) total). Sample: $sample. Review each guest and remove those no longer required (Entra ID > Users > User type = Guest, or use Access Reviews)."
 }
 
 function Invoke-Check5_3_4 {
-    $cid = "5.3.4"; $title = "Ensure that All 'Privileged' Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.3.4"
+    New-ManualResult $cid `
         "Manual verification required — review privileged role assignments periodically (Entra ID > Roles and administrators, or PIM Access Reviews) and remove unnecessary assignments."
 }
 
@@ -120,24 +120,24 @@ function Invoke-Check5_3_5 {
     # Disabled accounts are tenant-wide (Graph) but role assignments live in the
     # per-subscription 'roles' prefetch, so this cross-references the two per subscription.
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
-    $cid = "5.3.5"; $title = "Ensure Disabled User Accounts do not Have Read, Write, or Owner Permissions"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.3.5"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
     if ($rolesErr) {
-        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+        return New-ErrorResult $cid "Role assignment prefetch failed: $rolesErr" $sid $sname
     }
 
     $duErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "disabledUsers"
     if ($duErr -or -not ($PrefetchData -and $PrefetchData.ContainsKey('disabledUsers'))) {
         $reason = if ($duErr) { $duErr } else { "disabled-user data not available" }
         $msg = New-GraphPermissionMessage -Permission 'User.Read.All (or Directory.Read.All)'
-        return New-ErrorResult $cid $title $level $sec "Could not list disabled users: $reason. $msg" $sid $sname
+        return New-ErrorResult $cid "Could not list disabled users: $reason. $msg" $sid $sname
     }
 
     $disabledUsers = @($PrefetchData['disabledUsers']['users'])
     if ($disabledUsers.Count -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "No disabled user accounts exist in the tenant." `
             -SubscriptionId $sid -SubscriptionName $sname
     }
@@ -152,7 +152,7 @@ function Invoke-Check5_3_5 {
     $offending = @($roles | Where-Object { $disabledById.ContainsKey([string]$_.principalId) })
 
     if ($offending.Count -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "None of the $($disabledUsers.Count) disabled user account(s) hold role assignments in this subscription." `
             -SubscriptionId $sid -SubscriptionName $sname
     }
@@ -162,21 +162,21 @@ function Invoke-Check5_3_5 {
         $who = if ($upn) { $upn } else { [string]$_.principalId }
         "$who at $([string]$_.scope)"
     }) -join "; "
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details "$($offending.Count) role assignment(s) held by disabled user accounts: $sample" `
         -Remediation "Remove role assignments from disabled accounts (IAM > Role assignments), or delete the accounts if no longer needed." `
         -SubscriptionId $sid -SubscriptionName $sname
 }
 
 function Invoke-Check5_3_6 {
-    $cid = "5.3.6"; $title = "Ensure 'Tenant Creator' Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.3.6"
+    New-ManualResult $cid `
         "Manual verification required — review members of the 'Tenant Creator' role periodically and remove assignments that are no longer required."
 }
 
 function Invoke-Check5_3_7 {
-    $cid = "5.3.7"; $title = "Ensure All Non-privileged Role Assignments are Periodically Reviewed"; $level = 1; $sec = "5 - Identity Services"
-    New-ManualResult $cid $title $level $sec `
+    $cid = "5.3.7"
+    New-ManualResult $cid `
         "Manual verification required — periodically review non-privileged role assignments (Access Reviews) and remove access that is no longer required."
 }
 
@@ -184,7 +184,7 @@ function Invoke-Check5_5 {
     # Custom roles are defined per subscription scope, so this runs in the
     # per-subscription loop (it was previously a tenant-level MANUAL check).
     param([string]$SubscriptionId, [string]$SubscriptionName)
-    $cid = "5.5"; $title = "Ensure that a Custom Role is Assigned Permissions for Administering Resource Locks"; $level = 2; $sec = "5 - Identity Services"
+    $cid = "5.5"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     try {
@@ -203,30 +203,30 @@ function Invoke-Check5_5 {
             ForEach-Object { [PSCustomObject]@{ name = $_.Name } }
         )
     } catch {
-        return New-ErrorResult $cid $title $level $sec $_.Exception.Message $sid $sname
+        return New-ErrorResult $cid $_.Exception.Message $sid $sname
     }
 
     if ($lockRoles.Count -gt 0) {
         $names = ($lockRoles | ForEach-Object { $_.name }) -join ", "
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "Custom role(s) granting resource-lock administration: $names" `
             -SubscriptionId $sid -SubscriptionName $sname
     }
 
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details "No custom role grants Microsoft.Authorization/locks permissions in this subscription." `
         -Remediation "IAM > Roles > Add custom role with 'Microsoft.Authorization/locks/*' actions and assign it to the principals responsible for managing resource locks." `
         -SubscriptionId $sid -SubscriptionName $sname
 }
 
 function Invoke-Check5_6 {
-    $cid = "5.6"; $title = "Ensure that 'Subscription leaving Microsoft Entra tenant' and 'Subscription entering Microsoft Entra tenant' is set to 'Permit no one'"; $level = 2; $sec = "5 - Identity Services"
+    $cid = "5.6"
 
     $url = "https://management.azure.com/providers/Microsoft.Subscription/policies/default?api-version=2021-10-01"
     $r   = Invoke-ArmRest -Uri $url
 
     if (-not $r.Success) {
-        return New-ErrorResult $cid $title $level $sec "Tenant subscription policy could not be read (requires tenant-level read access): $($r.Error). Manual check: Azure portal > Subscriptions > Advanced options > Manage Policies."
+        return New-ErrorResult $cid "Tenant subscription policy could not be read (requires tenant-level read access): $($r.Error). Manual check: Azure portal > Subscriptions > Advanced options > Manage Policies."
     }
 
     $props = if ($r.Data -and $r.Data.PSObject.Properties['properties']) { $r.Data.properties } else { $null }
@@ -234,14 +234,14 @@ function Invoke-Check5_6 {
     $blockEntering = $props -and $props.PSObject.Properties['blockSubscriptionsIntoTenant']    -and ([string]$props.blockSubscriptionsIntoTenant -eq 'True')
 
     if ($blockLeaving -and $blockEntering) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "Subscription tenant-transfer policy blocks both leaving and entering (Permit no one)."
     }
 
     $gaps = @()
     if (-not $blockLeaving)  { $gaps += "'Subscription leaving Microsoft Entra tenant' is not blocked" }
     if (-not $blockEntering) { $gaps += "'Subscription entering Microsoft Entra tenant' is not blocked" }
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details ($gaps -join '; ') `
         -Remediation "Azure portal > Subscriptions > Advanced options > Manage Policies > set both 'Subscription leaving...' and 'Subscription entering...' to 'Permit no one'."
 }
@@ -250,12 +250,12 @@ function Invoke-Check5_6 {
 
 function Invoke-Check5_3_3 {
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
-    $cid = "5.3.3"; $title = "Ensure That Use of the 'User Access Administrator' Role is Restricted"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.3.3"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
     if ($rolesErr) {
-        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+        return New-ErrorResult $cid "Role assignment prefetch failed: $rolesErr" $sid $sname
     }
 
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
@@ -265,7 +265,7 @@ function Invoke-Check5_3_3 {
     })
 
     if ($uaaAssignments.Count -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "No User Access Administrator assignments at subscription scope." `
             -SubscriptionId $sid -SubscriptionName $sname
     }
@@ -275,7 +275,7 @@ function Invoke-Check5_3_3 {
         $pi = [string]$_.principalId
         if ($pn) { "$pn ($pi)" } else { $pi }
     }) -join ", "
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details "User Access Administrator assigned at subscription scope to: $names" `
         -Remediation "IAM > Role assignments > Remove UAA role from subscription scope; use resource-group scope or PIM time-bound assignments instead." `
         -SubscriptionId $sid -SubscriptionName $sname
@@ -283,7 +283,7 @@ function Invoke-Check5_3_3 {
 
 function Invoke-Check5_4 {
     param([string]$SubscriptionId, [string]$SubscriptionName)
-    $cid = "5.4"; $title = "Ensure that No Custom Subscription Administrator Roles Exist"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.4"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     try {
@@ -304,17 +304,17 @@ function Invoke-Check5_4 {
             ForEach-Object { [PSCustomObject]@{ name = $_.Name } }
         )
     } catch {
-        return New-ErrorResult $cid $title $level $sec $_.Exception.Message $sid $sname
+        return New-ErrorResult $cid $_.Exception.Message $sid $sname
     }
 
     if ($customOwners.Count -eq 0) {
-        return New-CISResult $cid $title $level $sec $script:PASS `
+        return New-CISResult -ControlId $cid -Status $script:PASS `
             -Details "No custom roles with wildcard (*) permissions found." `
             -SubscriptionId $sid -SubscriptionName $sname
     }
 
     $names = ($customOwners | ForEach-Object { $_.name }) -join ", "
-    New-CISResult $cid $title $level $sec $script:FAIL `
+    New-CISResult -ControlId $cid -Status $script:FAIL `
         -Details "Custom role(s) with Administrator-level (wildcard *) permissions: $names" `
         -Remediation "IAM > Roles > Review and remove custom roles with wildcard (*) actions assignable at subscription scope." `
         -SubscriptionId $sid -SubscriptionName $sname
@@ -322,12 +322,12 @@ function Invoke-Check5_4 {
 
 function Invoke-Check5_7 {
     param([string]$SubscriptionId, [string]$SubscriptionName, [hashtable]$PrefetchData)
-    $cid = "5.7"; $title = "Ensure there are between 2 and 3 Subscription Owners"; $level = 1; $sec = "5 - Identity Services"
+    $cid = "5.7"
     $sid = $SubscriptionId; $sname = $SubscriptionName
 
     $rolesErr = Get-PrefetchError -PrefetchData $PrefetchData -Key "roles"
     if ($rolesErr) {
-        return New-ErrorResult $cid $title $level $sec "Role assignment prefetch failed: $rolesErr" $sid $sname
+        return New-ErrorResult $cid "Role assignment prefetch failed: $rolesErr" $sid $sname
     }
 
     $roles = @(Get-PrefetchData -PrefetchData $PrefetchData -Key "roles" -SubscriptionId $sid)
@@ -339,7 +339,7 @@ function Invoke-Check5_7 {
     $count = $ownerAssignments.Count
 
     $pass = $count -ge 2 -and $count -le 3
-    New-CISResult $cid $title $level $sec `
+    New-CISResult -ControlId $cid `
         -Status $(if ($pass) { $script:PASS } else { $script:FAIL }) `
         -Details "Found $count subscription Owner(s) at subscription scope. CIS recommends between 2 and 3." `
         -Remediation $(if (-not $pass) { "IAM > Role assignments > Adjust Owner assignments to be between 2 and 3 at subscription scope." } else { "" }) `

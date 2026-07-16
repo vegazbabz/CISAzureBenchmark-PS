@@ -16,12 +16,7 @@ function Invoke-Check3_1_1 {
     evaluation (UserAuthenticationMethod.Read.All + Policy.Read.All).
     Partial checks would be misleading, so this remains manual.
     #>
-    $cid = "3.1.1"
-    $title = "Ensure only MFA Enabled Identities can Access Privileged Virtual Machine"
-    $level = 2
-    $sec = "3 - Compute Services"
-
-    New-CISResult $cid $title $level $sec $script:MANUAL `
+    New-CISResult -ControlId "3.1.1" -Status $script:MANUAL `
         -Details ("Manual verification required — check that all identities with " +
             "'Virtual Machine Administrator Login' or 'Virtual Machine User Login' " +
             "roles have MFA enabled (per-user MFA or Conditional Access).") `

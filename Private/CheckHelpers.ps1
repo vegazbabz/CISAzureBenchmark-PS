@@ -110,16 +110,17 @@ function New-ErrorResult {
     .SYNOPSIS
     Shorthand factory for ERROR results. Passes the message through Format-AzErrorMessage
     so raw API error strings are translated into human-readable guidance.
+    Title/Level/Section come from the control catalog unless explicitly overridden.
     #>
     param(
-        [string]$ControlId,
-        [string]$Title,
-        [int]$Level,
-        [string]$Section,
-        [string]$Message,
-        [string]$SubscriptionId   = "",
-        [string]$SubscriptionName = "",
-        [string]$Resource         = ""
+        [Parameter(Mandatory, Position = 0)][string]$ControlId,
+        [Parameter(Position = 1)][string]$Message,
+        [Parameter(Position = 2)][string]$SubscriptionId   = "",
+        [Parameter(Position = 3)][string]$SubscriptionName = "",
+        [Parameter(Position = 4)][string]$Resource         = "",
+        [string]$Title   = "",
+        [int]$Level      = 0,
+        [string]$Section = ""
     )
     $msg = Format-AzErrorMessage -Message $Message
     New-CISResult -ControlId $ControlId -Title $Title -Level $Level -Section $Section `
@@ -131,17 +132,18 @@ function New-InfoResult {
     <#
     .SYNOPSIS
     Shorthand factory for INFO results (non-assessed — resource not present or not applicable).
+    Title/Level/Section come from the control catalog unless explicitly overridden.
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Factory function that constructs and returns an object; does not modify system state.')]
     param(
-        [string]$ControlId,
-        [string]$Title,
-        [int]$Level,
-        [string]$Section,
-        [string]$Message,
-        [string]$SubscriptionId   = "",
-        [string]$SubscriptionName = "",
-        [string]$Resource         = ""
+        [Parameter(Mandatory, Position = 0)][string]$ControlId,
+        [Parameter(Position = 1)][string]$Message,
+        [Parameter(Position = 2)][string]$SubscriptionId   = "",
+        [Parameter(Position = 3)][string]$SubscriptionName = "",
+        [Parameter(Position = 4)][string]$Resource         = "",
+        [string]$Title   = "",
+        [int]$Level      = 0,
+        [string]$Section = ""
     )
     New-CISResult -ControlId $ControlId -Title $Title -Level $Level -Section $Section `
         -Status $script:INFO -Details $Message `
@@ -153,14 +155,56 @@ function New-ManualResult {
     .SYNOPSIS
     Shorthand factory for MANUAL results — controls that cannot be automated and require
     a human reviewer to verify compliance in the portal.
+    Title/Level/Section come from the control catalog unless explicitly overridden.
     #>
     param(
-        [string]$ControlId,
-        [string]$Title,
-        [int]$Level,
-        [string]$Section,
-        [string]$Message
+        [Parameter(Mandatory, Position = 0)][string]$ControlId,
+        [Parameter(Position = 1)][string]$Message,
+        [string]$Title   = "",
+        [int]$Level      = 0,
+        [string]$Section = ""
     )
     New-CISResult -ControlId $ControlId -Title $Title -Level $Level -Section $Section `
         -Status $script:MANUAL -Details $Message
+}
+
+function Add-ClassifiedErrorSet {
+    <#
+    .SYNOPSIS
+    Classify one data-plane read failure and emit the same outcome for every control
+    that depended on that read.
+
+    .DESCRIPTION
+    Sections 8 and 9 repeated a four-branch catch block (not-applicable / authorization /
+    firewall / raw fallback) per check — ~11 near-identical copies. This function owns the
+    classification once: not-applicable produces INFO (only when -NotApplicableMessage is
+    given), authorization and firewall produce ERROR with the caller's remediation text,
+    anything else produces ERROR with the raw message. Control titles/levels/sections come
+    from the catalog.
+    #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Appends to the provided in-memory result list; does not modify system state.')]
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.Generic.List[object]]$Results,
+        [Parameter(Mandatory)][string[]]$ControlIds,
+        [Parameter(Mandatory)][string]$Message,
+        [string]$NotApplicableMessage = "",
+        [string]$AuthzMessage         = "Insufficient permissions to read this resource.",
+        [string]$FirewallMessage      = "A firewall or network configuration is blocking access from the audit machine.",
+        [string]$SubscriptionId       = "",
+        [string]$SubscriptionName     = "",
+        [string]$Resource             = ""
+    )
+
+    foreach ($cid in $ControlIds) {
+        $emit = @{ ControlId = $cid; SubscriptionId = $SubscriptionId; SubscriptionName = $SubscriptionName; Resource = $Resource }
+        if ($NotApplicableMessage -and (Test-NotApplicableError $Message)) {
+            $Results.Add((New-InfoResult @emit -Message $NotApplicableMessage))
+        } elseif (Test-AuthzError $Message) {
+            $Results.Add((New-ErrorResult @emit -Message $AuthzMessage))
+        } elseif (Test-FirewallError $Message) {
+            $Results.Add((New-ErrorResult @emit -Message $FirewallMessage))
+        } else {
+            $Results.Add((New-ErrorResult @emit -Message $Message))
+        }
+    }
 }

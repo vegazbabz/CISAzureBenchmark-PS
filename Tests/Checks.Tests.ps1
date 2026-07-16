@@ -261,22 +261,115 @@ Describe "New-CISResult" {
 
 Describe "New-ErrorResult" {
     It "creates an ERROR status result" {
-        $r = New-ErrorResult "1.1" "Title" 1 "Section" "Some error message"
+        $r = New-ErrorResult "1.1" "Some error message" -Title "Title" -Level 1 -Section "Section"
         $r.Status | Should -Be "ERROR"
     }
 
     It "truncates long messages to ~220 chars" {
         $long = "A" * 300
-        $r = New-ErrorResult "1.1" "T" 1 "S" $long
+        $r = New-ErrorResult "1.1" $long -Title "T" -Level 1 -Section "S"
         $r.Details.Length | Should -BeLessOrEqual 225
     }
 }
 
 Describe "New-InfoResult" {
     It "creates an INFO status result" {
-        $r = New-InfoResult "7.1" "Title" 1 "Section" "No NSGs found."
+        $r = New-InfoResult "7.1" "No NSGs found."
         $r.Status  | Should -Be "INFO"
         $r.Details | Should -Be "No NSGs found."
+    }
+}
+
+Describe "Control catalog (Get-ControlMeta)" {
+    It "resolves title, level, and section for a known control" {
+        $m = Get-ControlMeta -ControlId "9.2.3"
+        $m.Title   | Should -Be "Ensure 'Versioning' is Set to 'Enabled' on Azure Blob Storage Storage Accounts"
+        $m.Level   | Should -Be 2
+        $m.Section | Should -Be "9 - Storage Services"
+    }
+
+    It "throws on an unknown control id" {
+        { Get-ControlMeta -ControlId "99.99" } | Should -Throw "*not in the catalog*"
+    }
+
+    It "has 127 controls, each with a non-empty title, a valid level, and a known section" {
+        $script:CONTROLS.Count | Should -Be 127
+        foreach ($id in $script:CONTROLS.Keys) {
+            $m = Get-ControlMeta -ControlId $id
+            $m.Title   | Should -Not -BeNullOrEmpty -Because "control $id needs a title"
+            $m.Level   | Should -BeIn @(1, 2) -Because "control $id needs level 1 or 2"
+            $m.Section | Should -Not -BeNullOrEmpty -Because "control $id needs a section"
+        }
+    }
+
+    It "matches the control inventory documented in the README" {
+        $readme = Get-Content (Join-Path (Split-Path $PSScriptRoot -Parent) "README.md") -Raw
+        $readmeIds = [regex]::Matches($readme, '(?m)^\|\s*`?(\d+(?:\.\d+)+)`?\s*\|') |
+            ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+        $catalogIds = @($script:CONTROLS.Keys | Sort-Object)
+        $missingFromCatalog = @($readmeIds  | Where-Object { $_ -notin $catalogIds })
+        $missingFromReadme  = @($catalogIds | Where-Object { $_ -notin $readmeIds })
+        $missingFromCatalog | Should -BeNullOrEmpty -Because "every README control needs a catalog entry"
+        $missingFromReadme  | Should -BeNullOrEmpty -Because "every catalog control should be documented in the README"
+    }
+
+    It "New-CISResult resolves metadata from the catalog when only the id is given" {
+        $r = New-CISResult -ControlId "8.3.5" -Status "PASS"
+        $r.Title   | Should -Be "Ensure 'Purge protection' is Set to 'Enabled'"
+        $r.Level   | Should -Be 1
+        $r.Section | Should -Be "8 - Security Services"
+    }
+
+    It "explicit metadata still overrides the catalog" {
+        $r = New-CISResult -ControlId "8.3.5" -Status "PASS" -Title "Custom" -Level 2 -Section "X"
+        $r.Title   | Should -Be "Custom"
+        $r.Level   | Should -Be 2
+        $r.Section | Should -Be "X"
+    }
+}
+
+Describe "Add-ClassifiedErrorSet" {
+    BeforeEach {
+        $script:ces = [System.Collections.Generic.List[object]]::new()
+    }
+
+    It "emits INFO for every control on a not-applicable error when a message is provided" {
+        Add-ClassifiedErrorSet -Results $script:ces -ControlIds @("9.2.1","9.2.2","9.2.3") `
+            -Message "Blob service is not supported for this account type." `
+            -NotApplicableMessage "Blob service not supported." -Resource "sa1"
+        $script:ces.Count | Should -Be 3
+        $script:ces | ForEach-Object {
+            $_.Status  | Should -Be "INFO"
+            $_.Details | Should -Be "Blob service not supported."
+        }
+    }
+
+    It "emits ERROR with the authz remediation on an authorization error" {
+        Add-ClassifiedErrorSet -Results $script:ces -ControlIds @("8.3.1") `
+            -Message "Operation returned Forbidden" `
+            -AuthzMessage "Grant Key Vault Reader." -Resource "kv1"
+        $script:ces[0].Status  | Should -Be "ERROR"
+        $script:ces[0].Details | Should -Be "Grant Key Vault Reader."
+    }
+
+    It "classifies the real Key Vault firewall message as firewall, not authz" {
+        Add-ClassifiedErrorSet -Results $script:ces -ControlIds @("8.3.1") `
+            -Message "Client address is not authorized and caller is not a trusted service" `
+            -AuthzMessage "Grant Key Vault Reader." -FirewallMessage "Add IP to the vault firewall allowlist." -Resource "kv1"
+        $script:ces[0].Status  | Should -Be "ERROR"
+        # Format-AzErrorMessage normalizes firewall-flavored text into its canned guidance —
+        # the point here is the classification: firewall wording, not the authz message.
+        $script:ces[0].Details | Should -Match "Network access blocked"
+        $script:ces[0].Details | Should -Not -Match "Key Vault Reader"
+    }
+
+    It "falls back to the raw message for unclassified errors and fills metadata from the catalog" {
+        Add-ClassifiedErrorSet -Results $script:ces -ControlIds @("9.1.1") `
+            -Message "Something completely unexpected happened" -Resource "sa1"
+        $script:ces[0].Status  | Should -Be "ERROR"
+        $script:ces[0].Details | Should -Match "unexpected"
+        $script:ces[0].Title   | Should -Be "Ensure Soft Delete for Azure File Shares is Enabled"
+        $script:ces[0].Level   | Should -Be 1
     }
 }
 
