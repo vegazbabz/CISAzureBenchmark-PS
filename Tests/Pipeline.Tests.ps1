@@ -44,7 +44,7 @@ Describe "New-CISSarifReport" {
         $log.version | Should -Be "2.1.0"
         $log.'$schema' | Should -Match 'sarif-2\.1\.0'
         $log.runs.Count | Should -Be 1
-        $log.runs[0].tool.driver.name    | Should -Be "CISAzureBenchmark"
+        $log.runs[0].tool.driver.name    | Should -Be "CISAzureFoundationsBenchmark"
         $log.runs[0].tool.driver.version | Should -Be $script:CIS_VERSION
         $log.runs[0].tool.driver.properties.benchmarkVersion | Should -Be $script:BENCHMARK_VER
     }
@@ -132,7 +132,7 @@ Describe "Complete-AuditRun (shared report/summary tail)" {
 
     It "writes the report, dedupes, and returns a typed summary" {
         $summary = Invoke-TailFixture
-        $summary.PSObject.TypeNames | Should -Contain 'CISAzureBenchmark.AuditSummary'
+        $summary.PSObject.TypeNames | Should -Contain 'CISAzureFoundationsBenchmark.AuditSummary'
         Test-Path $summary.ReportPath | Should -BeTrue
         # 4 raw results, 1 exact duplicate removed
         $summary.Results.Count | Should -Be 3

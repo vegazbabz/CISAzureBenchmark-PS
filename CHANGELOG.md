@@ -4,6 +4,18 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
+## [2.2.0] — 2026-07-16
+
+### Changed
+
+- **Module renamed to `CISAzureFoundationsBenchmark`** (was `CISAzureBenchmark`): the
+  PowerShell Gallery package ID `CISAzureBenchmark` is owned by an unrelated project, so this
+  module publishes to the Gallery as `CISAzureFoundationsBenchmark`. The manifest/loader files,
+  the summary object's type name (`CISAzureFoundationsBenchmark.AuditSummary`), and the SARIF
+  tool driver name follow the new name. The exported command is still `Invoke-CISAzureAudit`,
+  the repository name is unchanged, and no control results or scores change. If you imported
+  the module by path, update the manifest filename; the root script shim is unaffected.
+
 ## [2.1.0] — 2026-07-16
 
 Feature release: run-to-run diff, SARIF export, three newly automated identity controls
@@ -165,6 +177,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
+[2.2.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/releases/tag/v1.0.0

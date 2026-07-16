@@ -98,7 +98,7 @@ function New-CISSarifReport {
             [ordered]@{
                 tool    = @{
                     driver = [ordered]@{
-                        name            = 'CISAzureBenchmark'
+                        name            = 'CISAzureFoundationsBenchmark'
                         informationUri  = 'https://github.com/vegazbabz/CISAzureBenchmark-PS'
                         version         = [string]$script:CIS_VERSION
                         semanticVersion = [string]$script:CIS_VERSION

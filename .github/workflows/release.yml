@@ -60,13 +60,13 @@ jobs:
         shell: pwsh
         run: |
           $tagVer = '${{ github.ref_name }}'.TrimStart('v')
-          $m = Test-ModuleManifest ./CISAzureBenchmark.psd1
+          $m = Test-ModuleManifest ./CISAzureFoundationsBenchmark.psd1
           if ($m.Version.ToString() -ne $tagVer) {
-            throw "Manifest version $($m.Version) does not match tag $tagVer — bump ModuleVersion in CISAzureBenchmark.psd1 before tagging."
+            throw "Manifest version $($m.Version) does not match tag $tagVer — bump ModuleVersion in CISAzureFoundationsBenchmark.psd1 before tagging."
           }
           $staged = ./scripts/Build-ModulePackage.ps1 -OutputPath $env:RUNNER_TEMP | Select-Object -Last 1
           Publish-PSResource -Path $staged -Repository PSGallery -ApiKey $env:PSGALLERY_API_KEY
-          Write-Host "Published CISAzureBenchmark v$tagVer to the PowerShell Gallery."
+          Write-Host "Published CISAzureFoundationsBenchmark v$tagVer to the PowerShell Gallery."
 
       - name: Gallery publish skipped
         if: env.PSGALLERY_API_KEY == ''

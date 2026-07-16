@@ -9,7 +9,7 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
 
@@ -94,7 +94,7 @@ The tool is also a proper module — import it and work with the returned summar
 instead of parsing console output:
 
 ```powershell
-Import-Module .\CISAzureBenchmark.psd1
+Import-Module .\CISAzureFoundationsBenchmark.psd1
 
 $audit = Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id -NoOpen
 
@@ -177,8 +177,8 @@ in your browser automatically when done.
 ## Project Structure
 
 ```text
-CISAzureBenchmark.psd1       Module manifest (version, exports, Gallery metadata)
-CISAzureBenchmark.psm1       Module loader — dot-sources Private/, Checks/, Public/
+CISAzureFoundationsBenchmark.psd1   Module manifest (version, exports, Gallery metadata)
+CISAzureFoundationsBenchmark.psm1   Module loader — dot-sources Private/, Checks/, Public/
 Invoke-CISAzureAudit.ps1     Script entry point (thin shim around the module function)
 Public/
   Invoke-CISAzureAudit.ps1    The audit orchestrator — the module's exported command
@@ -937,6 +937,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
