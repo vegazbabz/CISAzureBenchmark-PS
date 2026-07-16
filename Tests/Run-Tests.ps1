@@ -31,7 +31,8 @@ if (-not $pester) {
 Import-Module (Join-Path $pester.ModuleBase "Pester.psd1") -Force
 
 $config = New-PesterConfiguration
-$config.Run.Path        = Join-Path $PSScriptRoot "Checks.Tests.ps1"
+# Discovers every *.Tests.ps1 in Tests\ (per-section files; shared setup in TestHelpers.ps1)
+$config.Run.Path        = $PSScriptRoot
 $config.Run.PassThru    = $true
 $config.Output.Verbosity = "Detailed"
 

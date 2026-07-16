@@ -71,6 +71,10 @@ For compliance users the key question is *which controls changed* — every entr
   hand-copied versions of the dedupe → suppressions → level filter → score → console summary →
   report → history → exit-code sequence; both now call the same function. Output and exit-code
   behavior are unchanged.
+- **Test suite split into per-section files**: the 3,900-line `Tests/Checks.Tests.ps1` monolith
+  is now nine focused files (`Section2`–`Section9`, `Helpers`, `Pipeline`) sharing one
+  bootstrap (`Tests/TestHelpers.ps1`) for module loading, fixtures, and the hermetic default
+  mocks. Same 314 tests; the suite runs noticeably faster.
 
 ### Fixed
 

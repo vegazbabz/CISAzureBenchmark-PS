@@ -48,7 +48,7 @@ Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 
 1. Add the check function to the appropriate `Checks/Section*.ps1` file.
 2. Return results using `New-CISResult` (from `Private/Models.ps1`) or the `New-ErrorResult` / `New-InfoResult` / `New-ManualResult` helpers (from `Private/CheckHelpers.ps1`).
-3. Add unit tests in `Tests/Checks.Tests.ps1`.
+3. Add unit tests in the matching `Tests/Section*.Tests.ps1` file (shared fixtures and default mocks come from `Tests/TestHelpers.ps1`, dot-sourced in each file's `BeforeAll`).
 4. Update the check-coverage table in `README.md`.
 
 ## Code style
