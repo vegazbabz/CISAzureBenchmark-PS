@@ -241,6 +241,7 @@ suppressions.json.example   Suppression template with annotated examples
 | `-NoOpen` | switch | | Do not auto-open the report in the browser |
 | `-ExitCode` | switch | | Exit with code 2 when FAIL or ERROR results are found (for CI/CD) |
 | `-SuppressionsFile` | string | `suppressions.json` | Path to the suppressions file (see *Suppressing Findings*) |
+| `-CompareWith` | string | | Previous run's `<report>.json` to diff against, or `auto` to pick the newest report JSON in the output directory. Adds a "Changes vs previous run" section to the HTML report and writes `<report>.diff.json` |
 | `-DebugMode` | switch | | Verbose debug logging |
 | `-LogFile` | string | | Write log to file |
 
@@ -295,6 +296,9 @@ See [`cis_audit.json.example`](cis_audit.json.example) for all available setting
 
 # Show what findings are currently suppressed
 .\Invoke-CISAzureAudit.ps1 -ReportOnly  # suppressions applied during report generation
+
+# Diff against the previous run (regressions, improvements, new/removed results)
+.\Invoke-CISAzureAudit.ps1 -CompareWith auto
 ```
 
 ---

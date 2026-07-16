@@ -19,6 +19,7 @@ $script:ModuleFiles = @(
     "Private\Identity.ps1",
     "Private\Checkpoint.ps1",
     "Private\History.ps1",
+    "Private\RunDiff.ps1",
     "Private\AuditPipeline.ps1",
     "Private\Report.ps1",
     "Private\Sarif.ps1",

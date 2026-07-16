@@ -43,6 +43,7 @@ param(
     [string]  $LogFile            = "",
     [switch]  $ExitCode,
     [string]  $SuppressionsFile   = "suppressions.json",
+    [string]  $CompareWith        = "",
     # Catch space-separated subscription names: -Subscriptions "A" "B"
     # PowerShell can't merge named-binding and remaining-binding on the same
     # parameter, so overflow values land here and are merged below.

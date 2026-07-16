@@ -8,6 +8,12 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Added
 
+- **Run-to-run diff report** (`-CompareWith`): pass a previous run's `<report>.json` (or
+  `auto` to pick the most recent report JSON in the output directory) and the HTML report
+  gains a "Changes vs previous run" section — regressions (was passing, now FAIL/ERROR),
+  improvements, new results and removed results, keyed by control + subscription + resource.
+  The same breakdown is written to `<report>.diff.json` for machine consumption. No control
+  results or scores change; without `-CompareWith` the report is unchanged.
 - **SARIF 2.1.0 export**: every run now writes `<report>.sarif` alongside the JSON/CSV
   outputs, ready for `github/codeql-action/upload-sarif` (GitHub code scanning) and
   Defender for DevOps. FAIL maps to `error`, ERROR to `warning` (an unauditable control is

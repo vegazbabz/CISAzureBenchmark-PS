@@ -66,6 +66,12 @@ function Invoke-CISAzureAudit {
     .PARAMETER SuppressionsFile
         Path to the suppressions file (default: suppressions.json under the module root).
 
+    .PARAMETER CompareWith
+        Diff this run against a previous run's JSON report: pass the path to the
+        previous <report>.json, or 'auto' to use the most recent report JSON in the
+        output directory. Adds a "Changes vs previous run" section to the HTML report
+        (regressions / improvements / new / removed) and writes <report>.diff.json.
+
     .EXAMPLE
         Invoke-CISAzureAudit -TenantId "00000000-0000-0000-0000-000000000000"
 
@@ -95,6 +101,7 @@ function Invoke-CISAzureAudit {
         [string]  $LogFile            = "",
         [switch]  $ExitCode,
         [string]  $SuppressionsFile   = "suppressions.json",
+        [string]  $CompareWith        = "",
         # Catch space-separated subscription names: -Subscriptions "A" "B"
         # PowerShell can't merge named-binding and remaining-binding on the same
         # parameter, so overflow values land here and are merged below.
@@ -269,6 +276,7 @@ function Invoke-CISAzureAudit {
             -Tenant $tenantId -CallerName $callerName -CallerType $callerType `
             -SubscriptionNames @($subNames.Values) -SubTimestamps $subTimestamps `
             -SubscriptionCount $subIds.Count `
+            -CompareWith $CompareWith `
             -SetExitCode:$ExitCode -NoOpen:$NoOpen
     }
 
@@ -821,5 +829,5 @@ function Invoke-CISAzureAudit {
         -SubscriptionNames @($subObjects | ForEach-Object { [string]$_.name }) `
         -SubTimestamps $subTimestamps -SubscriptionCount $subIds.Count `
         -AppendHistory:$appendHistory -HistorySubscriptionIds $subIds `
-        -ElapsedLabel $elapsedStr -SetExitCode:$ExitCode -NoOpen:$NoOpen
+        -ElapsedLabel $elapsedStr -CompareWith $CompareWith -SetExitCode:$ExitCode -NoOpen:$NoOpen
 }
