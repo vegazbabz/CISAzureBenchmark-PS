@@ -25,9 +25,12 @@ jobs:
         shell: pwsh
         run: Install-Module Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
 
+      # Coverage (with the floor gate + job summary) only on the Linux leg —
+      # breakpoint instrumentation slows the suite, once per run is enough.
+      # Baseline was 82.7% when the 75% floor was set; ratchet it up over time.
       - name: Run unit tests
         shell: pwsh
-        run: ./Tests/Run-Tests.ps1
+        run: ./Tests/Run-Tests.ps1 ${{ matrix.os == 'ubuntu-latest' && '-Coverage -MinCoverage 75' || '' }}
 
   lint:
     name: lint
