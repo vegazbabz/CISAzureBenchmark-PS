@@ -207,7 +207,9 @@ function Invoke-Section9Checks {
 
         if (-not $isAdls) {
             try {
-                $bp = Get-AzStorageBlobServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
+                $bp = Invoke-WithRetry -OperationName "blob service properties ($acctName)" -ScriptBlock {
+                    Get-AzStorageBlobServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
+                }
 
                 # 9.2.1 — Blob soft delete enabled
                 $softDelOn  = [bool]($bp.DeleteRetentionPolicy?.Enabled)
@@ -273,7 +275,9 @@ function Invoke-Section9Checks {
 
         # 9.1.1 — File share soft delete
         try {
-            $fp = Get-AzStorageFileServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
+            $fp = Invoke-WithRetry -OperationName "file service properties ($acctName)" -ScriptBlock {
+                Get-AzStorageFileServiceProperty -ResourceGroupName $acctRg -StorageAccountName $acctName -ErrorAction Stop
+            }
 
             $fsDelOn = $fp.ShareDeleteRetentionPolicy?.Enabled
             $fsDays  = [int]($fp.ShareDeleteRetentionPolicy?.Days)

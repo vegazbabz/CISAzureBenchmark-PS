@@ -273,8 +273,9 @@ function Invoke-Section8Checks {
             try {
                 # Filter out certificate-backed keys (Managed = $true) — those are managed by the
                 # certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
-                $allKeys    = @(Get-AzKeyVaultKey -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop |
-                                    Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
+                $allKeys    = @(Invoke-WithRetry -OperationName "list keys ($kvName)" -ScriptBlock {
+                                    Get-AzKeyVaultKey -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop
+                                } | Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
                 $cachedKeys = $allKeys
 
                 if ($allKeys.Count -eq 0) {
@@ -307,8 +308,9 @@ function Invoke-Section8Checks {
             try {
                 # Filter out certificate-backed secrets (Managed = $true) — those are managed by
                 # the certificate lifecycle and will be excluded by default in Az.KeyVault 7.0 / Az 16.
-                $allSecrets = @(Get-AzKeyVaultSecret -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop |
-                                    Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
+                $allSecrets = @(Invoke-WithRetry -OperationName "list secrets ($kvName)" -ScriptBlock {
+                                    Get-AzKeyVaultSecret -VaultName $kvName -WarningAction SilentlyContinue -ErrorAction Stop
+                                } | Where-Object { -not ($_.PSObject.Properties['Managed'] -and $_.Managed) })
 
                 if ($allSecrets.Count -eq 0) {
                     $results.Add((New-InfoResult $ctrlSecExp $titleSecExp 1 $sec "No secrets found in vault." $sid $sname $kvName))
@@ -336,7 +338,9 @@ function Invoke-Section8Checks {
 
             # 8.3.11 — Certificate validity <= 12 months
             try {
-                $allCerts = @(Get-AzKeyVaultCertificate -VaultName $kvName -ErrorAction Stop)
+                $allCerts = @(Invoke-WithRetry -OperationName "list certificates ($kvName)" -ScriptBlock {
+                                  Get-AzKeyVaultCertificate -VaultName $kvName -ErrorAction Stop
+                              })
 
                 if ($allCerts.Count -eq 0) {
                     $results.Add((New-InfoResult "8.3.11" "Ensure Certificate 'Validity Period (in months)' is Less Than or Equal to '12'" 1 $sec "No certificates found." $sid $sname $kvName))

@@ -48,6 +48,14 @@ For compliance users the key question is *which controls changed* — every entr
 - **Control 5.4** (no custom subscription administrator roles) now reads role definitions via
   `Permissions[n].Actions` with a fallback to the flattened `Actions` property (#58) — forward
   compatible with the Az.Resources 10 / Az 16 breaking change. Check semantics unchanged.
+- **Scoring is now computed in one place** (`Private/Scoring.ps1`): the console summary, HTML
+  report (including the L1/L2 donuts), run history, and exit code all share the same
+  `Get-AuditCounts`/`Get-AuditScore` functions instead of four hand-copied formulas. No score
+  values change — this removes the risk of the outputs drifting apart.
+- **Key Vault and Storage data-plane reads now retry on throttling**: key/secret/certificate
+  listings and blob/file service property reads are wrapped in the same jittered-backoff retry
+  as REST calls, so a transient 429/5xx no longer surfaces as a permanent ERROR for that
+  control.
 
 ### Fixed
 
