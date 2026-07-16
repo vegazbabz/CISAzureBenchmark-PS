@@ -601,7 +601,7 @@ function Invoke-CISAzureAudit {
                 Write-AuditLog "Tenant checks: $($tenantResults.Count) results." -Level INFO
             } catch {
                 Write-AuditLog "Tenant-level check error: $_" -Level WARNING
-                $allResults.Add((New-ErrorResult "TENANT" "Tenant-level checks failed" 1 "0 - Audit Errors" "The tenant-level check run crashed: $($_.Exception.Message). Tenant/Entra controls (Sections 2, 3, 5, 6, 7, 8) were not evaluated." "" ""))
+                $allResults.Add((New-ErrorResult "TENANT" "The tenant-level check run crashed: $($_.Exception.Message). Tenant/Entra controls (Sections 2, 3, 5, 6, 7, 8) were not evaluated." -Title "Tenant-level checks failed" -Level 1 -Section "0 - Audit Errors"))
             }
         }
     }
@@ -627,7 +627,7 @@ function Invoke-CISAzureAudit {
             if ($ctxSub -ne $SubId) { throw "context switch landed on subscription '$ctxSub' instead of '$SubId'" }
         } catch {
             Write-AuditLog "Could not switch Az context to $SubName ($SubId): $_ — skipping subscription." -Level WARNING
-            $subResults.Add((New-ErrorResult "CONTEXT" "Azure context switch failed — subscription skipped" 1 "0 - Audit Errors" "Set-AzContext to '$SubId' failed: $($_.Exception.Message). All checks for this subscription were skipped to avoid auditing the wrong subscription." $SubId $SubName))
+            $subResults.Add((New-ErrorResult "CONTEXT" "Set-AzContext to '$SubId' failed: $($_.Exception.Message). All checks for this subscription were skipped to avoid auditing the wrong subscription." $SubId $SubName -Title "Azure context switch failed — subscription skipped" -Level 1 -Section "0 - Audit Errors"))
             return $subResults.ToArray()
         }
 
@@ -657,7 +657,7 @@ function Invoke-CISAzureAudit {
                 Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level INFO
             } catch {
                 Write-AuditLog "$($group.Name) error for ${SubName}: $_" -Level WARNING
-                $subResults.Add((New-ErrorResult "GROUP" "$($group.Name) checks failed" 1 $group.Sec "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $SubId $SubName))
+                $subResults.Add((New-ErrorResult "GROUP" "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $SubId $SubName -Title "$($group.Name) checks failed" -Level 1 -Section $group.Sec))
             }
         }
 
@@ -697,7 +697,7 @@ function Invoke-CISAzureAudit {
                     Write-AuditLog "  [$seqIdx/$($subsToProcess.Count)] Completed: $subName — $($subResults.Count) results" -Level INFO
                 } catch {
                     Write-AuditLog "Fatal error auditing $subName`: $_" -Level WARNING
-                    $allResults.Add((New-ErrorResult "FATAL" "Subscription audit failed" 1 "0 - Audit Errors" "Auditing '$subName' crashed: $($_.Exception.Message)." $subId $subName))
+                    $allResults.Add((New-ErrorResult "FATAL" "Auditing '$subName' crashed: $($_.Exception.Message)." $subId $subName -Title "Subscription audit failed" -Level 1 -Section "0 - Audit Errors"))
                 }
             }
         } else {
@@ -785,7 +785,7 @@ function Invoke-CISAzureAudit {
                     try {
                         if ($ctxError) {
                             [Console]::Error.WriteLine("[PARALLEL-CONTEXT-ERROR] ${subName}: $ctxError — skipping subscription.")
-                            $ctxResult = New-ErrorResult "CONTEXT" "Azure context switch failed — subscription skipped" 1 "0 - Audit Errors" "Set-AzContext to '$subId' failed: $ctxError. All checks for this subscription were skipped to avoid auditing the wrong subscription." $subId $subName
+                            $ctxResult = New-ErrorResult "CONTEXT" "Set-AzContext to '$subId' failed: $ctxError. All checks for this subscription were skipped to avoid auditing the wrong subscription." $subId $subName -Title "Azure context switch failed — subscription skipped" -Level 1 -Section "0 - Audit Errors"
                             $bag.Add($ctxResult)
                             $cBag.Add(1)
                             Write-Host "  [$($cBag.Count)/$subTotal] Skipped (context error): $subName" -ForegroundColor Yellow
@@ -810,7 +810,7 @@ function Invoke-CISAzureAudit {
                                 foreach ($r in @(& $g.Fn)) { $subResults.Add($r); $gCount++ }
                             } catch {
                                 [Console]::Error.WriteLine("[PARALLEL-CHECK-ERROR] ${subName}: $_")
-                                $subResults.Add((New-ErrorResult "GROUP" "$($g.Name) checks failed" 1 $g.Sec "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $subId $subName))
+                                $subResults.Add((New-ErrorResult "GROUP" "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $subId $subName -Title "$($g.Name) checks failed" -Level 1 -Section $g.Sec))
                             }
                             $gSw.Stop()
                             Write-Host ("    [$subName] $($g.Name) done — $gCount result(s) in $($gSw.Elapsed.TotalSeconds.ToString('F1'))s") -ForegroundColor DarkGray

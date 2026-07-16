@@ -56,6 +56,16 @@ For compliance users the key question is *which controls changed* — every entr
   listings and blob/file service property reads are wrapped in the same jittered-backoff retry
   as REST calls, so a transient 429/5xx no longer surfaces as a permanent ERROR for that
   control.
+- **Control metadata now lives in one catalog** (`Private/Controls.ps1`, 127 controls): checks
+  emit results by control id and the title/level/section are resolved from the catalog, instead
+  of every emission branch repeating the literals (the 9.2.3 title used to appear 7 times).
+  A benchmark-version bump now changes control metadata in exactly one file, and a title can no
+  longer differ between branches of the same control. Generic fallback titles in error paths
+  ("Key Expiration Check", "Activity Log Alert Check") are replaced by the real control titles.
+- **Error-path classification centralized**: the ~11 copies of the four-branch
+  not-applicable/authorization/firewall/fallback catch block in Sections 8 and 9 are collapsed
+  into one `Add-ClassifiedErrorSet` helper. Statuses are unchanged; a few per-control message
+  variants within the same failed read are consolidated to the most specific wording.
 
 ### Fixed
 

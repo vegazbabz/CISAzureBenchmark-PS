@@ -10,6 +10,7 @@
 # later file depends on, so they load first.
 $script:ModuleFiles = @(
     "Private\Config.ps1",
+    "Private\Controls.ps1",
     "Private\Models.ps1",
     "Private\Scoring.ps1",
     "Private\AzureClient.ps1",
