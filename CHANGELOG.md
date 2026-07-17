@@ -4,6 +4,16 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
+## [Unreleased]
+
+### Changed
+
+- **Sample report regenerated** (`docs/sample_report.html` + JSON, new SARIF sample) so the
+  published preview shows the current report, including the benchmark page-reference
+  tooltips. README: PowerShell Gallery install link added at the top, the page-reference
+  tooltip documented under *HTML Report*, and a stale test count corrected. Documentation
+  only — no code changes.
+
 ## [2.4.0] — 2026-07-17
 
 Quality release: benchmark page references in the report, locale-independent console
@@ -241,6 +251,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
+[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.0...HEAD
 [2.4.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...v2.3.0
