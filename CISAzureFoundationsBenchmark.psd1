@@ -6,6 +6,8 @@
     Copyright         = '(c) vegazbabz. MIT License.'
     Description       = 'Audits Azure subscriptions against the CIS Microsoft Azure Foundations Benchmark v6.0.0 and produces a self-contained HTML compliance report (plus JSON/CSV). Read-only: performs no changes to the tenant.'
     PowerShellVersion = '7.0'
+    # Gives the package the Core-edition compatibility badge on the Gallery.
+    CompatiblePSEditions = @('Core')
 
     # Declared as RequiredModules so the Gallery records them as dependencies:
     # Install-Module CISAzureFoundationsBenchmark pulls the whole Az set in one
@@ -23,7 +25,17 @@
 
     PrivateData = @{
         PSData = @{
-            Tags         = @('CIS', 'Azure', 'Benchmark', 'Audit', 'Compliance', 'Security', 'Assessment', 'Entra')
+            # Single-word tags only (Gallery requirement). The Windows/Linux/MacOS
+            # and PSEdition_Core tags drive the compatibility badges on the
+            # package page; the rest are search terms.
+            Tags         = @(
+                'CIS', 'CISBenchmark', 'Azure', 'MicrosoftAzure', 'Benchmark',
+                'Audit', 'SecurityAudit', 'Compliance', 'Security', 'AzureSecurity',
+                'CloudSecurity', 'CSPM', 'Hardening', 'Governance', 'Assessment',
+                'Entra', 'EntraID', 'Defender', 'KeyVault', 'DevSecOps',
+                'SARIF', 'Reporting',
+                'PSEdition_Core', 'Windows', 'Linux', 'MacOS'
+            )
             LicenseUri   = 'https://github.com/vegazbabz/CISAzureBenchmark-PS/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/vegazbabz/CISAzureBenchmark-PS'
             ReleaseNotes = 'https://github.com/vegazbabz/CISAzureBenchmark-PS/releases'

@@ -23,6 +23,10 @@ Packaging release: one `Install-Module CISAzureFoundationsBenchmark` now install
 - README: installation instructions now lead with `Install-Module CISAzureFoundationsBenchmark`
   from the PowerShell Gallery (Quick Start and Getting Started); cloning remains documented as
   an alternative. Added PowerShell Gallery version/downloads badges.
+- **Gallery discoverability**: the package now declares `CompatiblePSEditions = Core` (edition
+  and OS compatibility badges on the Gallery page) and a broader tag set (CSPM, CloudSecurity,
+  SecurityAudit, Hardening, Governance, DevSecOps, EntraID, Defender, KeyVault, SARIF, …) so
+  the module surfaces in more Gallery searches. Metadata only — no behavior change.
 
 ## [2.2.0] — 2026-07-16
 
