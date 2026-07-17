@@ -1,6 +1,6 @@
 @{
     RootModule        = 'CISAzureFoundationsBenchmark.psm1'
-    ModuleVersion     = '2.3.0'
+    ModuleVersion     = '2.3.1'
     GUID              = '6d9a7e0d-3f09-4c83-8686-01095806dde5'
     Author            = 'vegazbabz'
     Copyright         = '(c) vegazbabz. MIT License.'
@@ -36,6 +36,7 @@
                 'SARIF', 'Reporting',
                 'PSEdition_Core', 'Windows', 'Linux', 'MacOS'
             )
+            IconUri      = 'https://raw.githubusercontent.com/vegazbabz/CISAzureBenchmark-PS/main/docs/icon.png'
             LicenseUri   = 'https://github.com/vegazbabz/CISAzureBenchmark-PS/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/vegazbabz/CISAzureBenchmark-PS'
             ReleaseNotes = 'https://github.com/vegazbabz/CISAzureBenchmark-PS/releases'

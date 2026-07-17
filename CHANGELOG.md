@@ -4,6 +4,14 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
+## [2.3.1] — 2026-07-17
+
+### Added
+
+- **Package icon**: the module now ships an `IconUri` (`docs/icon.png` — shield-and-checkmark
+  on Azure blue), so the PowerShell Gallery listing and search results show a custom thumbnail
+  instead of the default placeholder. Metadata only — no behavior change.
+
 ## [2.3.0] — 2026-07-17
 
 Packaging release: one `Install-Module CISAzureFoundationsBenchmark` now installs the tool
@@ -201,6 +209,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
+[2.3.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.0.0...v2.1.0
