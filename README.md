@@ -11,7 +11,7 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 2.3.1
+**Version:** 2.4.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
 
@@ -952,6 +952,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 2.3.1
+**Version:** 2.4.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
