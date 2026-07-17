@@ -4,6 +4,23 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
+## [Unreleased]
+
+### Changed
+
+- **CI coverage floor raised from 75% to 80%** (actual coverage is 82.7%), locking in the
+  headroom so future changes cannot quietly erode test coverage.
+
+### Fixed
+
+- **Console score formatting is now locale-independent**: on machines with a comma-decimal
+  locale (e.g. Danish), the console summary printed "62,1%" while the reports show "62.1" —
+  both the audit summary and the test runner's coverage line now format with the invariant
+  culture. Reports and scores are unchanged.
+- **`Run-Tests.ps1 -Test <filter>` now fails when the filter matches nothing**: Pester
+  reports an all-NotRun run as "Passed", so a mistyped filter used to exit green without
+  running a single test.
+
 ## [2.3.1] — 2026-07-17
 
 ### Added
@@ -209,6 +226,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
+[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...HEAD
 [2.3.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.1.0...v2.2.0

@@ -27,10 +27,10 @@ jobs:
 
       # Coverage (with the floor gate + job summary) only on the Linux leg —
       # breakpoint instrumentation slows the suite, once per run is enough.
-      # Baseline was 82.7% when the 75% floor was set; ratchet it up over time.
+      # Baseline was 82.7% when the 80% floor was set; ratchet it up over time.
       - name: Run unit tests
         shell: pwsh
-        run: ./Tests/Run-Tests.ps1 ${{ matrix.os == 'ubuntu-latest' && '-Coverage -MinCoverage 75' || '' }}
+        run: ./Tests/Run-Tests.ps1 ${{ matrix.os == 'ubuntu-latest' && '-Coverage -MinCoverage 80' || '' }}
 
   lint:
     name: lint

@@ -693,7 +693,7 @@ Install-Module Pester -Force -Scope CurrentUser
 .\Tests\Run-Tests.ps1 -Coverage
 
 # Fail (exit 1) when coverage drops below a floor — this is what CI enforces
-.\Tests\Run-Tests.ps1 -Coverage -MinCoverage 75
+.\Tests\Run-Tests.ps1 -Coverage -MinCoverage 80
 ```
 
 Coverage measures `Private/*.ps1` and `Checks/*.ps1` and writes `coverage.xml`
@@ -704,7 +704,7 @@ Coverage measures `Private/*.ps1` and `Checks/*.ps1` and writes `coverage.xml`
 A GitHub Actions pipeline runs on every push and pull request:
 
 - Pester tests (Ubuntu + Windows)
-- Code coverage floor of 75% (Ubuntu leg, published in the job summary)
+- Code coverage floor of 80% (Ubuntu leg, published in the job summary)
 - PSScriptAnalyzer linting
 
 The workflow file lives at `.github/workflows/ci.yml`.
