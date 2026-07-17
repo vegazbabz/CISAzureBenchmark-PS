@@ -217,6 +217,27 @@ Describe "Control catalog (Get-ControlMeta)" {
             $m.Title   | Should -Not -BeNullOrEmpty -Because "control $id needs a title"
             $m.Level   | Should -BeIn @(1, 2) -Because "control $id needs level 1 or 2"
             $m.Section | Should -Not -BeNullOrEmpty -Because "control $id needs a section"
+            $m.Page    | Should -BeGreaterThan 20 -Because "control $id needs its CIS v6.0.0 PDF page"
+            $m.Page    | Should -BeLessThan 552 -Because "the v6.0.0 PDF has 551 pages"
+        }
+    }
+
+    It "benchmark page references match the v6.0.0 PDF for known controls" {
+        (Get-ControlMeta -ControlId "2.1.1").Page  | Should -Be 27
+        (Get-ControlMeta -ControlId "5.4").Page    | Should -Be 104
+        (Get-ControlMeta -ControlId "8.3.6").Page  | Should -Be 378
+        (Get-ControlMeta -ControlId "9.3.11").Page | Should -Be 481
+    }
+
+    It "benchmark pages ascend with control order within each section" {
+        $ordered = $script:CONTROLS.Keys | Sort-Object { Get-ControlSortKey $_ }
+        $prev = $null
+        foreach ($id in $ordered) {
+            $cur = Get-ControlMeta -ControlId $id
+            if ($prev -and $prev.Section -eq $cur.Section) {
+                $cur.Page | Should -BeGreaterOrEqual $prev.Page -Because "control $id cannot precede $($prev.ControlId) in the PDF"
+            }
+            $prev = $cur
         }
     }
 

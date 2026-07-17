@@ -99,6 +99,15 @@ function New-CISHtmlReport {
                 $fix = "<div class=`"fix`">&#x1F4A1; $([System.Web.HttpUtility]::HtmlEncode($r.Remediation))</div>"
             }
 
+            # Hover tooltip on the control id: page reference into the benchmark PDF.
+            # Guarded so results loaded from an older report JSON (-ReportOnly) with a
+            # control id no longer in the catalog still render, just without the tooltip.
+            $pageAttr = ''
+            try {
+                $ctlPage = (Get-ControlMeta -ControlId $r.ControlId).Page
+                if ($ctlPage -gt 0) { $pageAttr = " title=`"CIS Microsoft Azure Foundations Benchmark v6.0.0, page $ctlPage`"" }
+            } catch { $pageAttr = '' }
+
             [void]$rows.Append(
                 "<tr style=`"background:$($st.Bg)`" " +
                 "data-sec=`"$secId`" " +
@@ -106,7 +115,7 @@ function New-CISHtmlReport {
                 "data-status=`"$($r.Status)`" " +
                 "data-level=`"L$($r.Level)`" " +
                 "data-sub=`"$([System.Web.HttpUtility]::HtmlEncode($r.SubscriptionName))`">" +
-                "<td><code>$([System.Web.HttpUtility]::HtmlEncode($r.ControlId))</code></td>" +
+                "<td><code$pageAttr>$([System.Web.HttpUtility]::HtmlEncode($r.ControlId))</code></td>" +
                 "<td><span class=`"lv`">L$($r.Level)</span></td>" +
                 "<td>$([System.Web.HttpUtility]::HtmlEncode($r.Title))</td>" +
                 "<td class=`"sub-col`">$subCell</td>" +
@@ -437,6 +446,8 @@ tr.sh:hover td { background: #e2e8f0; }
 .sub-name { font-size: .78rem; color: #374151; font-weight: 600; padding: 1px 0; margin-bottom: 2px; }
 .res-name { font-size: .76rem; color: #6b7280; margin-top: 3px; }
 .res-name code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+/* Control ids carry a benchmark page reference in their tooltip */
+td code[title] { cursor: help; border-bottom: 1px dotted #94a3b8; }
 
 .fix { margin-top: .4rem; font-size: .78rem; color: #64748b; font-style: italic; }
 
