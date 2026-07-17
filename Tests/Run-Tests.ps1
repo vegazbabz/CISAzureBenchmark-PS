@@ -61,10 +61,19 @@ if (-not $result -or $result.Result -ne "Passed") {
     exit 1
 }
 
+# A filter that matches nothing leaves every test NotRun, which Pester still
+# reports as "Passed" - fail loudly instead of handing back a green no-op run.
+if ($Test -and ($result.PassedCount + $result.FailedCount + $result.SkippedCount) -eq 0) {
+    Write-Error "Test filter '*$Test*' matched no tests ($($result.NotRunCount) tests discovered, none run)."
+    exit 1
+}
+
 if ($Coverage) {
     $cc = $result.CodeCoverage
+    # Invariant culture: -f renders doubles with the machine locale ("82,73" on da-DK).
     $pct = [math]::Round($cc.CoveragePercent, 2)
-    Write-Host ("Code coverage: {0}% ({1} of {2} analyzed commands executed)" -f $pct, $cc.CommandsExecutedCount, $cc.CommandsAnalyzedCount)
+    $pctText = $pct.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+    Write-Host ("Code coverage: {0}% ({1} of {2} analyzed commands executed)" -f $pctText, $cc.CommandsExecutedCount, $cc.CommandsAnalyzedCount)
 
     if ($env:GITHUB_STEP_SUMMARY) {
         $gate = if ($MinCoverage -gt 0) { "floor $MinCoverage%" } else { "no floor" }

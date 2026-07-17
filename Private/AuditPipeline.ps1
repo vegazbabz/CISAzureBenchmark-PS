@@ -85,7 +85,10 @@ function Complete-AuditRun {
     Write-Host ""
     Write-Host ("  " + "`u{2501}" * 60) -ForegroundColor DarkGray
     Write-Host $completeLine -ForegroundColor White
-    Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls; ERROR counts as failing, excludes INFO/MANUAL/SUPPRESSED)" -f $score, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
+    # Invariant culture so the console score matches the reports ("62.1", never "62,1")
+    # regardless of the machine locale; -f formats numbers with the current culture.
+    $scoreText = $score.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+    Write-Host ("  Compliance Score : {0}%  ({1} of {2} assessed controls; ERROR counts as failing, excludes INFO/MANUAL/SUPPRESSED)" -f $scoreText, $counts.PASS, $assessed) -ForegroundColor $(if ($score -ge 80) { "Green" } elseif ($score -ge 60) { "Yellow" } else { "Red" })
     Write-Host ("`u{2705} PASS         {0,4}" -f $counts.PASS)       -ForegroundColor Green
     Write-Host ("`u{274C} FAIL         {0,4}" -f $counts.FAIL)       -ForegroundColor Red
     Write-Host ("`u{26A0}`u{FE0F}  ERROR        {0,4}" -f $counts.ERROR)      -ForegroundColor DarkYellow
