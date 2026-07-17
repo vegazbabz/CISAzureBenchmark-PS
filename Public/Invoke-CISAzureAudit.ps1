@@ -600,7 +600,7 @@ function Invoke-CISAzureAudit {
                     $subResults.Add($r)
                 }
                 $sw.Stop()
-                Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1'))s" -Level INFO
+                Write-AuditLog "    [$SubName] $($group.Name) done — $($groupResults.Count) result(s) in $($sw.Elapsed.TotalSeconds.ToString('F1', [System.Globalization.CultureInfo]::InvariantCulture))s" -Level INFO
             } catch {
                 Write-AuditLog "$($group.Name) error for ${SubName}: $_" -Level WARNING
                 $subResults.Add((New-ErrorResult "GROUP" "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $SubId $SubName -Title "$($group.Name) checks failed" -Level 1 -Section $group.Sec))
@@ -759,7 +759,7 @@ function Invoke-CISAzureAudit {
                                 $subResults.Add((New-ErrorResult "GROUP" "The whole check group crashed: $($_.Exception.Message). Individual controls in this group were not evaluated." $subId $subName -Title "$($g.Name) checks failed" -Level 1 -Section $g.Sec))
                             }
                             $gSw.Stop()
-                            Write-Host ("    [$subName] $($g.Name) done — $gCount result(s) in $($gSw.Elapsed.TotalSeconds.ToString('F1'))s") -ForegroundColor DarkGray
+                            Write-Host ("    [$subName] $($g.Name) done — $gCount result(s) in $($gSw.Elapsed.TotalSeconds.ToString('F1', [System.Globalization.CultureInfo]::InvariantCulture))s") -ForegroundColor DarkGray
                         }
 
                         foreach ($r in $subResults) { $bag.Add($r) }
@@ -806,7 +806,7 @@ function Invoke-CISAzureAudit {
 
     $auditStopwatch.Stop()
     $elapsed = $auditStopwatch.Elapsed
-    $elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "{0}m {1}s" -f [int][math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds } else { "{0}s" -f $elapsed.TotalSeconds.ToString('F1') }
+    $elapsedStr = if ($elapsed.TotalMinutes -ge 1) { "{0}m {1}s" -f [int][math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds } else { "{0}s" -f $elapsed.TotalSeconds.ToString('F1', [System.Globalization.CultureInfo]::InvariantCulture) }
     Write-AuditLog "Audit complete. $($allResults.Count) total results in $elapsedStr." -Level INFO
 
     # ── Report, history, exit code (shared tail) ─────────────────────────────
