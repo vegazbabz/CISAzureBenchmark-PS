@@ -6,6 +6,14 @@ For compliance users the key question is *which controls changed* — every entr
 
 ## [Unreleased]
 
+### Added
+
+- **Benchmark page references in the HTML report**: hovering a control id now shows the
+  control's page in the CIS Microsoft Azure Foundations Benchmark v6.0.0 PDF, so auditors can
+  jump straight from a finding to the benchmark's rationale/audit/remediation text. The page
+  numbers live in the control catalog and are covered by tests (spot-checked values plus
+  per-section ordering). No control results or scores change.
+
 ### Changed
 
 - **CI coverage floor raised from 75% to 80%** (actual coverage is 82.7%), locking in the
