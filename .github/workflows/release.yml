@@ -55,6 +55,16 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
+      # Test-ModuleManifest and the staged-module import validation in
+      # Build-ModulePackage.ps1 need the RequiredModules present on the runner.
+      - name: Install Az module dependencies
+        if: env.PSGALLERY_API_KEY != ''
+        shell: pwsh
+        run: |
+          $required = (Import-PowerShellDataFile ./CISAzureFoundationsBenchmark.psd1).RequiredModules
+          $missing = @($required | Where-Object { -not (Get-Module -ListAvailable $_) })
+          if ($missing) { Install-PSResource -Name $missing -TrustRepository -Scope CurrentUser }
+
       - name: Publish to PowerShell Gallery
         if: env.PSGALLERY_API_KEY != ''
         shell: pwsh
@@ -93,12 +103,13 @@ jobs:
 
             ### Requirements
             - PowerShell 7.0+
-            - Az PowerShell module (`Connect-AzAccount` before running)
+            - Az PowerShell modules (installed automatically with `Install-Module`)
 
             ### Quick Start
             ```powershell
+            Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
             Connect-AzAccount
-            .\Invoke-CISAzureAudit.ps1
+            Invoke-CISAzureAudit -TenantId (Get-AzContext).Tenant.Id
             ```
 
             See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full documentation.

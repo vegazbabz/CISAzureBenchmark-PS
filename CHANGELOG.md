@@ -4,13 +4,25 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
-## [Unreleased]
+## [2.3.0] — 2026-07-17
+
+Packaging release: one `Install-Module CISAzureFoundationsBenchmark` now installs the tool
+**and** all of its Az module dependencies. No control results or scores change.
 
 ### Changed
 
+- **Az modules are now declared as `RequiredModules`**: the PowerShell Gallery records them as
+  dependencies, so `Install-Module`/`Install-PSResource` pulls Az.Accounts, Az.ResourceGraph,
+  Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources and Az.Security automatically —
+  no separate install step. Trade-off: `Import-Module` now requires those modules to be present
+  (previously the module imported without them and gaps surfaced in the runtime preflight);
+  clone/ZIP users install them once with the documented one-liner, and CI installs them before
+  manifest validation.
+- The scheduled-audit (OIDC) recipe in the README now installs the module from the Gallery —
+  no repository checkout or manual Az module install steps.
 - README: installation instructions now lead with `Install-Module CISAzureFoundationsBenchmark`
   from the PowerShell Gallery (Quick Start and Getting Started); cloning remains documented as
-  an alternative. Documentation only — no control results change.
+  an alternative. Added PowerShell Gallery version/downloads badges.
 
 ## [2.2.0] — 2026-07-16
 
@@ -185,7 +197,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
-[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...HEAD
+[2.3.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v1.0.0...v2.0.0

@@ -1,5 +1,7 @@
 # CIS Microsoft Azure Foundations Benchmark v6.0.0 — Audit Tool (PowerShell)
 
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/CISAzureFoundationsBenchmark?label=PowerShell%20Gallery)](https://www.powershellgallery.com/packages/CISAzureFoundationsBenchmark)
+[![Gallery downloads](https://img.shields.io/powershellgallery/dt/CISAzureFoundationsBenchmark?label=downloads)](https://www.powershellgallery.com/packages/CISAzureFoundationsBenchmark)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CIS Benchmark](https://img.shields.io/badge/CIS%20Benchmark-v6.0.0-blue.svg)](https://www.cisecurity.org/benchmark/azure)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0%2B-blue.svg)](https://learn.microsoft.com/en-us/powershell/)
@@ -9,7 +11,7 @@
 
 ![Sample report dashboard](docs/sample_report_dashboard.png)
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
 
@@ -23,7 +25,8 @@ All audit checks use the Az PowerShell module — no Azure CLI required.
 The optional permission preflight uses `Get-AzRoleAssignment` in parallel runspaces to verify
 the runner account holds the required roles before the audit begins.
 Skip it with `-NoPermissionCheck` if you already know your permissions are correct.
-Install the required Az modules once, then run `Connect-AzAccount` to authenticate.
+One `Install-Module CISAzureFoundationsBenchmark` brings in the tool and every Az module it
+needs; run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
 can be resumed without re-running completed work. Output is a self-contained HTML report with
@@ -45,9 +48,12 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 | Az.Storage | `Install-Module Az.Storage` — storage account enumeration |
 | Az.KeyVault | `Install-Module Az.KeyVault` — key rotation policies |
 | Az.Resources | `Install-Module Az.Resources` — role definitions |
+| Az.Security | `Install-Module Az.Security` — Defender plans, security contacts |
 | Azure login | `Connect-AzAccount` completed before running |
 
-> **Install Az modules all at once:**
+> **Installing from the PowerShell Gallery pulls all of the Az modules above
+> automatically** — they are declared dependencies of the module. The one-liner
+> below is only needed when running from a clone or ZIP:
 >
 > ```powershell
 > Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
@@ -74,9 +80,8 @@ filtering, compliance scoring, charts, and per-finding remediation guidance.
 ## Quick Start
 
 ```powershell
-# 1. Install the module and the required Az PowerShell modules (one-time)
+# 1. Install (one-time) — the required Az modules are installed automatically
 Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
-Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
 
 # 2. Log in to Azure
 Connect-AzAccount
@@ -129,7 +134,10 @@ New to PowerShell or Azure? Follow these steps to get the tool running on your m
 
 ### Step 2 — Install the required Az PowerShell modules
 
-Run this once in a PowerShell 7 terminal:
+**Skip this step if you install from the PowerShell Gallery** (Step 3, Option A) — the Az
+modules are declared dependencies and come along automatically.
+
+For a clone or ZIP download, run this once in a PowerShell 7 terminal:
 
 ```powershell
 Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
@@ -810,16 +818,12 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the audit tool
-        uses: actions/checkout@v4
-        with:
-          repository: vegazbabz/CISAzureBenchmark-PS   # omit if this workflow lives in the tool repo
-
-      - name: Install Az modules
+      - name: Install the audit module
         shell: pwsh
         run: |
-          Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, `
-            Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser -Force
+          # Pulls the Az module dependencies automatically. Pin -Version for
+          # reproducible scheduled runs if you prefer.
+          Install-PSResource CISAzureFoundationsBenchmark -TrustRepository -Scope CurrentUser
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -832,7 +836,7 @@ jobs:
       - name: Run audit
         shell: pwsh
         run: |
-          ./Invoke-CISAzureAudit.ps1 `
+          Invoke-CISAzureAudit `
             -Subscriptions "${{ vars.AZURE_SUBSCRIPTION_ID }}" `
             -Output reports/cis.html `
             -NoOpen `
@@ -948,6 +952,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
