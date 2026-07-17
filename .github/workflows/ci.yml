@@ -61,8 +61,23 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-ReportScript.ps1 -RequireJsEngine
 
-      # Az modules are deliberately not RequiredModules (runtime preflight handles
-      # them), so the manifest validates and the module imports on a bare runner.
+      # Az modules are RequiredModules (so Gallery installs pull them in
+      # automatically), which means manifest validation and the import smoke
+      # test need them present on the runner. Cached — a cold install takes a
+      # few minutes, a restore takes seconds.
+      - name: Cache Az modules
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: az-modules-${{ runner.os }}-${{ hashFiles('CISAzureFoundationsBenchmark.psd1') }}
+
+      - name: Install Az module dependencies
+        shell: pwsh
+        run: |
+          $required = (Import-PowerShellDataFile ./CISAzureFoundationsBenchmark.psd1).RequiredModules
+          $missing = @($required | Where-Object { -not (Get-Module -ListAvailable $_) })
+          if ($missing) { Install-PSResource -Name $missing -TrustRepository -Scope CurrentUser }
+
       - name: Validate module manifest
         shell: pwsh
         run: |
