@@ -4,7 +4,10 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
-## [Unreleased]
+## [2.4.0] — 2026-07-17
+
+Quality release: benchmark page references in the report, locale-independent console
+output, and small CI/runner hardening. No control results or scores change.
 
 ### Added
 
@@ -28,6 +31,10 @@ For compliance users the key question is *which controls changed* — every entr
 - **`Run-Tests.ps1 -Test <filter>` now fails when the filter matches nothing**: Pester
   reports an all-NotRun run as "Passed", so a mistyped filter used to exit green without
   running a single test.
+- **Mistyped switches after `-Subscriptions` now produce a clear error**: space-separated
+  subscription values are supported (`-Subscriptions A B`), which meant an unknown switch
+  (e.g. `-NoOpne`) was silently collected as a "subscription name". Anything starting with
+  `-` in that overflow is now rejected with an unknown-parameter error naming the token.
 
 ## [2.3.1] — 2026-07-17
 
@@ -234,7 +241,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
-[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...HEAD
+[2.4.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.1.0...v2.2.0

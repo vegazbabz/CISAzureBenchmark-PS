@@ -1,6 +1,6 @@
 @{
     RootModule        = 'CISAzureFoundationsBenchmark.psm1'
-    ModuleVersion     = '2.3.1'
+    ModuleVersion     = '2.4.0'
     GUID              = '6d9a7e0d-3f09-4c83-8686-01095806dde5'
     Author            = 'vegazbabz'
     Copyright         = '(c) vegazbabz. MIT License.'

@@ -58,6 +58,12 @@ Import-Module (Join-Path $PSScriptRoot "CISAzureFoundationsBenchmark.psd1") -For
 
 # Merge space-separated overflow subscription names before forwarding, then
 # drop the internal overflow parameter so the function sees a single clean set.
+# A mistyped switch (e.g. -NoOpne) would land here too and silently become a
+# "subscription name" — reject anything that looks like a parameter instead.
+$typos = @($_ExtraSubscriptions | Where-Object { $_ -like '-*' })
+if ($typos.Count -gt 0) {
+    throw "Unknown parameter(s): $($typos -join ', '). Check the spelling; run Get-Help .\Invoke-CISAzureAudit.ps1 for the parameter list."
+}
 $forward = @{} + $PSBoundParameters
 $null = $forward.Remove('_ExtraSubscriptions')
 if ($_ExtraSubscriptions.Count -gt 0) {

@@ -116,6 +116,12 @@ function Invoke-CISAzureAudit {
     # shared report/summary tail) live in Private\AuditPipeline.ps1.
 
     # Merge space-separated overflow subscription names into $Subscriptions.
+    # A mistyped switch (e.g. -NoOpne) would land here too and silently become a
+    # "subscription name" — reject anything that looks like a parameter instead.
+    $typos = @($_ExtraSubscriptions | Where-Object { $_ -like '-*' })
+    if ($typos.Count -gt 0) {
+        throw "Unknown parameter(s): $($typos -join ', '). Check the spelling; run Get-Help Invoke-CISAzureAudit for the parameter list."
+    }
     if ($_ExtraSubscriptions.Count -gt 0) {
         $Subscriptions = @(@($Subscriptions) + @($_ExtraSubscriptions)) | Where-Object { $_ }
     }
