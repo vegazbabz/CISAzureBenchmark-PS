@@ -4,6 +4,14 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
+## [Unreleased]
+
+### Changed
+
+- README: the AzureDemoEnvironment cross-link now uses `Install-Module`, matching every other
+  human-facing install instruction (`Install-PSResource` remains only in the CI recipe, where
+  `-TrustRepository` is needed for non-interactive runs). Documentation only.
+
 ## [2.4.2] — 2026-07-18
 
 ### Added
@@ -286,6 +294,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
+[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.2...HEAD
 [2.4.2]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...v2.4.0

@@ -11,7 +11,7 @@
 >
 > **[📊 View sample report](https://htmlpreview.github.io/?https://raw.githubusercontent.com/vegazbabz/CISAzureBenchmark-PS/main/docs/sample_report.html)** — synthetic data, no real tenant information.
 >
-> **[🎯 Need a target environment?](https://www.powershellgallery.com/packages/AzureDemoEnvironment)** — `Install-PSResource AzureDemoEnvironment` deploys a complete multi-tier demo environment (Azure defaults or CIS/MCSB-hardened) to audit and compare.
+> **[🎯 Need a target environment?](https://www.powershellgallery.com/packages/AzureDemoEnvironment)** — `Install-Module AzureDemoEnvironment` deploys a complete multi-tier demo environment (Azure defaults or CIS/MCSB-hardened) to audit and compare.
 
 ![Demo: one-command install, audit run, HTML report](docs/demo.gif)
 
