@@ -13,9 +13,9 @@
 >
 > **[🎯 Need a target environment?](https://www.powershellgallery.com/packages/AzureDemoEnvironment)** — `Install-PSResource AzureDemoEnvironment` deploys a complete multi-tier demo environment (Azure defaults or CIS/MCSB-hardened) to audit and compare.
 
-![Sample report dashboard](docs/sample_report_dashboard.png)
+![Demo: one-command install, audit run, HTML report](docs/demo.gif)
 
-**Version:** 2.4.1
+**Version:** 2.4.2
 **Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
 
@@ -958,6 +958,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 2.4.1
+**Version:** 2.4.2
 **Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
