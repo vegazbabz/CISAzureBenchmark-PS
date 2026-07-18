@@ -7,8 +7,8 @@
         "driver": {
           "name": "CISAzureFoundationsBenchmark",
           "informationUri": "https://github.com/vegazbabz/CISAzureBenchmark-PS",
-          "version": "2.0.0",
-          "semanticVersion": "2.0.0",
+          "version": "2.4.2",
+          "semanticVersion": "2.4.2",
           "rules": [
             {
               "id": "2.1.1",

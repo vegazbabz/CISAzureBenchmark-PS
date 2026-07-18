@@ -4,7 +4,15 @@ All notable changes to CISAzureBenchmark-PS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 For compliance users the key question is *which controls changed* — every entry calls that out explicitly.
 
-## [Unreleased]
+## [2.4.2] — 2026-07-18
+
+### Added
+
+- **Demo GIF in the README** (`docs/demo.gif`): a terminal replay of the real install →
+  login → audit flow (actual numbers from the live E2E run), ending on the report dashboard.
+- **Dashboard screenshot refreshed** (`docs/sample_report_dashboard.png`): the old image
+  showed the v1-era report (Benchmark v5.0.0, "Audit Tool v1.0.1", Danish month names);
+  it is now a capture of the current sample report.
 
 ### Fixed
 
@@ -278,7 +286,7 @@ Initial public release.
 - Checkpoint save/resume per subscription; `-ReportOnly` regeneration; run history with trend
   chart; adaptive parallel execution; permission preflight; Pester suite + PSScriptAnalyzer CI.
 
-[Unreleased]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.1...HEAD
+[2.4.2]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/vegazbabz/CISAzureBenchmark-PS/compare/v2.3.0...v2.3.1
