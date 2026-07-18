@@ -15,8 +15,8 @@
 
 ![Demo: one-command install, audit run, HTML report](docs/demo.gif)
 
-**Version:** 2.4.2
-**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)
+**Version:** 2.4.2\
+**Benchmark:** [CIS Microsoft Azure Foundations Benchmark v6.0.0](https://www.cisecurity.org/benchmark/azure) (April 2026)\
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)
 
 ---
@@ -236,8 +236,11 @@ Tests/
   Run-Tests.ps1               Test runner
 scripts/
   New-SampleReport.ps1        Generate sample report with synthetic data
+  Build-ModulePackage.ps1     Stage a clean module folder for Gallery publishing
+  Test-ReportScript.ps1       Validate the report's inline JavaScript
 docs/
-  sample_report.html          Pre-generated sample report
+  sample_report.html          Pre-generated sample report (synthetic data)
+  demo.gif                    Terminal demo shown at the top of this README
 suppressions.json.example   Suppression template with annotated examples
 ```
 
@@ -246,15 +249,17 @@ suppressions.json.example   Suppression template with annotated examples
 ## Usage
 
 ```text
-.\Invoke-CISAzureAudit.ps1 [options]
+Invoke-CISAzureAudit [options]          # Gallery install (module command)
+.\Invoke-CISAzureAudit.ps1 [options]    # clone/ZIP (script shim — identical behavior)
 ```
 
 ### All parameters
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
-| `-Subscriptions` | string[] | all | One or more subscription names or IDs to audit |
-| `-Output` | string | `cis_audit_report.html` | HTML report path |
+| `-TenantId` | string | | Tenant to audit — enumerates all its enabled subscriptions. **Either `-TenantId` or `-Subscriptions` is required** — the tool never assumes a scope |
+| `-Subscriptions` | string[] | | One or more subscription names or IDs to audit |
+| `-Output` | string | `reports\cis_audit_report_<timestamp>.html` | HTML report path (`.json`, `.csv`, `.sarif` are derived from it) |
 | `-Parallel` | int | 3 | Concurrent subscription workers |
 | `-Level` | 1 \| 2 \| both | both | CIS level filter |
 | `-Fresh` | switch | | Clear all checkpoints and start a full re-audit |
@@ -294,35 +299,34 @@ See [`cis_audit.json.example`](cis_audit.json.example) for all available setting
 ### Examples
 
 ```powershell
-# Audit all subscriptions
-.\Invoke-CISAzureAudit.ps1
+$tid = (Get-AzContext).Tenant.Id   # a scope (-TenantId or -Subscriptions) is always required
+
+# Audit every enabled subscription in the tenant
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid
 
 # Audit specific subscriptions with parallelism
 .\Invoke-CISAzureAudit.ps1 -Subscriptions "sub-id-1","sub-id-2" -Parallel 5
 
 # Level 1 checks only, custom output path
-.\Invoke-CISAzureAudit.ps1 -Level 1 -Output report.html
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid -Level 1 -Output report.html
 
 # Start completely fresh, ignoring previous checkpoints
-.\Invoke-CISAzureAudit.ps1 -Fresh
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid -Fresh
 
-# Regenerate the HTML report without re-running any checks
+# Regenerate the HTML report without re-running any checks (no scope needed)
 .\Invoke-CISAzureAudit.ps1 -ReportOnly
 
 # Trace-level diagnostics written to a log file
-.\Invoke-CISAzureAudit.ps1 -DebugMode -LogFile cis_audit.log
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid -DebugMode -LogFile cis_audit.log
 
 # Skip tenant-level identity checks
-.\Invoke-CISAzureAudit.ps1 -SkipTenantChecks
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid -SkipTenantChecks
 
 # Interrupted run? Just re-run — it resumes automatically
-.\Invoke-CISAzureAudit.ps1
-
-# Show what findings are currently suppressed
-.\Invoke-CISAzureAudit.ps1 -ReportOnly  # suppressions applied during report generation
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid
 
 # Diff against the previous run (regressions, improvements, new/removed results)
-.\Invoke-CISAzureAudit.ps1 -CompareWith auto
+.\Invoke-CISAzureAudit.ps1 -TenantId $tid -CompareWith auto
 ```
 
 ---
@@ -374,16 +378,12 @@ For tenant-level identity checks and APIs not exposed by Az module cmdlets:
 - `management.azure.com/.../diagnosticSettings` — subscription-level activity log routing (6.1.1.x)
 - ARM REST for security contacts (8.1.12–8.1.15), WDATP integration (8.1.3.3), and attack path notifications (8.1.15)
 
-#### 4. Permission preflight
-
-Before the audit begins, `Get-AzRoleAssignment` is called in parallel runspaces (up to 8 at once)
-to verify the runner account holds the required roles on every subscription. No Azure CLI is
-required. Use `-NoPermissionCheck` to bypass the preflight entirely.
-
 ### Permission preflight
 
-Before the audit begins, the tool checks whether the runner account holds the required roles on
-every subscription.
+Before the audit begins, `Get-AzRoleAssignment` is called in parallel runspaces (up to 8 at once)
+to verify the runner account holds the required roles on every subscription, and each Key Vault's
+data plane is probed so missing access surfaces as one consolidated warning upfront instead of
+scattered ERRORs at the end. Use `-NoPermissionCheck` to skip the preflight entirely.
 
 ### Checkpoints and resume
 
@@ -479,7 +479,7 @@ Copy it to `suppressions.json` and remove any entries that don't apply.
   {
     "control_id": "9.5",
     "justification": "Legacy storage account — migration planned for Q3",
-    "expires": "2025-09-30",
+    "expires": "2026-12-31",
     "resource": "/subscriptions/.../storageAccounts/legacy01",
     "subscription": "Production"
   }
@@ -690,8 +690,10 @@ Install-Module Pester -Force -Scope CurrentUser
 ### Run a single check
 
 ```powershell
-.\Tests\Run-Tests.ps1 -Test "5_27"
+.\Tests\Run-Tests.ps1 -Test "9.2.1"
 ```
+
+A filter that matches no tests fails the run instead of exiting green.
 
 ### With code coverage
 
@@ -915,7 +917,7 @@ Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/
 
 ## Troubleshooting
 
-**Identity checks return ERROR (AccessDenied)**
+**Identity checks return ERROR (AccessDenied)**\
 Your account needs Global Reader in Entra ID. To verify Graph API access:
 
 ```powershell
@@ -925,16 +927,16 @@ Invoke-AzRestMethod -Method GET -Uri "https://graph.microsoft.com/v1.0/policies/
 If this returns a 403, ask your Entra ID admin to grant Global Reader or consent to the required
 Graph API permissions for the service principal used for auditing.
 
-**Key Vault checks return ERROR (audit incomplete)**
+**Key Vault checks return ERROR (audit incomplete)**\
 The runner account needs Key Vault data plane access. For RBAC-enabled vaults assign the
 **Key Vault Reader** role; for access-policy vaults, add the account to the vault's access policy.
 The ERROR message in the report states exactly what is missing.
 
-**Subscription not found**
+**Subscription not found**\
 Values passed to `-Subscriptions` must match an existing subscription name or ID exactly.
 Run `Get-AzSubscription | Select-Object Name, Id` to see the available subscriptions.
 
-**Interrupted run**
+**Interrupted run**\
 Re-run the same command to resume from where it stopped, or add `-Fresh` to start over.
 
 ---
@@ -958,6 +960,6 @@ This tool is not affiliated with, endorsed by, or approved by CIS.
 
 [MIT](LICENSE)
 
-**Version:** 2.4.2
-**Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)
+**Version:** 2.4.2\
+**Benchmark:** CIS Microsoft Azure Foundations Benchmark v6.0.0 (April 2026)\
 **Coverage:** 93 automated controls across 7 sections · 34 manual controls noted in output (127 total)

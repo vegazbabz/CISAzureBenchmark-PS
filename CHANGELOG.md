@@ -11,6 +11,15 @@ For compliance users the key question is *which controls changed* — every entr
 - README: the AzureDemoEnvironment cross-link now uses `Install-Module`, matching every other
   human-facing install instruction (`Install-PSResource` remains only in the CI recipe, where
   `-TrustRepository` is needed for non-interactive runs). Documentation only.
+- README quality pass ahead of the public announcement: hard line breaks where GitHub was
+  soft-wrapping the Version/Benchmark/Coverage block and the Troubleshooting entries onto one
+  line; the parameters table gains the missing `-TenantId` row and correct defaults
+  (`-Subscriptions` claimed "all" — a scope has always been required; `-Output`'s real default
+  is timestamped under `reports\`); usage examples now include the required scope; the
+  duplicated permission-preflight section is merged (and notes the Key Vault data-plane
+  probe); the test-filter example references a real control; the inline suppression example
+  no longer shows an already-expired date; the project tree lists the packaging/report-check
+  scripts and the demo GIF. Documentation only.
 
 ## [2.4.2] — 2026-07-18
 
