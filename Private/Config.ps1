@@ -3,7 +3,13 @@
 
 Set-StrictMode -Version Latest
 
-$script:CIS_VERSION   = "2.0.0"
+# Tool version shown in report headers and stamped into checkpoints/history —
+# single-sourced from the module manifest so it cannot drift from the released
+# version (it sat frozen at "2.0.0" through the 2.1–2.4 releases, which also
+# silently disabled the version-mismatch checkpoint invalidation).
+$script:CIS_VERSION = try {
+    [string](Import-PowerShellDataFile (Join-Path (Split-Path $PSScriptRoot -Parent) 'CISAzureFoundationsBenchmark.psd1')).ModuleVersion
+} catch { '0.0.0' }
 $script:BENCHMARK_VER = "6.0.0"
 
 # Status constants — avoid $Error which is a PS reserved variable

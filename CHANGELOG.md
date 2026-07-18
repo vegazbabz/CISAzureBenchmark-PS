@@ -6,6 +6,18 @@ For compliance users the key question is *which controls changed* — every entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **Report header version no longer drifts**: the "Audit Tool vX.Y.Z" version shown in the
+  report (and stamped into checkpoints and run history) sat frozen at "2.0.0" through the
+  2.1–2.4 releases — it is now read from the module manifest. This also revives the
+  version-mismatch checkpoint invalidation, which the frozen constant had silently disabled:
+  the first run after upgrading re-audits instead of resuming checkpoints written by an
+  older version.
+- **Report dates are locale-independent**: the run-history "audited" column used the
+  machine locale's month abbreviations (a Danish host rendered "jul. 17"); it now always
+  renders invariant-culture English ("Jul 17").
+
 ### Changed
 
 - README: the Overview and the *HTML Report* section now state explicitly that each control
