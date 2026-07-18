@@ -34,7 +34,8 @@ needs; run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
 can be resumed without re-running completed work. Output is a self-contained HTML report with
-filtering, compliance scoring, charts, and per-finding remediation guidance.
+filtering, compliance scoring, charts, and per-finding remediation guidance — each control id
+carries the page number in the CIS benchmark PDF where its full remediation steps are documented.
 
 ---
 
@@ -413,7 +414,7 @@ The generated report is a self-contained HTML file with no external dependencies
 - **Filterable table** — filter simultaneously by free-text search, subscription, status, and level (L1/L2). Section headers collapse when all their results are filtered out.
 - **Per-resource results** — each NSG, storage account, Key Vault, subnet, and Databricks workspace is reported individually, not aggregated to a single pass/fail per control.
 - **Remediation hints** — every FAIL result includes the Azure portal navigation path to fix the issue. ERROR results include an actionable explanation of what access is missing.
-- **Benchmark page references** — hover any control id to see the control's page in the CIS Microsoft Azure Foundations Benchmark v6.0.0 PDF, for jumping straight to the benchmark's rationale, audit, and remediation text.
+- **Benchmark page references** — hover any control id to see the page number in the CIS Microsoft Azure Foundations Benchmark v6.0.0 PDF where the control's rationale, audit procedure, and full remediation steps are documented — so a finding can be traced straight to the benchmark's own remediation instructions.
 - **Audit-error rows** — if a subscription context switch, a whole check group, or the tenant-level run crashes, a synthetic ERROR row (control `CONTEXT`, `GROUP`, `TENANT` or `FATAL` under section *0 - Audit Errors*) is emitted so the failure is visible in the report instead of controls silently disappearing.
 - **Compliance trend** — after two or more full-tenant audit runs, a collapsible chart appears showing the compliance score over time.
 - **Back to top** — fixed button in the bottom-right corner for long reports.
