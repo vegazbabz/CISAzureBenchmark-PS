@@ -162,7 +162,9 @@ function New-CISHtmlReport {
                 $age    = ($today2 - $aud).Days
                 $aLbl   = if ($age -eq 0) { 'today' } elseif ($age -eq 1) { 'yesterday' } else { "${age}d ago" }
                 $aCol   = if ($age -le 1) { '#64748b' } elseif ($age -le 30) { '#d97706' } else { '#dc2626' }
-                $aDt    = $aud.ToString('MMM dd')
+                # Invariant culture: month abbreviations must not follow the machine locale
+        # (a Danish host rendered "jul. 17" into the report).
+        $aDt    = $aud.ToString('MMM dd', [System.Globalization.CultureInfo]::InvariantCulture)
                 $auditedCell = "<td style=`"color:$aCol;white-space:nowrap`">$aDt<br><small>$aLbl</small></td>"
             } catch { $null = $_ <# Graceful: if date parsing fails, omit the 'last audited' cell #> }
         }
