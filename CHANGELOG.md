@@ -8,9 +8,11 @@ For compliance users the key question is *which controls changed* — every entr
 
 ### Changed
 
-- README: the AzureDemoEnvironment cross-link now uses `Install-Module`, matching every other
-  human-facing install instruction (`Install-PSResource` remains only in the CI recipe, where
-  `-TrustRepository` is needed for non-interactive runs). Documentation only.
+- README, CONTRIBUTING, and the GitHub-release Quick Start now lead every human-facing install
+  instruction with `Install-PSResource` — Microsoft's package-management docs state PSResourceGet
+  *replaces* PowerShellGet and it ships in the box with PowerShell 7.4+; `Install-Module` stays
+  as a commented fallback for older PowerShellGet. Supersedes the short-lived standardization
+  on `Install-Module`. No control changes; documentation only.
 - README quality pass ahead of the public announcement: hard line breaks where GitHub was
   soft-wrapping the Version/Benchmark/Coverage block and the Troubleshooting entries onto one
   line; the parameters table gains the missing `-TenantId` row and correct defaults
