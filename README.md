@@ -7,11 +7,11 @@
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0%2B-blue.svg)](https://learn.microsoft.com/en-us/powershell/)
 [![CI](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml/badge.svg)](https://github.com/vegazbabz/CISAzureBenchmark-PS/actions/workflows/ci.yml)
 
-> **[⬇️ Get it from the PowerShell Gallery](https://www.powershellgallery.com/packages/CISAzureFoundationsBenchmark)** — `Install-Module CISAzureFoundationsBenchmark`
+> **[⬇️ Get it from the PowerShell Gallery](https://www.powershellgallery.com/packages/CISAzureFoundationsBenchmark)** — `Install-PSResource CISAzureFoundationsBenchmark`
 >
 > **[📊 View sample report](https://htmlpreview.github.io/?https://raw.githubusercontent.com/vegazbabz/CISAzureBenchmark-PS/main/docs/sample_report.html)** — synthetic data, no real tenant information.
 >
-> **[🎯 Need a target environment?](https://www.powershellgallery.com/packages/AzureDemoEnvironment)** — `Install-Module AzureDemoEnvironment` deploys a complete multi-tier demo environment (Azure defaults or CIS/MCSB-hardened) to audit and compare.
+> **[🎯 Need a target environment?](https://www.powershellgallery.com/packages/AzureDemoEnvironment)** — `Install-PSResource AzureDemoEnvironment` deploys a complete multi-tier demo environment (Azure defaults or CIS/MCSB-hardened) to audit and compare.
 
 ![Demo: one-command install, audit run, HTML report](docs/demo.gif)
 
@@ -29,7 +29,7 @@ All audit checks use the Az PowerShell module — no Azure CLI required.
 The optional permission preflight uses `Get-AzRoleAssignment` in parallel runspaces to verify
 the runner account holds the required roles before the audit begins.
 Skip it with `-NoPermissionCheck` if you already know your permissions are correct.
-One `Install-Module CISAzureFoundationsBenchmark` brings in the tool and every Az module it
+One `Install-PSResource CISAzureFoundationsBenchmark` brings in the tool and every Az module it
 needs; run `Connect-AzAccount` to authenticate.
 
 Results are saved as checkpoints after each subscription completes, so a failed or interrupted run
@@ -46,14 +46,14 @@ carries the page number in the CIS benchmark PDF where its full remediation step
 | Requirement | Details |
 | --- | --- |
 | PowerShell | [7.0 or higher](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) |
-| Az.Accounts | `Install-Module Az.Accounts` — authentication, context, REST calls |
-| Az.ResourceGraph | `Install-Module Az.ResourceGraph` — resource prefetch queries |
-| Az.Monitor | `Install-Module Az.Monitor` — log profiles, diagnostic settings, activity log alerts |
-| Az.Network | `Install-Module Az.Network` — network watcher flow logs |
-| Az.Storage | `Install-Module Az.Storage` — storage account enumeration |
-| Az.KeyVault | `Install-Module Az.KeyVault` — key rotation policies |
-| Az.Resources | `Install-Module Az.Resources` — role definitions |
-| Az.Security | `Install-Module Az.Security` — Defender plans, security contacts |
+| Az.Accounts | `Install-PSResource Az.Accounts` — authentication, context, REST calls |
+| Az.ResourceGraph | `Install-PSResource Az.ResourceGraph` — resource prefetch queries |
+| Az.Monitor | `Install-PSResource Az.Monitor` — log profiles, diagnostic settings, activity log alerts |
+| Az.Network | `Install-PSResource Az.Network` — network watcher flow logs |
+| Az.Storage | `Install-PSResource Az.Storage` — storage account enumeration |
+| Az.KeyVault | `Install-PSResource Az.KeyVault` — key rotation policies |
+| Az.Resources | `Install-PSResource Az.Resources` — role definitions |
+| Az.Security | `Install-PSResource Az.Security` — Defender plans, security contacts |
 | Azure login | `Connect-AzAccount` completed before running |
 
 > **Installing from the PowerShell Gallery pulls all of the Az modules above
@@ -61,7 +61,7 @@ carries the page number in the CIS benchmark PDF where its full remediation step
 > below is only needed when running from a clone or ZIP:
 >
 > ```powershell
-> Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
+> Install-PSResource Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security
 > ```
 
 ### Azure permissions
@@ -86,7 +86,8 @@ carries the page number in the CIS benchmark PDF where its full remediation step
 
 ```powershell
 # 1. Install (one-time) — the required Az modules are installed automatically
-Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
+Install-PSResource CISAzureFoundationsBenchmark
+# (older PowerShellGet: Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser)
 
 # 2. Log in to Azure
 Connect-AzAccount
@@ -145,7 +146,7 @@ modules are declared dependencies and come along automatically.
 For a clone or ZIP download, run this once in a PowerShell 7 terminal:
 
 ```powershell
-Install-Module Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security -Scope CurrentUser
+Install-PSResource Az.Accounts, Az.ResourceGraph, Az.Monitor, Az.Network, Az.Storage, Az.KeyVault, Az.Resources, Az.Security
 ```
 
 If prompted to install from an untrusted repository, type `Y` and press Enter.
@@ -155,7 +156,8 @@ If prompted to install from an untrusted repository, type `Y` and press Enter.
 **Option A — Install from the PowerShell Gallery** (recommended):
 
 ```powershell
-Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser
+Install-PSResource CISAzureFoundationsBenchmark
+# (older PowerShellGet: Install-Module CISAzureFoundationsBenchmark -Scope CurrentUser)
 ```
 
 **Option B — Clone with Git**:
@@ -681,7 +683,7 @@ The test suite uses **Pester 5** — all tests mock Az module calls so no real A
 
 ```powershell
 # Requires Pester 5.0+
-Install-Module Pester -Force -Scope CurrentUser
+Install-PSResource Pester
 
 # Run all tests
 .\Tests\Run-Tests.ps1

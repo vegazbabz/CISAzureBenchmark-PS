@@ -31,8 +31,8 @@ Thank you for considering a contribution! This document covers the basics.
 Install dev dependencies:
 
 ```powershell
-Install-Module Pester -Force -Scope CurrentUser
-Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+Install-PSResource Pester
+Install-PSResource PSScriptAnalyzer
 ```
 
 ## Project layout
